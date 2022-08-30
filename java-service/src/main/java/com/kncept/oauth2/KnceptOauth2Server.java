@@ -7,10 +7,7 @@ import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.spi.HttpServerProvider;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
@@ -64,20 +61,15 @@ public class KnceptOauth2Server implements HttpHandler {
         try {
             String path = exchange.getRequestURI().getPath().toLowerCase();
 
-            if (
-                    path.equals("/authorize")
-            ) {
-                OperationResponse response = oauth2.authorize(getUrlParameters(exchange.getRequestURI()));
+            if (path.equals("/authorize")) {
+                OperationResponse response = oauth2.authorize(bodyOrQueryParams(exchange));
                 handleResponse(exchange, response);
-                System.out.println("did auth");
-            } else             if (
-                    path.equals("/login")
-            ) {
-                Map<String, String> params = new HashMap<>();
-                InputStream in = exchange.getRequestBody();
-                String value = new String(in.readAllBytes());
-                System.out.println("body: " + value);
-                handleResponse(exchange, oauth2.login(params));
+            } else if (path.equals("/login")) {
+                handleResponse(exchange, oauth2.login(bodyParams(exchange)));
+            } else if (path.equals("/signup")) {
+                handleResponse(exchange, oauth2.signup(bodyParams(exchange)));
+            } else if (path.equals("/token") || path.equals("/oauth/token")) {
+                handleResponse(exchange, oauth2.token(bodyOrQueryParams(exchange)));
             } else {
                 System.out.println("" + exchange.getRequestMethod() + " " + exchange.getRequestURI().getPath());
                 exchange.sendResponseHeaders(200, -1);
@@ -89,23 +81,44 @@ public class KnceptOauth2Server implements HttpHandler {
     }
 
     private void handleResponse(HttpExchange exchange, OperationResponse response) throws IOException {
-        exchange.getResponseHeaders().add("Content-Type", response.contentType);
-
-        if (response.contentType.equalsIgnoreCase("text/html")) {
-            exchange.sendResponseHeaders(response.responseCode, 0);
-            exchange.getResponseBody().write(response.responseDetail.getBytes());
-            exchange.getResponseBody().close();
-        } else {
-            throw new IllegalStateException("Unknown content type: " + response.contentType);
+        switch (response.type) {
+            case OK_HTML:
+            case ERROR_HTML:
+                int rCode = response.type == OperationResponse.ResponseType.OK_HTML ? 200 : 500;
+                exchange.getResponseHeaders().add("Content-Type", "text/html");
+                exchange.sendResponseHeaders(rCode, 0);
+                exchange.getResponseBody().write(response.responseDetail.getBytes());
+                exchange.getResponseBody().close();
+                return;
+            case OK_JSON:
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+                exchange.sendResponseHeaders(200, 0);
+                exchange.getResponseBody().write(response.responseDetail.getBytes());
+                exchange.getResponseBody().close();
+            case REDIRECT:
+                exchange.getResponseHeaders().add("Location", response.responseDetail);
+                exchange.sendResponseHeaders(302, -1);
+                return;
         }
+
+        throw new IllegalStateException("Unknown response type: " + response.type);
 
     }
 
+    private Map<String, String> bodyOrQueryParams(HttpExchange exchange) throws IOException {
+        return exchange.getRequestMethod().toLowerCase().equals("post") ?
+                bodyParams(exchange) : queryParams(exchange);
+    }
+    private Map<String, String> queryParams(HttpExchange exchange) throws IOException {
+        return extractSimpleParams(exchange.getRequestURI().getQuery());
+    }
+    private Map<String, String> bodyParams(HttpExchange exchange) throws IOException {
+        return extractSimpleParams(new String(exchange.getRequestBody().readAllBytes()));
+    }
     // based on https://stackoverflow.com/questions/1667278/parsing-query-strings-on-android
-    public static Map<String, String> getUrlParameters(URI uri)
-            throws UnsupportedEncodingException {
+    public static Map<String, String> extractSimpleParams(String query) throws IOException {
         Map<String, String> params = new HashMap<String, String>();
-        if (uri.getQuery() != null) for (String param : uri.getQuery().split("&")) {
+        if (query != null) for (String param : query.split("&")) {
             String pair[] = param.split("=");
             String key = URLDecoder.decode(pair[0], "UTF-8");
             String value = "";

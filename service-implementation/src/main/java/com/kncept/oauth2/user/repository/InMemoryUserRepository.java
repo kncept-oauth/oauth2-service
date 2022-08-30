@@ -16,6 +16,10 @@ public class InMemoryUserRepository implements UserRepository {
 
     private final Map<String, String> userToPasswordHash = new HashMap<>();
 
+    public InMemoryUserRepository() {
+        createUser("test", "test");
+    }
+
     @Override
     public boolean isAcceptingSignup() {
         return true;
@@ -24,7 +28,7 @@ public class InMemoryUserRepository implements UserRepository {
     @Override
     public boolean verifyUser(String username, String password) {
         String passwordHash = hash(username, password);
-        return passwordHash.equals(userToPasswordHash.getOrDefault("username", "_"));
+        return passwordHash.equals(userToPasswordHash.getOrDefault(username, "_"));
     }
 
     @Override

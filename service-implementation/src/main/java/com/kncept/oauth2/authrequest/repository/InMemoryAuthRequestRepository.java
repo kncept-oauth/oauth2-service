@@ -22,4 +22,12 @@ public class InMemoryAuthRequestRepository implements AuthRequestRepository {
     public AuthRequest lookupByOauthSessionId(String oauthSessionId) {
         return activeRequests.get(oauthSessionId);
     }
+
+    @Override
+    public AuthRequest lookupByCode(String code) {
+        return activeRequests.values().stream()
+                .filter(r -> r.getCode().equals(code))
+                .findAny()
+                .orElse(null);
+    }
 }

@@ -10,4 +10,7 @@ public interface AuthRequestRepository {
     // null if session not found
     AuthRequest lookupByOauthSessionId(String oauthSessionId);
 
+    // null if code not found
+    AuthRequest lookupByCode(String code);
+
 }

@@ -1,5 +1,7 @@
 rootProject.name='Kncept Oauth2 Service'
 
-include 'aws-service', 'service-implementation', 'service-interfaces', 'java-service'
-
-
+// include any subfolders with a build.gradle file in them
+for(file in rootDir.listFiles()) {
+    if (file.isDirectory() && new File(file, "build.gradle").exists())
+        include file.name
+}

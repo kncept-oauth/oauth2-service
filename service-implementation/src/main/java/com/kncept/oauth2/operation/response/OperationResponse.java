@@ -1,27 +1,20 @@
 package com.kncept.oauth2.operation.response;
 
 public class OperationResponse {
-    public final String contentType;
-    public final int responseCode;
+
+    public enum ResponseType {
+        OK_HTML, OK_JSON, ERROR_HTML, REDIRECT
+    }
+
+    public final ResponseType type;
     public final String responseDetail;
 
     public OperationResponse(
-            String contentType,
-            int responseCode,
+            ResponseType type,
             String responseDetail
     ) {
-        this.contentType = nonNull(contentType);
-        this.responseCode = nonZero(responseCode);
-        this.responseDetail = nonNull(responseDetail);
+        this.type = type;
+        this.responseDetail = responseDetail;
     }
 
-    private String nonNull(String value) {
-        if (value == null) throw new IllegalStateException();
-        return value;
-    }
-
-    private int nonZero(int value) {
-        if (value == 0) throw new IllegalStateException();
-        return value;
-    }
 }

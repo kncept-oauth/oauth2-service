@@ -5,24 +5,21 @@ public class SimpleAuthRequest implements AuthRequest {
     final String state; // nullable
     final String redirectUri;
     final String clientId;
+    final String responseType;
+    final String code;
 
     public SimpleAuthRequest(
             String state,
             String redirectUri,
-            String clientId
+            String clientId,
+            String responseType,
+            String code
     ){
         this.state = state;
         this.redirectUri = redirectUri;
         this.clientId = clientId;
-    }
-
-    public SimpleAuthRequest(
-            String redirectUri,
-            String clientId
-    ){
-        this.state = null;
-        this.redirectUri = redirectUri;
-        this.clientId = clientId;
+        this.responseType = responseType;
+        this.code = code;
     }
 
     @Override
@@ -38,5 +35,15 @@ public class SimpleAuthRequest implements AuthRequest {
     @Override
     public String getClientId() {
         return clientId;
+    }
+
+    @Override
+    public String getResponseType() {
+        return responseType;
+    }
+
+    @Override
+    public String getCode() {
+        return code;
     }
 }
