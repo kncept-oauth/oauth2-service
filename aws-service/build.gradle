@@ -1,0 +1,41 @@
+
+apply plugin: 'java'
+
+group = 'com.kncept.oauth2'
+version = '0.0.1'
+sourceCompatibility = 15
+targetCompatibility = 15
+
+defaultTasks 'buildZip'
+
+
+task buildZip(type: Zip) {
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtimeClasspath
+    }
+}
+
+// use JUnit5 Platform for testing
+test {
+    useJUnitPlatform()
+}
+
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+}
+
+def junit5version = '5.8.2'
+dependencies {
+
+	// see https://docs.aws.amazon.com/lambda/latest/dg/java-package.html
+	// implementation 'software.amazon.awssdk:lambda'
+    implementation 'com.amazonaws:aws-lambda-java-core:1.2.1'
+    implementation 'com.amazonaws:aws-lambda-java-events:3.11.0'
+
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:' + junit5version
+	testImplementation 'org.junit.jupiter:junit-jupiter-engine:' + junit5version
+}

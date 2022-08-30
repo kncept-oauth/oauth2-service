@@ -1,0 +1,30 @@
+
+apply plugin: 'java-library-distribution'
+
+group = 'com.kncept.oauth2'
+version = '0.0.1'
+sourceCompatibility = 15
+targetCompatibility = 15
+
+defaultTasks 'run'
+
+jar.dependsOn check
+jar.dependsOn test
+
+// use JUnit5 Platform for testing
+test {
+    useJUnitPlatform()
+}
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+}
+
+def junit5version = '5.8.2'
+dependencies {
+    implementation project(':service-interfaces')
+
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:' + junit5version
+	testImplementation 'org.junit.jupiter:junit-jupiter-engine:' + junit5version
+}

@@ -1,0 +1,5 @@
+rootProject.name='Kncept Oauth2 Service'
+
+include 'aws-service', 'service-implementation', 'service-interfaces', 'java-service'
+
+
