@@ -9,6 +9,7 @@ import com.kncept.oauth2.configuration.Oauth2Configuration;
 import com.kncept.oauth2.crypto.ExpiringKeyPair;
 import com.kncept.oauth2.crypto.KeyVendor;
 import com.kncept.oauth2.operation.response.OperationResponse;
+import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -52,13 +53,11 @@ public class Oauth2 {
         String state = optional("state", params, null);
 //        String nonce = optional("nonce", params, null);
 
-
-
-
         boolean isPkce = config.requirePkce() || params.containsKey("code_challenge");
-        if (config.requirePkce()) {
-            String codeChallenge = "";//required("code_challenge", params);
-            String codeChallengeMethod = "";//optional("code_challenge_method", params, "S256");
+        if (isPkce) {
+            String codeChallenge = required("code_challenge", params);
+            String codeChallengeMethod = optional("code_challenge_method", params, "S256");
+            String code_verifier = optional("code_verifier", params, null);
         }
 
         Client client = config.clientRepository().getClientById(clientId);
@@ -168,27 +167,20 @@ public class Oauth2 {
         String grantType = required("grant_type", params);
         // authorization_code
 
-        // requires 'response_type' was code
+        // requires 'grantType' was authorization_code ?
         String code = required("code", params);
         //code_verifier ? // https://developer.okta.com/docs/reference/api/oidc/#request-parameters-4
 
         AuthRequest authRequest = config.authRequestRepository().lookupByCode(code);
 
         if (authRequest == null) {
+            JSONObject obj = new JSONObject();
+            obj.put("error", "No matching auth codes");
             return new OperationResponse(
-                    OperationResponse.ResponseType.ERROR_HTML,
-                    config.htmlPageVendor().errorPage(
-                            "No code"
-                    ));
+                    OperationResponse.ResponseType.CLIENT_ERROR_JSON,
+                    obj.toJSONString());
         }
         String responseType = authRequest.getResponseType(); // code vs authorization code
-
-
-        //
-        //
-        //  NEED TO VERIFY CODE!
-        //
-        //
 
         // redirect_uri for 'authorization code' - same redirect URI as for the original auth request??
 
@@ -205,12 +197,20 @@ public class Oauth2 {
                 .withIssuer("kncept-oauth")
                 .withIssuedAt(LocalDateTime.now().toInstant(ZoneOffset.UTC))
                 .sign(algorithm);
+
+        JSONObject jwt = new JSONObject();
+
+        jwt.put("token_type", "Bearer");
+        jwt.put("id_token", token);
+        jwt.put("expires_in", 3600);
+
+//        jwt.put("refresh_token", "xxxx")
+
         // needs to be json
         return new OperationResponse(
                 OperationResponse.ResponseType.OK_JSON,
-                token);
+                jwt.toJSONString());
     }
-
 
     private String required(String name, Map<String, String> params) {
         String value = params.get(name);

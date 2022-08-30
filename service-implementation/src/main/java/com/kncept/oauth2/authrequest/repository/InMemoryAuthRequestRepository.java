@@ -7,9 +7,7 @@ import java.util.TreeMap;
 import java.util.UUID;
 
 public class InMemoryAuthRequestRepository implements AuthRequestRepository {
-
     private final Map<String, AuthRequest> activeRequests = new TreeMap<>();
-
 
     @Override
     public String createAuthRequest(AuthRequest newSession) {

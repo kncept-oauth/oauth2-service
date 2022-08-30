@@ -81,18 +81,24 @@ public class KnceptOauth2Server implements HttpHandler {
     }
 
     private void handleResponse(HttpExchange exchange, OperationResponse response) throws IOException {
+        int rCode = 200;
         switch (response.type) {
-            case OK_HTML:
             case ERROR_HTML:
-                int rCode = response.type == OperationResponse.ResponseType.OK_HTML ? 200 : 500;
+                rCode = 500; //server error?
+            case OK_HTML:
                 exchange.getResponseHeaders().add("Content-Type", "text/html");
                 exchange.sendResponseHeaders(rCode, 0);
                 exchange.getResponseBody().write(response.responseDetail.getBytes());
                 exchange.getResponseBody().close();
                 return;
+            case CLIENT_ERROR_JSON:
+                rCode = 400; // client error
             case OK_JSON:
                 exchange.getResponseHeaders().add("Content-Type", "application/json");
-                exchange.sendResponseHeaders(200, 0);
+                exchange.getResponseHeaders().add("Cache-Control", "no-store");
+                exchange.getResponseHeaders().add("Pragma", "no-cache");
+
+                exchange.sendResponseHeaders(rCode, 0);
                 exchange.getResponseBody().write(response.responseDetail.getBytes());
                 exchange.getResponseBody().close();
             case REDIRECT:
