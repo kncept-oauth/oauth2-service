@@ -1,6 +1,5 @@
 package com.kncept.oauth2.user.repository;
 
-import com.kncept.oauth2.user.SimpleUser;
 import com.kncept.oauth2.user.User;
 
 import java.security.MessageDigest;
@@ -59,6 +58,36 @@ public class InMemoryUserRepository implements UserRepository {
             return Base64.getEncoder().encodeToString(simpleHash);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static class SimpleUser implements User {
+
+        private final String username;
+        private String passhash;
+        private final String sub;
+
+        public SimpleUser(String username, String passhash) {
+            this(username, passhash, UUID.randomUUID().toString());
+        }
+        public SimpleUser(String username, String passhash, String sub) {
+            this.username = username;
+            this.passhash = passhash;
+            this.sub = sub;
+        }
+
+        @Override
+        public String username() {
+            return username;
+        }
+
+        public String getPasshash() {
+            return passhash;
+        }
+
+        @Override
+        public String sub() {
+            return sub;
         }
     }
 }

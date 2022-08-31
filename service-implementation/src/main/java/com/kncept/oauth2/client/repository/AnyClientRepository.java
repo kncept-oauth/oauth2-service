@@ -17,7 +17,7 @@ public class AnyClientRepository implements ClientRepository {
         }
 
         @Override
-        public String getClientId() {
+        public String clientId() {
             return clientId;
         }
     }

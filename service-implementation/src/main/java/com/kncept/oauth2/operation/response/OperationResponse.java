@@ -1,21 +1,27 @@
 package com.kncept.oauth2.operation.response;
 
-// this is an oversimplification
-public class OperationResponse {
+public interface OperationResponse {
 
-    public enum ResponseType {
-        OK_HTML, ERROR_HTML, REDIRECT
+    int responseCode();
+
+    default boolean isRenderedContentResponse() {
+        return RenderedContentResponse.class.isAssignableFrom(getClass());
+    }
+    default RenderedContentResponse asRenderedContentResponse() {
+        return (RenderedContentResponse) this;
     }
 
-    public final ResponseType type;
-    public final String responseDetail;
-
-    public OperationResponse(
-            ResponseType type,
-            String responseDetail
-    ) {
-        this.type = type;
-        this.responseDetail = responseDetail;
+    default boolean isRedirect() {
+        return RedirectResponse.class.isAssignableFrom(getClass());
+    }
+    default RedirectResponse asRedirect() {
+        return (RedirectResponse) this;
     }
 
+    default boolean isContent() {
+        return ContentResponse.class.isAssignableFrom(getClass());
+    }
+    default ContentResponse asContent() {
+        return (ContentResponse) this;
+    }
 }

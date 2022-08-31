@@ -1,7 +1,9 @@
 package com.kncept.oauth2;
 
-import com.kncept.oauth2.operation.response.JsonResponse;
+import com.kncept.oauth2.operation.response.ContentResponse;
+import com.kncept.oauth2.operation.response.RenderedContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
+import com.kncept.oauth2.operation.response.RedirectResponse;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -12,7 +14,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 
 public class KnceptOauth2Server implements HttpHandler {
@@ -49,7 +53,6 @@ public class KnceptOauth2Server implements HttpHandler {
                 }
             }
         }
-
     }
 
     private Oauth2 oauth2;
@@ -63,18 +66,19 @@ public class KnceptOauth2Server implements HttpHandler {
         try {
             String path = exchange.getRequestURI().getPath().toLowerCase();
 
+            Map<String, String> cookies = headerCookies(exchange);
+            Optional<String> oauthSessionId = Optional.ofNullable(cookies.get("oauthSessionId"));
+
             if (path.equals("/authorize")) {
-                OperationResponse response = oauth2.authorize(bodyOrQueryParams(exchange));
-                handleResponse(exchange, response);
+                handleResponse(exchange, oauth2.authorize(bodyOrQueryParams(exchange), oauthSessionId));
             } else if (path.equals("/login")) {
-                handleResponse(exchange, oauth2.login(bodyParams(exchange)));
+                handleResponse(exchange, oauth2.login(bodyParams(exchange), oauthSessionId.orElseThrow()));
             } else if (path.equals("/signup")) {
-                handleResponse(exchange, oauth2.signup(bodyParams(exchange)));
+                handleResponse(exchange, oauth2.signup(bodyParams(exchange), oauthSessionId.orElseThrow()));
             } else if (path.equals("/token") || path.equals("/oauth/token")) {
                 handleResponse(exchange, oauth2.token(bodyOrQueryParams(exchange)));
             } else {
-                System.out.println("" + exchange.getRequestMethod() + " " + exchange.getRequestURI().getPath());
-                exchange.sendResponseHeaders(400, -1);
+                exchange.sendResponseHeaders(404, -1);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -82,35 +86,42 @@ public class KnceptOauth2Server implements HttpHandler {
         }
     }
 
-    // handle a json resonse
-    private void handleResponse(HttpExchange exchange, JsonResponse response) throws IOException {
+    private void handleResponse(HttpExchange exchange, OperationResponse response) throws IOException {
+        if (response.isRenderedContentResponse()) handleResponse(exchange, response.asRenderedContentResponse());
+        else if (response.isContent()) handleResponse(exchange, response.asContent());
+        else if (response.isRedirect()) handleResponse(exchange, response.asRedirect());
+        else throw new IllegalStateException("Unknown response type");
+    }
+    private void handleResponse(HttpExchange exchange, RenderedContentResponse response) throws IOException {
         Headers responseHeaders = exchange.getResponseHeaders();
-        responseHeaders.add("Content-Type", "application/json");
+        response.oauthSessionId().ifPresent(oauthSessionId -> {
+            responseHeaders.add("Set-Cookie", "oauthSessionId=" + oauthSessionId + "; HttpOnly");
+        });
         response.additionalHeaders.forEach(responseHeaders::add);
-        exchange.sendResponseHeaders(response.resopnseCode, 0);
-        exchange.getResponseBody().write(response.json.getBytes());
+        exchange.sendResponseHeaders(response.responseCode(), 0);
+        exchange.getResponseBody().write(response.content().getBytes());
         exchange.getResponseBody().close();
     }
+    private void handleResponse(HttpExchange exchange, ContentResponse response) throws IOException {
+        handleResponse(exchange, oauth2.render(response));
+    }
+    private void handleResponse(HttpExchange exchange, RedirectResponse response) throws IOException {
+        exchange.getResponseHeaders().add("Location", response.redirectUri());
+        exchange.sendResponseHeaders(302, -1);
+    }
 
-    private void handleResponse(HttpExchange exchange, OperationResponse response) throws IOException {
-        int rCode = 200;
-        switch (response.type) {
-            case ERROR_HTML:
-                rCode = 500; //server error?
-            case OK_HTML:
-                exchange.getResponseHeaders().add("Content-Type", "text/html");
-                exchange.sendResponseHeaders(rCode, 0);
-                exchange.getResponseBody().write(response.responseDetail.getBytes());
-                exchange.getResponseBody().close();
-                return;
-            case REDIRECT:
-                exchange.getResponseHeaders().add("Location", response.responseDetail);
-                exchange.sendResponseHeaders(302, -1);
-                return;
+
+    private Map<String, String> headerCookies(HttpExchange exchange) {
+        Map<String, String> cookies = new HashMap<>();
+
+        List<String> cookieHeaders = exchange.getRequestHeaders().get("Cookie");
+        if (cookieHeaders != null) for(String cookieString: cookieHeaders) {
+            for(String cookie: cookieString.split(";")) {
+                String[] nvp = cookie.trim().split("=");
+                if (nvp.length == 2) cookies.put(nvp[0], nvp[1]); // hacky ignore malformed coookies
+            }
         }
-
-        throw new IllegalStateException("Unknown response type: " + response.type);
-
+        return cookies;
     }
 
     private Map<String, String> bodyOrQueryParams(HttpExchange exchange) throws IOException {

@@ -5,6 +5,8 @@ import com.kncept.oauth2.authrequest.repository.InMemoryAuthRequestRepository;
 import com.kncept.oauth2.client.repository.AnyClientRepository;
 import com.kncept.oauth2.client.repository.ClientRepository;
 import com.kncept.oauth2.html.HtmlPageVendor;
+import com.kncept.oauth2.session.repository.InMemoryOauthSessionRepository;
+import com.kncept.oauth2.session.repository.OauthSessionRepository;
 import com.kncept.oauth2.user.repository.InMemoryUserRepository;
 import com.kncept.oauth2.user.repository.UserRepository;
 
@@ -14,6 +16,7 @@ public class Oauth2Configuration {
     private ClientRepository clientRepository;
     private AuthRequestRepository authRequestRepository;
     private UserRepository userRepository;
+    private OauthSessionRepository oauthSessionRepository;
 
     // TODO: config-ify this
     private HtmlPageVendor htmlPageVendor = new HtmlPageVendor();
@@ -55,6 +58,18 @@ public class Oauth2Configuration {
         }
         return userRepository;
     }
+
+    public synchronized OauthSessionRepository oauthSessionRepository() {
+        if (oauthSessionRepository == null) {
+            oauthSessionRepository = loadClassFromSystemProperty("oauth2.session-repository", OauthSessionRepository.class);
+            if (oauthSessionRepository == null) {
+                oauthSessionRepository = new InMemoryOauthSessionRepository();
+            }
+        }
+        return oauthSessionRepository;
+    }
+
+
 
     public HtmlPageVendor htmlPageVendor() {
         return htmlPageVendor;
