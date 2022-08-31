@@ -32,16 +32,15 @@ public class InMemoryAuthRequestRepository implements AuthRequestRepository {
     }
 
     @Override
-    public AuthRequest lookupByOauthSessionId(String oauthSessionId) {
-        return activeRequests.get(oauthSessionId);
+    public Optional<AuthRequest> lookupByOauthSessionId(String oauthSessionId) {
+        return Optional.ofNullable(activeRequests.get(oauthSessionId));
     }
 
     @Override
-    public AuthRequest lookupByCode(String code) {
-        return activeRequests.values().stream()
+    public Optional<AuthRequest> lookupByCode(String code) {
+        return (Optional) activeRequests.values().stream()
                 .filter(r -> r.code().equals(code))
-                .findAny()
-                .orElse(null);
+                .findAny();
     }
 
     private static class SimpleAuthRequest implements AuthRequest {

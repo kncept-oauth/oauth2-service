@@ -7,7 +7,10 @@ import com.kncept.oauth2.client.Client;
 import com.kncept.oauth2.configuration.Oauth2Configuration;
 import com.kncept.oauth2.crypto.ExpiringKeyPair;
 import com.kncept.oauth2.crypto.KeyVendor;
-import com.kncept.oauth2.operation.response.*;
+import com.kncept.oauth2.operation.response.ContentResponse;
+import com.kncept.oauth2.operation.response.OperationResponse;
+import com.kncept.oauth2.operation.response.RedirectResponse;
+import com.kncept.oauth2.operation.response.RenderedContentResponse;
 import com.kncept.oauth2.session.OauthSession;
 import com.kncept.oauth2.user.User;
 import org.json.simple.JSONObject;
@@ -75,28 +78,27 @@ public class Oauth2 {
         }
 
         // TODO: Dynamic Code Generator
-        String code = UUID.randomUUID().toString();
 
         // join an existing auth session if possible //a4fe4ef5-3aa7-4917-a446-f541d82c6399
         if (oauthSessionId.isPresent() && config.oauthSessionRepository().lookupSession(oauthSessionId.get()).isPresent()) {
-            AuthRequest ar = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId.get());
-            if (ar == null) config.authRequestRepository().createAuthRequest(
+            Optional<AuthRequest> ar = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId.get());
+            if (!ar.isPresent()) config.authRequestRepository().createAuthRequest(
                     oauthSessionId.get(),
-                    code,
+                    UUID.randomUUID().toString(),
                     state,
                     nonce,
                     redirectUri,
                     clientId,
                     responseType
             );
-            return redirectAfterSuccessfulAuth(oauthSessionId.get(), null);
+            return redirectAfterSuccessfulAuth(oauthSessionId.get(), null, ar.get());
         }
 
         // create new session then
         OauthSession session = config.oauthSessionRepository().createSession();
         config.authRequestRepository().createAuthRequest(
                 session.oauthSessionId(),
-                code,
+                UUID.randomUUID().toString(),
                 state,
                 nonce,
                 redirectUri,
@@ -129,7 +131,15 @@ public class Oauth2 {
 
 //        https://openid.net/specs/openid-connect-core-1_0.html#AuthResponse
         if (endUser != null) {
-            return redirectAfterSuccessfulAuth(oauthSessionId, endUser);
+            Optional<AuthRequest> authRequest = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId);
+            if (authRequest.isEmpty()) {
+                return new ContentResponse(
+                        400,
+                        ContentResponse.ContentType.ERROR_PAGE,
+                        Optional.of(oauthSessionId))
+                        .withParam("error", "OIDC Auth Request Timed out");
+            }
+            return redirectAfterSuccessfulAuth(oauthSessionId, endUser, authRequest.get());
         } else {
             return new ContentResponse(
                     200,
@@ -158,7 +168,17 @@ public class Oauth2 {
         String password = params.get("password");
         String username = params.get("username");
         User endUser = config.userRepository().createUser(username, password);
-        if (endUser != null) return redirectAfterSuccessfulAuth(oauthSessionId, endUser);
+
+        Optional<AuthRequest> authRequest = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId);
+        if (authRequest.isEmpty()) {
+            return new ContentResponse(
+                    400,
+                    ContentResponse.ContentType.ERROR_PAGE,
+                    Optional.of(oauthSessionId))
+                    .withParam("error", "OIDC Auth Request Timed out");
+        }
+
+        if (endUser != null) return redirectAfterSuccessfulAuth(oauthSessionId, endUser, authRequest.get());
 
         return new ContentResponse(
                 200,
@@ -167,7 +187,7 @@ public class Oauth2 {
                 .withParam("message", "Signup failed");
     }
 
-    private OperationResponse redirectAfterSuccessfulAuth(String oauthSessionId, User endUser) throws IOException {
+    private OperationResponse redirectAfterSuccessfulAuth(String oauthSessionId, User endUser, AuthRequest authRequest) throws IOException {
         // redirect back to app.
         //
         // Potential option - use an interposing screen.
@@ -176,7 +196,7 @@ public class Oauth2 {
         // eg: these services have been authorized
         //   - app1
         //   - app2
-        AuthRequest authRequest = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId);
+//        Optional<AuthRequest> authRequest = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId);
         // handle expired?
 
         String redirectUri = authRequest.redirectUri();
@@ -206,14 +226,14 @@ public class Oauth2 {
             String code = required("code", params);
             //code_verifier ? // https://developer.okta.com/docs/reference/api/oidc/#request-parameters-4
 
-            AuthRequest authRequest = config.authRequestRepository().lookupByCode(code);
+            Optional<AuthRequest> authRequest = config.authRequestRepository().lookupByCode(code);
 
-            if (authRequest == null) {
+            if (authRequest.isEmpty()) {
                 JSONObject obj = new JSONObject();
-                obj.put("error", "No matching auth codes");
+                obj.put("error", "No matching auth codes"); // OR expired
                 return new RenderedContentResponse(400, obj.toJSONString(), oauthSessionId);
             }
-            String responseType = authRequest.responseType(); // code vs authorization code
+            String responseType = authRequest.map(AuthRequest::responseType).get(); // code vs authorization code
             // redirect_uri for 'authorization code' - same redirect URI as for the original auth request??
 
             // if the code matches, VEND a JWT token!!

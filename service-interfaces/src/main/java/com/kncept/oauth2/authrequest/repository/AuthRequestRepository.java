@@ -17,10 +17,8 @@ public interface AuthRequestRepository {
         String responseType
     );
 
-    // null if session not found
-    AuthRequest lookupByOauthSessionId(String oauthSessionId);
+    Optional<AuthRequest> lookupByOauthSessionId(String oauthSessionId);
 
-    // null if code not found
-    AuthRequest lookupByCode(String code);
+    Optional<AuthRequest> lookupByCode(String code);
 
 }
