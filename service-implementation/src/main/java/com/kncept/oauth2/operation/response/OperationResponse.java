@@ -4,7 +4,7 @@ package com.kncept.oauth2.operation.response;
 public class OperationResponse {
 
     public enum ResponseType {
-        OK_HTML, OK_JSON, ERROR_HTML, CLIENT_ERROR_JSON, REDIRECT
+        OK_HTML, ERROR_HTML, REDIRECT
     }
 
     public final ResponseType type;

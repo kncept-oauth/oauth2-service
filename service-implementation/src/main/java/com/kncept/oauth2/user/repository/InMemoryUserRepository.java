@@ -1,5 +1,8 @@
 package com.kncept.oauth2.user.repository;
 
+import com.kncept.oauth2.user.SimpleUser;
+import com.kncept.oauth2.user.User;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
@@ -14,7 +17,7 @@ public class InMemoryUserRepository implements UserRepository {
 
     private final String randomSalt = UUID.randomUUID().toString();
 
-    private final Map<String, String> userToPasswordHash = new HashMap<>();
+    private final Map<String, SimpleUser> users = new HashMap<>();
 
     public InMemoryUserRepository() {
         createUser("test", "test");
@@ -26,9 +29,11 @@ public class InMemoryUserRepository implements UserRepository {
     }
 
     @Override
-    public boolean verifyUser(String username, String password) {
-        String passwordHash = hash(username, password);
-        return passwordHash.equals(userToPasswordHash.getOrDefault(username, "_"));
+    public User lookupUser(String username, String password) {
+        String passhash = hash(username, password);
+        SimpleUser user = users.get(username);
+        if (user != null && user.getPasshash().equals(passhash)) return user;
+        return null;
     }
 
     @Override
@@ -36,8 +41,8 @@ public class InMemoryUserRepository implements UserRepository {
         if (password == null) return false;
         password = password.trim();
         if (password.length() < 3) return false;
-        if (userToPasswordHash.containsKey(username)) return false;
-        userToPasswordHash.put(username, hash(username, password));
+        if (users.containsKey(username)) return false;
+        users.put(username, new SimpleUser(username, hash(username, password)));
         return true;
     }
 

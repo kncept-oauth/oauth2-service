@@ -8,7 +8,9 @@ import com.kncept.oauth2.client.Client;
 import com.kncept.oauth2.configuration.Oauth2Configuration;
 import com.kncept.oauth2.crypto.ExpiringKeyPair;
 import com.kncept.oauth2.crypto.KeyVendor;
+import com.kncept.oauth2.operation.response.JsonResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
+import com.kncept.oauth2.user.User;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
@@ -106,10 +108,10 @@ public class Oauth2 {
         String password = params.get("password");
         String username = params.get("username");
 
-        boolean isAuthorized = config.userRepository().verifyUser(password, username);
+        User endUser = config.userRepository().lookupUser(username, password);
 
 //        https://openid.net/specs/openid-connect-core-1_0.html#AuthResponse
-        if (isAuthorized) {
+        if (endUser != null) {
             // redirect back to app.
             //
             // Potential option - use an interposing screen.
@@ -128,6 +130,8 @@ public class Oauth2 {
             }
 
             redirectUri = redirectUri + "code=" + URLEncoder.encode(authRequest.getCode(), "UTF8");
+            // ADD a CODE store
+//            code -> username (and sub)
 
             String state = authRequest.getState();
             if (state != null) redirectUri = redirectUri + "&state=" + URLEncoder.encode(state, "UTF8");
@@ -162,54 +166,56 @@ public class Oauth2 {
     }
 
     // https://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
-    public OperationResponse token(Map<String, String> params) {
+    public JsonResponse token(Map<String, String> params) {
+        try {
+            String grantType = required("grant_type", params);
+            // authorization_code
 
-        String grantType = required("grant_type", params);
-        // authorization_code
+            // requires 'grantType' was authorization_code ?
+            String code = required("code", params);
+            //code_verifier ? // https://developer.okta.com/docs/reference/api/oidc/#request-parameters-4
 
-        // requires 'grantType' was authorization_code ?
-        String code = required("code", params);
-        //code_verifier ? // https://developer.okta.com/docs/reference/api/oidc/#request-parameters-4
+            AuthRequest authRequest = config.authRequestRepository().lookupByCode(code);
 
-        AuthRequest authRequest = config.authRequestRepository().lookupByCode(code);
+            if (authRequest == null) {
+                JSONObject obj = new JSONObject();
+                obj.put("error", "No matching auth codes");
+                return new JsonResponse(400, obj.toJSONString());
+            }
+            String responseType = authRequest.getResponseType(); // code vs authorization code
+            // redirect_uri for 'authorization code' - same redirect URI as for the original auth request??
 
-        if (authRequest == null) {
+            // if the code matches, VEND a JWT token!!
+            // https://github.com/auth0/java-jwt
+
+            ExpiringKeyPair keys = keyVendor.getPair();
+            Algorithm algorithm = Algorithm.RSA256(
+                    (RSAPublicKey) keys.keyPair().getPublic(),
+                    (RSAPrivateKey) keys.keyPair().getPrivate());
+            String token = JWT.create()
+                    .withIssuer("kncept-oauth")
+                    .withSubject(code) // TODO: This should be a 'user id', from the (todo) code lookup
+                    .withIssuedAt(LocalDateTime.now().toInstant(ZoneOffset.UTC))
+                    .withExpiresAt(LocalDateTime.now().plusHours(18).toInstant(ZoneOffset.UTC))
+//                    .withClaim("nonce", authRequest.getnonce)
+                    .sign(algorithm);
+
+            JSONObject jwt = new JSONObject();
+            jwt.put("token_type", "Bearer");
+            jwt.put("id_token", token);
+            jwt.put("expires_in", 3600);
+            //        jwt.put("refresh_token", "xxxx")
+
+            // needs to be json
+            return new JsonResponse(200, jwt.toJSONString())
+                    .addHeader("Cache-Control", "no-store")
+                    .addHeader("Pragma", "no-cache");
+
+        } catch (RuntimeException e) {
             JSONObject obj = new JSONObject();
-            obj.put("error", "No matching auth codes");
-            return new OperationResponse(
-                    OperationResponse.ResponseType.CLIENT_ERROR_JSON,
-                    obj.toJSONString());
+            obj.put("error", e.getMessage());
+            return new JsonResponse(400, obj.toJSONString());
         }
-        String responseType = authRequest.getResponseType(); // code vs authorization code
-
-        // redirect_uri for 'authorization code' - same redirect URI as for the original auth request??
-
-        // if the code matches, VEND a JWT token!!
-        // https://github.com/auth0/java-jwt
-//        HS256 = Algorithm.HMAC256
-//        RS256 = Algorithm.RSA256
-
-        ExpiringKeyPair keys = keyVendor.getPair();
-        Algorithm algorithm = Algorithm.RSA256(
-                (RSAPublicKey)keys.keyPair().getPublic(),
-                (RSAPrivateKey)keys.keyPair().getPrivate());
-        String token = JWT.create()
-                .withIssuer("kncept-oauth")
-                .withIssuedAt(LocalDateTime.now().toInstant(ZoneOffset.UTC))
-                .sign(algorithm);
-
-        JSONObject jwt = new JSONObject();
-
-        jwt.put("token_type", "Bearer");
-        jwt.put("id_token", token);
-        jwt.put("expires_in", 3600);
-
-//        jwt.put("refresh_token", "xxxx")
-
-        // needs to be json
-        return new OperationResponse(
-                OperationResponse.ResponseType.OK_JSON,
-                jwt.toJSONString());
     }
 
     private String required(String name, Map<String, String> params) {

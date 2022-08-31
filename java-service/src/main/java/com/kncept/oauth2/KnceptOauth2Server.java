@@ -1,6 +1,8 @@
 package com.kncept.oauth2;
 
+import com.kncept.oauth2.operation.response.JsonResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -72,12 +74,22 @@ public class KnceptOauth2Server implements HttpHandler {
                 handleResponse(exchange, oauth2.token(bodyOrQueryParams(exchange)));
             } else {
                 System.out.println("" + exchange.getRequestMethod() + " " + exchange.getRequestURI().getPath());
-                exchange.sendResponseHeaders(200, -1);
+                exchange.sendResponseHeaders(400, -1);
             }
         } catch (Exception e) {
             e.printStackTrace();
             exchange.sendResponseHeaders(500, -1);
         }
+    }
+
+    // handle a json resonse
+    private void handleResponse(HttpExchange exchange, JsonResponse response) throws IOException {
+        Headers responseHeaders = exchange.getResponseHeaders();
+        responseHeaders.add("Content-Type", "application/json");
+        response.additionalHeaders.forEach(responseHeaders::add);
+        exchange.sendResponseHeaders(response.resopnseCode, 0);
+        exchange.getResponseBody().write(response.json.getBytes());
+        exchange.getResponseBody().close();
     }
 
     private void handleResponse(HttpExchange exchange, OperationResponse response) throws IOException {
@@ -91,16 +103,6 @@ public class KnceptOauth2Server implements HttpHandler {
                 exchange.getResponseBody().write(response.responseDetail.getBytes());
                 exchange.getResponseBody().close();
                 return;
-            case CLIENT_ERROR_JSON:
-                rCode = 400; // client error
-            case OK_JSON:
-                exchange.getResponseHeaders().add("Content-Type", "application/json");
-                exchange.getResponseHeaders().add("Cache-Control", "no-store");
-                exchange.getResponseHeaders().add("Pragma", "no-cache");
-
-                exchange.sendResponseHeaders(rCode, 0);
-                exchange.getResponseBody().write(response.responseDetail.getBytes());
-                exchange.getResponseBody().close();
             case REDIRECT:
                 exchange.getResponseHeaders().add("Location", response.responseDetail);
                 exchange.sendResponseHeaders(302, -1);
