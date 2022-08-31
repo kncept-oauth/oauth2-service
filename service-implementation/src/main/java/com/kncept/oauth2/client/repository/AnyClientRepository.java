@@ -2,11 +2,13 @@ package com.kncept.oauth2.client.repository;
 
 import com.kncept.oauth2.client.Client;
 
+import java.util.Optional;
+
 public class AnyClientRepository implements ClientRepository {
 
     @Override
-    public Client getClientById(String clientId) {
-        return new AnyClient(clientId);
+    public Optional<Client> getClientById(String clientId) {
+        return Optional.of(new AnyClient(clientId));
     }
 
     static class AnyClient implements Client {

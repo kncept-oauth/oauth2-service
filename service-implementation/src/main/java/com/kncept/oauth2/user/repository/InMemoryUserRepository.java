@@ -4,10 +4,7 @@ import com.kncept.oauth2.user.User;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * This class really really REALLY shouldn't be used in production.
@@ -27,22 +24,22 @@ public class InMemoryUserRepository implements UserRepository {
     }
 
     @Override
-    public User lookupUser(String username, String password) {
+    public Optional<User> attemptUserLogin(String username, String password) {
         String passhash = hash(username, password);
         SimpleUser user = users.get(username);
-        if (user != null && user.getPasshash().equals(passhash)) return user;
-        return null;
+        if (user != null && user.getPasshash().equals(passhash)) return Optional.of(user);
+        return Optional.empty();
     }
 
     @Override
-    public User createUser(String username, String password) {
-        if (password == null) return null;
+    public Optional<User> createUser(String username, String password) {
+        if (password == null) return Optional.empty();
         password = password.trim();
-        if (password.length() < 3) return null;
-        if (users.containsKey(username)) return null;
+        if (password.length() < 3) return Optional.empty();
+        if (users.containsKey(username)) return Optional.empty();
         SimpleUser user = new SimpleUser(username, hash(username, password));
         users.put(username, user);
-        return user;
+        return Optional.of(user);
     }
 
     // half of a hashing algorithm
@@ -65,15 +62,15 @@ public class InMemoryUserRepository implements UserRepository {
 
         private final String username;
         private String passhash;
-        private final String sub;
+        private final String userId;
 
         public SimpleUser(String username, String passhash) {
             this(username, passhash, UUID.randomUUID().toString());
         }
-        public SimpleUser(String username, String passhash, String sub) {
+        public SimpleUser(String username, String passhash, String userId) {
             this.username = username;
             this.passhash = passhash;
-            this.sub = sub;
+            this.userId = userId;
         }
 
         @Override
@@ -86,8 +83,8 @@ public class InMemoryUserRepository implements UserRepository {
         }
 
         @Override
-        public String sub() {
-            return sub;
+        public String userId() {
+            return userId;
         }
     }
 }

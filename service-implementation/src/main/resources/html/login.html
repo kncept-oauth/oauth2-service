@@ -1,14 +1,18 @@
 <html>
+<head>
+    <title>OIDC Login</title>
+    <link rel="stylesheet" href="${root}/style.css">
+</head>
 <body>
-<h1>OIDC Login</h1>
-<div>
-    <div>${message}</div>
-    <form action="${root}/login" method="post">
-    <div>username: <input name="username" type="text"></div>
-    <div>password: <input name="password" type="password"></div>
-    <div><input type="submit"></div>
-    <div>${signup}</div>
-    </form>
-</div>
+    <h1>OIDC Login</h1>
+    <div>
+        <div>${message}</div>
+        <form action="${root}/login" method="post">
+        <div>username: <input name="username" type="text"></div>
+        <div>password: <input name="password" type="password"></div>
+        <div><input type="submit"></div>
+        <div>${signup}</div>
+        </form>
+    </div>
 </body>
 </html>

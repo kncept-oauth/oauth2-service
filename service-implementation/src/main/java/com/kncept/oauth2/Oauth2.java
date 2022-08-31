@@ -68,8 +68,8 @@ public class Oauth2 {
             String code_verifier = optional("code_verifier", params, null);
         }
 
-        Client client = config.clientRepository().getClientById(clientId);
-        if (client == null) {
+        Optional<Client> client = config.clientRepository().getClientById(clientId);
+        if (client.isEmpty()) {
             return new ContentResponse(
                     400,
                     ContentResponse.ContentType.ERROR_PAGE,
@@ -127,10 +127,10 @@ public class Oauth2 {
         String password = params.get("password");
         String username = params.get("username");
 
-        User endUser = config.userRepository().lookupUser(username, password);
+        Optional<User> endUser = config.userRepository().attemptUserLogin(username, password);
 
 //        https://openid.net/specs/openid-connect-core-1_0.html#AuthResponse
-        if (endUser != null) {
+        if (endUser.isEmpty()) {
             Optional<AuthRequest> authRequest = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId);
             if (authRequest.isEmpty()) {
                 return new ContentResponse(
@@ -139,7 +139,7 @@ public class Oauth2 {
                         Optional.of(oauthSessionId))
                         .withParam("error", "OIDC Auth Request Timed out");
             }
-            return redirectAfterSuccessfulAuth(oauthSessionId, endUser, authRequest.get());
+            return redirectAfterSuccessfulAuth(oauthSessionId, endUser.get(), authRequest.get());
         } else {
             return new ContentResponse(
                     200,
@@ -167,7 +167,7 @@ public class Oauth2 {
         // attempt signup
         String password = params.get("password");
         String username = params.get("username");
-        User endUser = config.userRepository().createUser(username, password);
+        Optional<User> endUser = config.userRepository().createUser(username, password);
 
         Optional<AuthRequest> authRequest = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId);
         if (authRequest.isEmpty()) {
@@ -178,7 +178,7 @@ public class Oauth2 {
                     .withParam("error", "OIDC Auth Request Timed out");
         }
 
-        if (endUser != null) return redirectAfterSuccessfulAuth(oauthSessionId, endUser, authRequest.get());
+        if (endUser.isPresent()) return redirectAfterSuccessfulAuth(oauthSessionId, endUser.get(), authRequest.get());
 
         return new ContentResponse(
                 200,
@@ -269,12 +269,13 @@ public class Oauth2 {
         }
     }
 
-
-    public RenderedContentResponse render(ContentResponse response) {
-        return new RenderedContentResponse(response.responseCode(),content(response), response.oauthSessionId());
+    public RenderedContentResponse renderCss() {
+        return render(new ContentResponse(200, ContentResponse.ContentType.CSS, Optional.empty()));
     }
-
-    public String content(ContentResponse response) {
+    public RenderedContentResponse render(ContentResponse response) {
+        return new RenderedContentResponse(response.responseCode(),renderContentToString(response), response.oauthSessionId());
+    }
+    public String renderContentToString(ContentResponse response) {
         Map<String, String> params = response.params();
         switch(response.type()) {
             case ERROR_PAGE -> {

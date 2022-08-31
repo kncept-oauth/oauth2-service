@@ -75,6 +75,8 @@ public class KnceptOauth2Server implements HttpHandler {
                 handleResponse(exchange, oauth2.login(bodyParams(exchange), oauthSessionId.orElseThrow()));
             } else if (path.equals("/signup")) {
                 handleResponse(exchange, oauth2.signup(bodyParams(exchange), oauthSessionId.orElseThrow()));
+            } else if (path.equals("/style.css")) {
+                handleResponse(exchange, oauth2.renderCss());
             } else if (path.equals("/token") || path.equals("/oauth/token")) {
                 handleResponse(exchange, oauth2.token(bodyOrQueryParams(exchange)));
             } else {

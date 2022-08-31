@@ -1,14 +1,18 @@
 <html>
+<head>
+    <title>Create Account</title>
+    <link rel="stylesheet" href="${root}/style.css">
+</head>
 <body>
-<h1>Create Account</h1>
-<div>
-    <div>${message}</div>
-    <form action="${root}/signup" method="post">
-    <div>new username: <input name="username" type="text"></div>
-    <div>new password: <input name="password" type="password"></div>
-    <div><input type="submit"></div>
-    <div>${signup}</div>
-    </form>
-</div>
+    <h1>Create Account</h1>
+    <div>
+        <div>${message}</div>
+        <form action="${root}/signup" method="post">
+        <div>new username: <input name="username" type="text"></div>
+        <div>new password: <input name="password" type="password"></div>
+        <div><input type="submit"></div>
+        <div>${signup}</div>
+        </form>
+    </div>
 </body>
 </html>

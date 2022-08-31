@@ -10,12 +10,17 @@ public interface AuthRequestRepository {
     AuthRequest createAuthRequest(
         String oauthSessionId,
         String code, // authCode
+
+        // Optional<Sub>
+
         Optional<String> state,
         Optional<String> nonce,
         String redirectUri,
         String clientId,
         String responseType
     );
+
+//    Optional<AuthRequest> addSubByOauthSessionId(String oauthSessionId, String sub);
 
     Optional<AuthRequest> lookupByOauthSessionId(String oauthSessionId);
 
