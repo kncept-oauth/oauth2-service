@@ -41,6 +41,9 @@ public class Oauth2 {
     private Oauth2Configuration config = new Oauth2Configuration();
     private KeyVendor keyVendor = new KeyVendor();
 
+    public Oauth2(Oauth2Configuration config) {
+        if (config != null) this.config = config;
+    }
     public Oauth2() {
     }
 
@@ -112,34 +115,7 @@ public class Oauth2 {
 
 //        https://openid.net/specs/openid-connect-core-1_0.html#AuthResponse
         if (endUser != null) {
-            // redirect back to app.
-            //
-            // Potential option - use an interposing screen.
-            // Use case - ignoring redirect URI and using this service
-            // as an 'index' service
-            // eg: these services have been authorized
-            //   - app1
-            //   - app2
-            AuthRequest authRequest = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId);
-            // handle expired?
-
-            String redirectUri = authRequest.getRedirectUri();
-
-            if (!redirectUri.endsWith("?")) {
-                redirectUri = redirectUri + "?";
-            }
-
-            redirectUri = redirectUri + "code=" + URLEncoder.encode(authRequest.getCode(), "UTF8");
-            // ADD a CODE store
-//            code -> username (and sub)
-
-            String state = authRequest.getState();
-            if (state != null) redirectUri = redirectUri + "&state=" + URLEncoder.encode(state, "UTF8");
-
-            return new OperationResponse(
-                    OperationResponse.ResponseType.REDIRECT,
-                    redirectUri);
-
+            return redirectAfterSuccessfulAuth(oauthSessionId, endUser);
         } else {
             return new OperationResponse(
                     OperationResponse.ResponseType.OK_HTML,
@@ -151,18 +127,65 @@ public class Oauth2 {
         }
     }
 
-    public OperationResponse signup(Map<String, String> params) {
+    public OperationResponse signup(Map<String, String> params) throws IOException {
         if (!config.userRepository().isAcceptingSignup())
             return new OperationResponse(
                     OperationResponse.ResponseType.ERROR_HTML,
                     config.htmlPageVendor().errorPage(
                     "Signup is not currently enabled"
             ));
+
+        String oauthSessionId = params.get("oauthSessionId");
+
+        if (params.isEmpty() || !params.containsKey("password")) // just display signup page with no attempts at anything else
+            return new OperationResponse(OperationResponse.ResponseType.OK_HTML,
+                    config.htmlPageVendor().signupPage(
+                            oauthSessionId,
+                            null
+                    ));
+
+        // attempt signup
+        String password = params.get("password");
+        String username = params.get("username");
+        User endUser = config.userRepository().createUser(username, password);
+        if (endUser != null) return redirectAfterSuccessfulAuth(oauthSessionId, endUser);
+
         return new OperationResponse(
-                OperationResponse.ResponseType.ERROR_HTML,
-                config.htmlPageVendor().errorPage(
-                "Signup is not currently implemented"
+                OperationResponse.ResponseType.OK_HTML,
+                config.htmlPageVendor().signupPage(
+                oauthSessionId,
+                "Signup failed"
         ));
+    }
+
+    private OperationResponse redirectAfterSuccessfulAuth(String oauthSessionId, User endUser) throws IOException {
+        // redirect back to app.
+        //
+        // Potential option - use an interposing screen.
+        // Use case - ignoring redirect URI and using this service
+        // as an 'index' service
+        // eg: these services have been authorized
+        //   - app1
+        //   - app2
+        AuthRequest authRequest = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId);
+        // handle expired?
+
+        String redirectUri = authRequest.getRedirectUri();
+
+        if (!redirectUri.endsWith("?")) {
+            redirectUri = redirectUri + "?";
+        }
+
+        redirectUri = redirectUri + "code=" + URLEncoder.encode(authRequest.getCode(), "UTF8");
+        // ADD a CODE store
+//            code -> username (and sub)
+
+        String state = authRequest.getState();
+        if (state != null) redirectUri = redirectUri + "&state=" + URLEncoder.encode(state, "UTF8");
+
+        return new OperationResponse(
+                OperationResponse.ResponseType.REDIRECT,
+                redirectUri);
     }
 
     // https://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint

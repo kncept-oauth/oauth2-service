@@ -20,7 +20,6 @@ public class InMemoryUserRepository implements UserRepository {
     private final Map<String, SimpleUser> users = new HashMap<>();
 
     public InMemoryUserRepository() {
-        createUser("test", "test");
     }
 
     @Override
@@ -37,13 +36,14 @@ public class InMemoryUserRepository implements UserRepository {
     }
 
     @Override
-    public boolean createUser(String username, String password) {
-        if (password == null) return false;
+    public User createUser(String username, String password) {
+        if (password == null) return null;
         password = password.trim();
-        if (password.length() < 3) return false;
-        if (users.containsKey(username)) return false;
-        users.put(username, new SimpleUser(username, hash(username, password)));
-        return true;
+        if (password.length() < 3) return null;
+        if (users.containsKey(username)) return null;
+        SimpleUser user = new SimpleUser(username, hash(username, password));
+        users.put(username, user);
+        return user;
     }
 
     // half of a hashing algorithm

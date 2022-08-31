@@ -20,4 +20,13 @@ public class HtmlPageVendor {
         return inflater.inflate(inflater.loadHtmlPageResource("/html/login.html"), params);
     }
 
+    public String signupPage(String oauthSessionId, String message) {
+        Map<String, String> params = new HashMap<>();
+        params.put("oauthSessionId", oauthSessionId);
+        params.put("message", message);
+        return inflater.inflate(inflater.loadHtmlPageResource("/html/signup.html"), params);
+    }
+
+
+
 }

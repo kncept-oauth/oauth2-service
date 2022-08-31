@@ -8,4 +8,4 @@ public interface UserRepository {
 
     public User lookupUser(String username, String password);
 
-    public boolean createUser(String username, String password);}
+    public User createUser(String username, String password);}
