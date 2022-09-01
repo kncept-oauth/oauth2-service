@@ -32,7 +32,7 @@ jobs:
           cache: 'gradle'
 
       - name: Main Build
-        run: gradlew build check
+        run: ./gradlew build check
 
       - name: Build AWS Lambda Deployment
-        run: gradlew :aws-service:buildZip
+        run: ./gradlew :aws-service:buildZip :aws-service:jar

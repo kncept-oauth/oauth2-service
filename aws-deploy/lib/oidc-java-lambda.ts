@@ -11,7 +11,7 @@ import * as s3Deployment from 'aws-cdk-lib/aws-s3-deployment'
 import * as path from 'path'
 import { CfnOutput } from 'aws-cdk-lib'
 
-export class OidcLambda extends cdk.Stack {
+export class OidcJavaLambda extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
@@ -37,7 +37,7 @@ export class OidcLambda extends cdk.Stack {
 
     const handler = new lambda.Function(this, 'kncept-oidc-lambda', {
       runtime: lambda.Runtime.JAVA_11,
-      functionName: 'oidc-service',
+      functionName: 'oidc-java-service',
       code: lambda.Code.fromBucket(deployedAsset.deployedBucket, objKey),
       handler: 'com.kncept.oauth2.Handler',
       timeout: cdk.Duration.seconds(30),

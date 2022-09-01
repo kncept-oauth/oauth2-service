@@ -1,0 +1,46 @@
+containers:
+  java:
+#    image: eclipse-temurin:11-alpine
+    image: openjdk:17-alpine
+    volumes:
+      - local: .
+        container: /simple-oidc
+        options: cached
+      - local: .gradle-cache-java
+        container: /home/simple-oidc/.gradle
+        options: cached
+    working_directory: /simple-oidc
+    run_as_current_user:
+      enabled: true
+      home_directory: /home/simple-oidc
+  nodejs:
+    image: node:current-alpine3.16
+    volumes:
+      - local: .
+        container: /simple-oidc
+        options: cached
+    working_directory: /simple-oidc
+    run_as_current_user:
+      enabled: true
+      home_directory: /home/simple-oidc
+
+tasks:
+  clean:
+    description: Clean project
+    run:
+      container: java
+      command: ./gradlew clean
+  build:
+    description: gradle build
+    run:
+      container: java
+      command: ./gradlew build
+
+  buildAws:
+    description: Build java-11 zip file for aws
+    run:
+      container: java
+      command: ./gradlew :aws-service:buildZip :aws-service:jar
+
+
+

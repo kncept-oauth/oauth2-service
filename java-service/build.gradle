@@ -3,8 +3,6 @@ apply plugin: 'application'
 
 group = 'com.kncept.oauth2'
 version = '0.0.1'
-sourceCompatibility = 15
-targetCompatibility = 15
 mainClassName = 'com.kncept.oauth2.KnceptOauth2Server'
 
 defaultTasks 'run'

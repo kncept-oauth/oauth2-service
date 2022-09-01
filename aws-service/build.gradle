@@ -3,22 +3,28 @@ apply plugin: 'java'
 
 group = 'com.kncept.oauth2'
 version = '0.0.1'
-sourceCompatibility = 11
-targetCompatibility = 11
+
+
+//
+// Addressed by using a Java-11 docker image via batect
+//
+//java {
+//    toolchain {
+//        // because AWS CBF to update to an (over a) year old LTS release
+//        languageVersion = JavaLanguageVersion.of(11)
+//    }
+//}
 
 
 
-java {
-    toolchain {
-        // because AWS CBF to update to an (over a) year old LTS release
-        languageVersion = JavaLanguageVersion.of(11)
-    }
+defaultTasks 'jar'
+
+// workaround to include resources
+sourceSets.main {
+    resources.srcDirs += [
+            new File(rootDir, 'service-implementation/src/main/resources'),
+    ]
 }
-
-
-
-defaultTasks 'buildZip'
-
 
 task buildZip(type: Zip) {
     from compileJava
@@ -27,6 +33,17 @@ task buildZip(type: Zip) {
         from configurations.runtimeClasspath
     }
 }
+
+jar {
+    manifest {
+        // Class-Path: MyUtils.jar
+//        attributes 'Main-Class': "${mainClassName}"
+        attributes 'Implementation-Title': 'Kncept Oauth2 Service Lambda'
+    }
+    // archiveBaseName = "${rootProject.name}"
+    from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+}
+
 
 // use JUnit5 Platform for testing
 test {
@@ -46,6 +63,11 @@ dependencies {
 	// implementation 'software.amazon.awssdk:lambda'
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.1'
     implementation 'com.amazonaws:aws-lambda-java-events:3.11.0'
+
+    // project dependencies
+    implementation project(':service-implementation')
+    implementation project(':service-interfaces')
+    implementation project(':service-crypto')
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:' + junit5version
 	testImplementation 'org.junit.jupiter:junit-jupiter-engine:' + junit5version

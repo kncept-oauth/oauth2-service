@@ -16,7 +16,7 @@ public class SimpleHtmlInflaterTest {
 
     @Test
     public void canFindHtmlPageResources() {
-        inflater.loadHtmlPageResource("/html/login.html");
+        inflater.loadHtmlPageResource("/simple-response-content/login.html");
     }
 
     @Test

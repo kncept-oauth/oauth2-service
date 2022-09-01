@@ -116,7 +116,6 @@ public class KnceptOauth2Server implements HttpHandler {
 
     private Map<String, String> headerCookies(HttpExchange exchange) {
         Map<String, String> cookies = new HashMap<>();
-
         List<String> cookieHeaders = exchange.getRequestHeaders().get("Cookie");
         if (cookieHeaders != null) for(String cookieString: cookieHeaders) {
             for(String cookie: cookieString.split(";")) {

@@ -3,6 +3,8 @@ OAuth2 Service
 
 A lightweight extensible Oauth2 solution, designed to be able to tie into existing auth systems with minimal configuration. 
 
+Retrofitted for Java11 because AWS doesn't support modern things
+
 ## How to use
 
 There are a few different ways to use this project.
