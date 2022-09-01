@@ -17,7 +17,6 @@ public class Handler implements RequestHandler<APIGatewayV2HTTPEvent, APIGateway
     public APIGatewayV2HTTPResponse handleRequest(APIGatewayV2HTTPEvent input, Context context) {
         // LambdaLogger logger = context.getLogger();
 
-
         StringBuilder sb = new StringBuilder();
         System.getenv().forEach((key, value) -> sb.append("env " + key + outputValue(value)));
         System.getProperties().forEach((key, value) -> sb.append("prop " + key + outputValue(value)));
@@ -42,6 +41,9 @@ public class Handler implements RequestHandler<APIGatewayV2HTTPEvent, APIGateway
         sb.append("b64Encoded " + outputValue(input.getIsBase64Encoded()));
 
         sb.append("body " + outputValue(input.getBody()));
+
+        context.getLogger().log(sb.toString());
+        System.out.println("sysout:  " + context.toString());
 
         Map<String, String> headers = new TreeMap<>();
         headers.put("Content-Type", "text/plain");

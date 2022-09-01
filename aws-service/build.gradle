@@ -3,8 +3,19 @@ apply plugin: 'java'
 
 group = 'com.kncept.oauth2'
 version = '0.0.1'
-sourceCompatibility = 15
-targetCompatibility = 15
+sourceCompatibility = 11
+targetCompatibility = 11
+
+
+
+java {
+    toolchain {
+        // because AWS CBF to update to an (over a) year old LTS release
+        languageVersion = JavaLanguageVersion.of(11)
+    }
+}
+
+
 
 defaultTasks 'buildZip'
 

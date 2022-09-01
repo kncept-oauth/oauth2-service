@@ -29,7 +29,7 @@ import java.util.UUID;
 public class Oauth2 {
 
     enum ResponseType {
-            code, token;
+            code ; //, token;
             public static ResponseType fromString(String name) {
                 for(ResponseType type: values())
                     if (type.name().equals(name))

@@ -31,4 +31,13 @@ See [Oauth2Configuration](service-implementation/src/main/java/com/kncept/oauth2
 
 ## Deployment
 A default aws deployment is provided in the `aws-deploy` folder
-If someone wants to build me an equivalent azure one, please do
+
+You to use as-is, you will need to `set` or `export` your own deployment keys
+
+    - AWS_ACCESS_KEY_ID
+    - AWS_SECRET_ACCESS_KEY
+    - AWS_DEFAULT_REGION
+
+If someone wants to build me an equivalent azure one, please do :)
+
+
