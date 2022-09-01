@@ -20,6 +20,7 @@ public class InMemoryAuthRequestRepository implements AuthRequestRepository {
             String responseType
     ) {
         SimpleAuthRequest authRequest = new SimpleAuthRequest(
+                oauthSessionId,
                 code,
                 state,
                 nonce,
@@ -44,14 +45,16 @@ public class InMemoryAuthRequestRepository implements AuthRequestRepository {
     }
 
     private static class SimpleAuthRequest implements AuthRequest {
-        String code;
-        Optional<String> state;
-        Optional<String> nonce;
-        String redirectUri;
-        String clientId;
-        String responseType;
+        private final String oauthSessionId;
+        private final String code;
+        private final Optional<String> state;
+        private final Optional<String> nonce;
+        private final String redirectUri;
+        private final String clientId;
+        private final String responseType;
 
         public SimpleAuthRequest(
+                String oauthSessionId,
                 String code,
                 Optional<String> state,
                 Optional<String> nonce,
@@ -59,6 +62,7 @@ public class InMemoryAuthRequestRepository implements AuthRequestRepository {
                 String clientId,
                 String responseType
         ) {
+            this.oauthSessionId = oauthSessionId;
             this.code = code;
             this.state = state;
             this.nonce = nonce;
@@ -90,6 +94,11 @@ public class InMemoryAuthRequestRepository implements AuthRequestRepository {
         @Override
         public String code() {
             return code;
+        }
+
+        @Override
+        public String oauthSessionId() {
+            return oauthSessionId;
         }
 
         @Override

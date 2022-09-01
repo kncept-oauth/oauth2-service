@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class RenderedContentResponse implements OperationResponse {
-    public final Map<String, String> additionalHeaders = new HashMap<>();
+    private final Map<String, String> headers = new HashMap<>();
     private final int responseCode;
     private final String content;
     private final Optional<String> oauthSessionId;
@@ -13,11 +13,20 @@ public class RenderedContentResponse implements OperationResponse {
     public RenderedContentResponse(
         int responseCode,
         String content,
+        String contentType,
         Optional<String> oauthSessionId
     ) {
         this.responseCode = responseCode;
         this.content = content;
         this.oauthSessionId = oauthSessionId;
+        headers.put("Content-Type", contentType);
+    }
+
+    public RenderedContentResponse(ContentResponse source, String content) {
+        this.responseCode = source.responseCode();
+        this.content = content;
+        this.oauthSessionId = source.oauthSessionId();
+        this.headers.putAll(source.headers());
     }
 
     @Override
@@ -26,12 +35,16 @@ public class RenderedContentResponse implements OperationResponse {
     }
 
     public RenderedContentResponse addHeader(String key, String value) {
-        additionalHeaders.put(key, value);
+        headers.put(key, value);
         return this;
     }
 
     public String content() {
         return content;
+    }
+
+    public Map<String, String> headers() {
+        return headers;
     }
 
     public Optional<String> oauthSessionId() {

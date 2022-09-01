@@ -1,7 +1,12 @@
 package com.kncept.oauth2.session;
 
+import java.util.Optional;
+
 public interface OauthSession {
 
-    public String oauthSessionId();
+    String oauthSessionId();
+
+    boolean authenticated();
+    Optional<String> userId();
 
 }

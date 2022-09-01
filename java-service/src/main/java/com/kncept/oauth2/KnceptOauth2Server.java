@@ -1,9 +1,10 @@
 package com.kncept.oauth2;
 
+import com.kncept.oauth2.configuration.InMemoryConfiguration;
 import com.kncept.oauth2.operation.response.ContentResponse;
-import com.kncept.oauth2.operation.response.RenderedContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
 import com.kncept.oauth2.operation.response.RedirectResponse;
+import com.kncept.oauth2.operation.response.RenderedContentResponse;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -57,8 +58,8 @@ public class KnceptOauth2Server implements HttpHandler {
 
     private Oauth2 oauth2;
 
-    public KnceptOauth2Server() throws IOException {
-        oauth2 = new Oauth2();
+    public KnceptOauth2Server() {
+        oauth2 = new Oauth2(new InMemoryConfiguration());
     }
 
     @Override
@@ -99,7 +100,7 @@ public class KnceptOauth2Server implements HttpHandler {
         response.oauthSessionId().ifPresent(oauthSessionId -> {
             responseHeaders.add("Set-Cookie", "oauthSessionId=" + oauthSessionId + "; HttpOnly");
         });
-        response.additionalHeaders.forEach(responseHeaders::add);
+        response.headers().forEach(responseHeaders::add);
         exchange.sendResponseHeaders(response.responseCode(), 0);
         exchange.getResponseBody().write(response.content().getBytes());
         exchange.getResponseBody().close();

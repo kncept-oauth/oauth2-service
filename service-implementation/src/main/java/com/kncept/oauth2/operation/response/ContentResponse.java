@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class ContentResponse implements OperationResponse {
-    public enum ContentType {
+    public enum Content {
         LOGIN_PAGE,
         SIGNUP_PAGE,
         ERROR_PAGE,
@@ -13,15 +13,20 @@ public class ContentResponse implements OperationResponse {
     }
 
     private final int responseCode;
-    private final ContentType type;
+    private final Content content;
     private final Optional<String> oauthSessionId;
     private final Map<String, String> params;
+    private final Map<String, String> headers;
 
-    public ContentResponse(int responseCode, ContentType type, Optional<String> oauthSessionId) {
+    // HEADERS
+
+    public ContentResponse(int responseCode, String contentType, Content content, Optional<String> oauthSessionId) {
         this.responseCode = responseCode;
-        this.type = type;
+        this.content = content;
         this.oauthSessionId = oauthSessionId;
         params = new HashMap<>();
+        headers = new HashMap<>();
+        headers.put("Content-Type", contentType);
     }
 
     public ContentResponse withParam(String key, String value) {
@@ -34,8 +39,12 @@ public class ContentResponse implements OperationResponse {
         return responseCode;
     }
 
-    public ContentType type() {
-        return type;
+    public Content content() {
+        return content;
+    }
+
+    public Map<String, String> headers() {
+        return headers;
     }
 
     public Optional<String> oauthSessionId() {

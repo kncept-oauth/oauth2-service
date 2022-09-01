@@ -4,9 +4,10 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.kncept.oauth2.authrequest.AuthRequest;
 import com.kncept.oauth2.client.Client;
-import com.kncept.oauth2.configuration.Oauth2Configuration;
+import com.kncept.oauth2.config.Oauth2Configuration;
 import com.kncept.oauth2.crypto.ExpiringKeyPair;
 import com.kncept.oauth2.crypto.KeyVendor;
+import com.kncept.oauth2.html.HtmlPageVendor;
 import com.kncept.oauth2.operation.response.ContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
 import com.kncept.oauth2.operation.response.RedirectResponse;
@@ -41,13 +42,12 @@ public class Oauth2 {
             }
     }
 
-    private Oauth2Configuration config = new Oauth2Configuration();
+    private final Oauth2Configuration config;
     private KeyVendor keyVendor = new KeyVendor();
+    private HtmlPageVendor htmlPageVendor = new HtmlPageVendor();
 
     public Oauth2(Oauth2Configuration config) {
-        if (config != null) this.config = config;
-    }
-    public Oauth2() {
+        this.config = config;
     }
 
     // https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
@@ -72,26 +72,30 @@ public class Oauth2 {
         if (client.isEmpty()) {
             return new ContentResponse(
                     400,
-                    ContentResponse.ContentType.ERROR_PAGE,
+                    "text/html",
+                    ContentResponse.Content.ERROR_PAGE,
                     oauthSessionId)
                     .withParam("error", "Unknown Client ID: " + clientId);
         }
 
         // TODO: Dynamic Code Generator
 
-        // join an existing auth session if possible //a4fe4ef5-3aa7-4917-a446-f541d82c6399
-        if (oauthSessionId.isPresent() && config.oauthSessionRepository().lookupSession(oauthSessionId.get()).isPresent()) {
-            Optional<AuthRequest> ar = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId.get());
-            if (!ar.isPresent()) config.authRequestRepository().createAuthRequest(
-                    oauthSessionId.get(),
-                    UUID.randomUUID().toString(),
-                    state,
-                    nonce,
-                    redirectUri,
-                    clientId,
-                    responseType
-            );
-            return redirectAfterSuccessfulAuth(oauthSessionId.get(), null, ar.get());
+        // join an existing auth session if possible
+        if (oauthSessionId.isPresent()) {
+            Optional<OauthSession> session = config.oauthSessionRepository().lookupSession(oauthSessionId.get());
+            if (session.isPresent() && session.get().authenticated()) {
+                Optional<AuthRequest> ar = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId.get());
+                if (!ar.isPresent()) config.authRequestRepository().createAuthRequest(
+                        oauthSessionId.get(),
+                        UUID.randomUUID().toString(),
+                        state,
+                        nonce,
+                        redirectUri,
+                        clientId,
+                        responseType
+                );
+                return redirectAfterSuccessfulAuth(oauthSessionId.get(), ar.get());
+            }
         }
 
         // create new session then
@@ -108,17 +112,21 @@ public class Oauth2 {
 
         return new ContentResponse(
                 200,
-                ContentResponse.ContentType.LOGIN_PAGE,
+                "text/html",
+                ContentResponse.Content.LOGIN_PAGE,
                 Optional.of(session.oauthSessionId()))
                 .withParam("acceptingSignup", Boolean.toString(config.userRepository().isAcceptingSignup()));
     }
 
     public OperationResponse login(Map<String, String> params, String oauthSessionId) throws IOException {
         if (oauthSessionId == null) throw new NullPointerException("Must have a session ID");
+        Optional<OauthSession> session = config.oauthSessionRepository().lookupSession(oauthSessionId);
+
         if (params.isEmpty() || !params.containsKey("password")) // just display login page with no attempts at anything else
             return new ContentResponse(
                     200,
-                    ContentResponse.ContentType.LOGIN_PAGE,
+                    "text/html",
+                    ContentResponse.Content.LOGIN_PAGE,
                     Optional.of(oauthSessionId))
                     .withParam("acceptingSignup", Boolean.toString(config.userRepository().isAcceptingSignup()));
 
@@ -130,20 +138,24 @@ public class Oauth2 {
         Optional<User> endUser = config.userRepository().attemptUserLogin(username, password);
 
 //        https://openid.net/specs/openid-connect-core-1_0.html#AuthResponse
-        if (endUser.isEmpty()) {
+        if (endUser.isPresent()) {
+            session = config.oauthSessionRepository().authenticateSession(oauthSessionId, endUser.get().userId());
+
             Optional<AuthRequest> authRequest = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId);
             if (authRequest.isEmpty()) {
                 return new ContentResponse(
                         400,
-                        ContentResponse.ContentType.ERROR_PAGE,
+                        "text/html",
+                        ContentResponse.Content.ERROR_PAGE,
                         Optional.of(oauthSessionId))
                         .withParam("error", "OIDC Auth Request Timed out");
             }
-            return redirectAfterSuccessfulAuth(oauthSessionId, endUser.get(), authRequest.get());
+            return redirectAfterSuccessfulAuth(oauthSessionId, authRequest.get());
         } else {
             return new ContentResponse(
                     200,
-                    ContentResponse.ContentType.LOGIN_PAGE,
+                    "text/html",
+                    ContentResponse.Content.LOGIN_PAGE,
                     Optional.of(oauthSessionId))
                     .withParam("acceptingSignup", Boolean.toString(config.userRepository().isAcceptingSignup()))
                     .withParam("message", "Authorization Failed - Please try again");
@@ -154,14 +166,16 @@ public class Oauth2 {
         if (!config.userRepository().isAcceptingSignup())
             return new ContentResponse(
                     400,
-                    ContentResponse.ContentType.ERROR_PAGE,
+                    "text/html",
+                    ContentResponse.Content.ERROR_PAGE,
                     Optional.of(oauthSessionId))
                     .withParam("error", "Signup is not currently enabled");
 
         if (params.isEmpty() || !params.containsKey("password")) // just display signup page with no attempts at anything else
             return new ContentResponse(
                     200,
-                    ContentResponse.ContentType.SIGNUP_PAGE,
+                    "text/html",
+                    ContentResponse.Content.SIGNUP_PAGE,
                     Optional.of(oauthSessionId));
 
         // attempt signup
@@ -173,21 +187,26 @@ public class Oauth2 {
         if (authRequest.isEmpty()) {
             return new ContentResponse(
                     400,
-                    ContentResponse.ContentType.ERROR_PAGE,
+                    "text/html",
+                    ContentResponse.Content.ERROR_PAGE,
                     Optional.of(oauthSessionId))
                     .withParam("error", "OIDC Auth Request Timed out");
         }
 
-        if (endUser.isPresent()) return redirectAfterSuccessfulAuth(oauthSessionId, endUser.get(), authRequest.get());
+        if (endUser.isPresent()) {
+            config.oauthSessionRepository().authenticateSession(oauthSessionId, endUser.get().userId());
+            return redirectAfterSuccessfulAuth(oauthSessionId, authRequest.get());
+        }
 
         return new ContentResponse(
                 200,
-                ContentResponse.ContentType.SIGNUP_PAGE,
+                "text/html",
+                ContentResponse.Content.SIGNUP_PAGE,
                 Optional.of(oauthSessionId))
                 .withParam("message", "Signup failed");
     }
 
-    private OperationResponse redirectAfterSuccessfulAuth(String oauthSessionId, User endUser, AuthRequest authRequest) throws IOException {
+    private OperationResponse redirectAfterSuccessfulAuth(String oauthSessionId, AuthRequest authRequest) throws IOException {
         // redirect back to app.
         //
         // Potential option - use an interposing screen.
@@ -196,8 +215,6 @@ public class Oauth2 {
         // eg: these services have been authorized
         //   - app1
         //   - app2
-//        Optional<AuthRequest> authRequest = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId);
-        // handle expired?
 
         String redirectUri = authRequest.redirectUri();
 
@@ -206,8 +223,6 @@ public class Oauth2 {
         }
 
         redirectUri = redirectUri + "code=" + URLEncoder.encode(authRequest.code(), "UTF8");
-        // ADD a CODE store
-//            code -> username (and sub)
 
         Optional<String> state = authRequest.state();
         if (state.isPresent()) redirectUri = redirectUri + "&state=" + URLEncoder.encode(state.get(), "UTF8");
@@ -227,12 +242,18 @@ public class Oauth2 {
             //code_verifier ? // https://developer.okta.com/docs/reference/api/oidc/#request-parameters-4
 
             Optional<AuthRequest> authRequest = config.authRequestRepository().lookupByCode(code);
-
             if (authRequest.isEmpty()) {
                 JSONObject obj = new JSONObject();
                 obj.put("error", "No matching auth codes"); // OR expired
-                return new RenderedContentResponse(400, obj.toJSONString(), oauthSessionId);
+                return new RenderedContentResponse(400, obj.toJSONString(), "application/json", oauthSessionId);
             }
+            Optional<OauthSession> session = config.oauthSessionRepository().lookupSession(authRequest.get().oauthSessionId());
+            if (session.isEmpty()) {
+                JSONObject obj = new JSONObject();
+                obj.put("error", "Session has expired"); // OR expired
+                return new RenderedContentResponse(400, obj.toJSONString(), "application/json", oauthSessionId);
+            }
+
             String responseType = authRequest.map(AuthRequest::responseType).get(); // code vs authorization code
             // redirect_uri for 'authorization code' - same redirect URI as for the original auth request??
 
@@ -245,7 +266,7 @@ public class Oauth2 {
                     (RSAPrivateKey) keys.keyPair().getPrivate());
             String token = JWT.create()
                     .withIssuer("kncept-oauth")
-                    .withSubject(code) // TODO: This should be a 'user id', from the (todo) code lookup
+                    .withSubject(session.get().userId().get())
                     .withIssuedAt(LocalDateTime.now().toInstant(ZoneOffset.UTC))
                     .withExpiresAt(LocalDateTime.now().plusHours(18).toInstant(ZoneOffset.UTC))
 //                    .withClaim("nonce", authRequest.getnonce)
@@ -258,48 +279,46 @@ public class Oauth2 {
             //        jwt.put("refresh_token", "xxxx")
 
             // needs to be json
-            return new RenderedContentResponse(200, jwt.toJSONString(), oauthSessionId)
+            return new RenderedContentResponse(200, jwt.toJSONString(), "application/json", oauthSessionId)
                     .addHeader("Cache-Control", "no-store")
                     .addHeader("Pragma", "no-cache");
 
         } catch (RuntimeException e) {
             JSONObject obj = new JSONObject();
             obj.put("error", e.getMessage());
-            return new RenderedContentResponse(400, obj.toJSONString(), oauthSessionId);
+            return new RenderedContentResponse(400, obj.toJSONString(), "application/json", oauthSessionId);
         }
     }
 
     public RenderedContentResponse renderCss() {
-        return render(new ContentResponse(200, ContentResponse.ContentType.CSS, Optional.empty()));
+        return render(new ContentResponse(200, "text/css", ContentResponse.Content.CSS, Optional.empty()));
     }
     public RenderedContentResponse render(ContentResponse response) {
-        return new RenderedContentResponse(response.responseCode(),renderContentToString(response), response.oauthSessionId());
+        return new RenderedContentResponse(response ,renderContentToString(response));
     }
     public String renderContentToString(ContentResponse response) {
         Map<String, String> params = response.params();
-        switch(response.type()) {
+        switch(response.content()) {
             case ERROR_PAGE -> {
-                return config.htmlPageVendor().errorPage(
+                return htmlPageVendor.errorPage(
                         required("error", params)
                 );
             }
             case LOGIN_PAGE -> {
-                return config.htmlPageVendor().loginPage(
+                return htmlPageVendor.loginPage(
                         optional("message", params),
                         Boolean.parseBoolean(optional("acceptingSignup", params).orElse(null))
                 );
             }
             case SIGNUP_PAGE -> {
-                return config.htmlPageVendor().signupPage(optional("message", params));
+                return htmlPageVendor.signupPage(optional("message", params));
             }
             case CSS -> {
-                return config.htmlPageVendor().css();
+                return htmlPageVendor.css();
             }
         }
-        throw new IllegalStateException("Unkonwn response type: " + response.type());
+        throw new IllegalStateException("Unknown response content: " + response.content());
     }
-
-
 
     private String required(String name, Map<String, String> params) {
         String value = params.get(name);
@@ -308,7 +327,6 @@ public class Oauth2 {
         if (value.equals("")) throw new RuntimeException("Required Param is empty: " + name);
         return value;
     }
-
     private String optional(String name, Map<String, String> params, String defaultValue) {
         String value = params.get(name);
         if (value == null) return defaultValue;
@@ -316,8 +334,6 @@ public class Oauth2 {
         if (value.equals("")) return defaultValue;
         return value;
     }
-
-    // trims null and empty to empty
     private Optional<String> optional(String name, Map<String, String> params) {
         String value = params.get(name);
         if (value == null) return Optional.empty();
@@ -325,8 +341,5 @@ public class Oauth2 {
         if (value.equals("")) return Optional.empty();
         return Optional.of(value);
     }
-
-
-
 
 }
