@@ -20,7 +20,7 @@ public class HtmlPageVendor {
     public String loginPage(Optional<String> message, boolean includeSignup) {
         Map<String, String> params = defaultParams();
         params.put("message", message.orElse(null));
-        if (includeSignup) params.put("signup", "<a href=\"/signup\">Signup</a>");
+        if (includeSignup) params.put("signup", "<a href=\"signup\">Signup</a>");
         return inflater.inflate(inflater.loadHtmlPageResource("/simple-response-content/login.html"), params);
     }
 
