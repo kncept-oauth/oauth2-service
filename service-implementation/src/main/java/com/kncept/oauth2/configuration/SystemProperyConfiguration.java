@@ -1,5 +1,6 @@
 package com.kncept.oauth2.configuration;
 
+import com.kncept.oauth2.authcode.repository.AuthcodeRepository;
 import com.kncept.oauth2.authrequest.repository.AuthRequestRepository;
 import com.kncept.oauth2.client.repository.ClientRepository;
 import com.kncept.oauth2.config.Oauth2Configuration;
@@ -13,6 +14,7 @@ public class SystemProperyConfiguration implements Oauth2Configuration {
     private AuthRequestRepository authRequestRepository;
     private UserRepository userRepository;
     private OauthSessionRepository oauthSessionRepository;
+    private AuthcodeRepository authcodeRepository;
 
     @Override
     public synchronized boolean requirePkce() {
@@ -55,6 +57,13 @@ public class SystemProperyConfiguration implements Oauth2Configuration {
         return oauthSessionRepository;
     }
 
+    @Override
+    public AuthcodeRepository authcodeRepository() {
+        if (authcodeRepository == null) {
+            authcodeRepository = loadClassFromSystemProperty("oauth2.authcode-repository", AuthcodeRepository.class);
+        }
+        return authcodeRepository;
+    }
 
     private static String getSystemProperty(String name) {
         String value = System.getProperty(name);

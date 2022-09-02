@@ -1,5 +1,6 @@
 package com.kncept.oauth2.config;
 
+import com.kncept.oauth2.authcode.repository.AuthcodeRepository;
 import com.kncept.oauth2.authrequest.repository.AuthRequestRepository;
 import com.kncept.oauth2.client.repository.ClientRepository;
 import com.kncept.oauth2.session.repository.OauthSessionRepository;
@@ -9,6 +10,7 @@ public interface Oauth2Configuration {
         boolean requirePkce();
         ClientRepository clientRepository();
         AuthRequestRepository authRequestRepository();
+        AuthcodeRepository authcodeRepository();
         UserRepository userRepository();
         OauthSessionRepository oauthSessionRepository();
 }

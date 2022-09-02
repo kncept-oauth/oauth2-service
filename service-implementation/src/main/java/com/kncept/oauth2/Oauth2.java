@@ -2,6 +2,7 @@ package com.kncept.oauth2;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.kncept.oauth2.authcode.Authcode;
 import com.kncept.oauth2.authrequest.AuthRequest;
 import com.kncept.oauth2.client.Client;
 import com.kncept.oauth2.config.Oauth2Configuration;
@@ -86,7 +87,6 @@ public class Oauth2 {
                 Optional<AuthRequest> ar = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId.get());
                 if (!ar.isPresent()) config.authRequestRepository().createAuthRequest(
                         oauthSessionId.get(),
-                        UUID.randomUUID().toString(),
                         state,
                         nonce,
                         redirectUri,
@@ -101,7 +101,6 @@ public class Oauth2 {
         OauthSession session = config.oauthSessionRepository().createSession();
         config.authRequestRepository().createAuthRequest(
                 session.oauthSessionId(),
-                UUID.randomUUID().toString(),
                 state,
                 nonce,
                 redirectUri,
@@ -213,7 +212,8 @@ public class Oauth2 {
             redirectUri = redirectUri + "?";
         }
 
-        redirectUri = redirectUri + "code=" + URLEncoder.encode(authRequest.code(), "UTF8");
+        Authcode authCode = config.authcodeRepository().create(UUID.randomUUID().toString(), oauthSessionId);
+        redirectUri = redirectUri + "code=" + URLEncoder.encode(authCode.authCode(), "UTF8");
 
         Optional<String> state = authRequest.state();
         if (state.isPresent()) redirectUri = redirectUri + "&state=" + URLEncoder.encode(state.get(), "UTF8");
@@ -232,20 +232,21 @@ public class Oauth2 {
             String code = required("code", params);
             //code_verifier ? // https://developer.okta.com/docs/reference/api/oidc/#request-parameters-4
 
-            Optional<AuthRequest> authRequest = config.authRequestRepository().lookupByCode(code);
-            if (authRequest.isEmpty()) {
+            Optional<Authcode> authCode = config.authcodeRepository().lookup(code);
+            if (authCode.isEmpty()) {
                 JSONObject obj = new JSONObject();
                 obj.put("error", "No matching auth codes"); // OR expired
                 return new RenderedContentResponse(400, obj.toJSONString(), "application/json", oauthSessionId, false);
             }
-            Optional<OauthSession> session = config.oauthSessionRepository().lookupSession(authRequest.get().oauthSessionId());
+            Optional<OauthSession> session = config.oauthSessionRepository().lookupSession(authCode.get().oauthSessionId());
             if (session.isEmpty()) {
                 JSONObject obj = new JSONObject();
                 obj.put("error", "Session has expired"); // OR expired
                 return new RenderedContentResponse(400, obj.toJSONString(), "application/json", oauthSessionId, false);
             }
 
-            String responseType = authRequest.map(AuthRequest::responseType).get(); // code vs authorization code
+//            Optional<AuthRequest> authRequest = config.authRequestRepository().lookupByOauthSessionId(authCode.get().oauthSessionId());
+//            String responseType = authRequest.map(AuthRequest::responseType).get(); // code vs authorization code
             // redirect_uri for 'authorization code' - same redirect URI as for the original auth request??
 
             // if the code matches, VEND a JWT token!!
