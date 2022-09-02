@@ -1,4 +1,4 @@
-package com.kncept.oauth2.authrequest;
+package com.kncept.oauth2.config.authrequest;
 
 import java.util.Map;
 import java.util.Optional;
@@ -29,7 +29,7 @@ public class InMemoryAuthRequestRepository implements AuthRequestRepository {
     }
 
     @Override
-    public Optional<AuthRequest> lookupByOauthSessionId(String oauthSessionId) {
+    public Optional<AuthRequest> lookup(String oauthSessionId) {
         return Optional.ofNullable(activeRequests.get(oauthSessionId));
     }
 

@@ -1,4 +1,4 @@
-package com.kncept.oauth2.authcode;
+package com.kncept.oauth2.config.authcode;
 
 import java.util.HashMap;
 import java.util.Map;

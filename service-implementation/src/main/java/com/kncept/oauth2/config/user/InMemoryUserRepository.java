@@ -1,4 +1,4 @@
-package com.kncept.oauth2.user;
+package com.kncept.oauth2.config.user;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -17,12 +17,12 @@ public class InMemoryUserRepository implements UserRepository {
     }
 
     @Override
-    public boolean isAcceptingSignup() {
+    public boolean acceptingSignup() {
         return true;
     }
 
     @Override
-    public Optional<User> attemptUserLogin(String username, String password) {
+    public Optional<User> login(String username, String password) {
         String passhash = hash(username, password);
         SimpleUser user = users.get(username);
         if (user != null && user.getPasshash().equals(passhash)) return Optional.of(user);
@@ -30,7 +30,7 @@ public class InMemoryUserRepository implements UserRepository {
     }
 
     @Override
-    public Optional<User> createUser(String username, String password) {
+    public Optional<User> create(String username, String password) {
         if (password == null) return Optional.empty();
         password = password.trim();
         if (password.length() < 3) return Optional.empty();

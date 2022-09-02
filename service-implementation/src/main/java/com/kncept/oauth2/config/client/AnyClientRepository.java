@@ -1,11 +1,11 @@
-package com.kncept.oauth2.client;
+package com.kncept.oauth2.config.client;
 
 import java.util.Optional;
 
 public class AnyClientRepository implements ClientRepository {
 
     @Override
-    public Optional<Client> getClientById(String clientId) {
+    public Optional<Client> lookup(String clientId) {
         return Optional.of(new AnyClient(clientId));
     }
 

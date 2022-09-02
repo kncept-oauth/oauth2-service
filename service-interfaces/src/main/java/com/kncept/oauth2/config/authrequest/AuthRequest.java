@@ -1,4 +1,4 @@
-package com.kncept.oauth2.authrequest;
+package com.kncept.oauth2.config.authrequest;
 
 import java.util.Optional;
 

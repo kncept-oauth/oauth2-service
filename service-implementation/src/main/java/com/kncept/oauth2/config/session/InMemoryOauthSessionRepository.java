@@ -1,4 +1,4 @@
-package com.kncept.oauth2.session;
+package com.kncept.oauth2.config.session;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,7 +10,7 @@ public class InMemoryOauthSessionRepository implements OauthSessionRepository {
     Map<String, SimpleOauthSession> sessions = new HashMap<>();
 
     @Override
-    public Optional<OauthSession> lookupSession(String oauthSessionId) {
+    public Optional<OauthSession> lookup(String oauthSessionId) {
         return Optional.ofNullable(sessions.get(oauthSessionId));
     }
 
@@ -22,7 +22,7 @@ public class InMemoryOauthSessionRepository implements OauthSessionRepository {
     }
 
     @Override
-    public Optional<OauthSession> authenticateSession(String oauthSessionId, String userId) {
+    public Optional<OauthSession> authenticate(String oauthSessionId, String userId) {
         SimpleOauthSession session = new SimpleOauthSession(oauthSessionId, Optional.of(userId));
         sessions.put(session.oauthSessionId(), session);
         return Optional.of(session);

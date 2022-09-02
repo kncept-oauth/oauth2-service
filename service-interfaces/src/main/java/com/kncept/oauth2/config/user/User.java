@@ -1,4 +1,4 @@
-package com.kncept.oauth2.user;
+package com.kncept.oauth2.config.user;
 
 public interface User {
     String username();

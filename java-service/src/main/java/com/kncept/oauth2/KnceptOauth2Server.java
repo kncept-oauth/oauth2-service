@@ -1,6 +1,6 @@
 package com.kncept.oauth2;
 
-import com.kncept.oauth2.configuration.InMemoryConfiguration;
+import com.kncept.oauth2.config.InMemoryConfiguration;
 import com.kncept.oauth2.operation.response.ContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
 import com.kncept.oauth2.operation.response.RedirectResponse;
@@ -53,10 +53,12 @@ public class KnceptOauth2Server implements HttpHandler {
         }
     }
 
-    private Oauth2 oauth2;
+    private final Oauth2 oauth2;
 
     public KnceptOauth2Server() {
-        oauth2 = new Oauth2(new InMemoryConfiguration());
+        InMemoryConfiguration config = new InMemoryConfiguration();
+        config.clientRepository().createClient("kncept-oauth");
+        oauth2 = new Oauth2(config);
     }
 
     @Override

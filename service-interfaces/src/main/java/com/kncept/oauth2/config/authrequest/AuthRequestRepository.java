@@ -1,4 +1,4 @@
-package com.kncept.oauth2.authrequest;
+package com.kncept.oauth2.config.authrequest;
 
 import java.util.Optional;
 
@@ -15,6 +15,6 @@ public interface AuthRequestRepository {
     );
 
 
-    Optional<AuthRequest> lookupByOauthSessionId(String oauthSessionId);
+    Optional<AuthRequest> lookup(String oauthSessionId);
 
 }

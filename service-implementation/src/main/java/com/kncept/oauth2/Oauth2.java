@@ -2,9 +2,9 @@ package com.kncept.oauth2;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.kncept.oauth2.authcode.Authcode;
-import com.kncept.oauth2.authrequest.AuthRequest;
-import com.kncept.oauth2.client.Client;
+import com.kncept.oauth2.config.authcode.Authcode;
+import com.kncept.oauth2.config.authrequest.AuthRequest;
+import com.kncept.oauth2.config.client.Client;
 import com.kncept.oauth2.config.Oauth2Configuration;
 import com.kncept.oauth2.crypto.ExpiringKeyPair;
 import com.kncept.oauth2.crypto.KeyVendor;
@@ -13,8 +13,8 @@ import com.kncept.oauth2.operation.response.ContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
 import com.kncept.oauth2.operation.response.RedirectResponse;
 import com.kncept.oauth2.operation.response.RenderedContentResponse;
-import com.kncept.oauth2.session.OauthSession;
-import com.kncept.oauth2.user.User;
+import com.kncept.oauth2.config.session.OauthSession;
+import com.kncept.oauth2.config.user.User;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
@@ -69,7 +69,7 @@ public class Oauth2 {
             String code_verifier = optional("code_verifier", params, null);
         }
 
-        Optional<Client> client = config.clientRepository().getClientById(clientId);
+        Optional<Client> client = config.clientRepository().lookup(clientId);
         if (client.isEmpty()) {
             return new ContentResponse(
                     400,
@@ -82,9 +82,9 @@ public class Oauth2 {
 
         // join an existing auth session if possible
         if (oauthSessionId.isPresent()) {
-            Optional<OauthSession> session = config.oauthSessionRepository().lookupSession(oauthSessionId.get());
+            Optional<OauthSession> session = config.oauthSessionRepository().lookup(oauthSessionId.get());
             if (session.isPresent() && session.get().authenticated()) {
-                Optional<AuthRequest> ar = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId.get());
+                Optional<AuthRequest> ar = config.authRequestRepository().lookup(oauthSessionId.get());
                 if (!ar.isPresent()) config.authRequestRepository().createAuthRequest(
                         oauthSessionId.get(),
                         state,
@@ -112,32 +112,32 @@ public class Oauth2 {
                 200,
                 ContentResponse.Content.LOGIN_PAGE,
                 Optional.of(session.oauthSessionId()))
-                .withParam("acceptingSignup", Boolean.toString(config.userRepository().isAcceptingSignup()));
+                .withParam("acceptingSignup", Boolean.toString(config.userRepository().acceptingSignup()));
     }
 
     public OperationResponse login(Map<String, String> params, String oauthSessionId) throws IOException {
         if (oauthSessionId == null) throw new NullPointerException("Must have a session ID");
-        Optional<OauthSession> session = config.oauthSessionRepository().lookupSession(oauthSessionId);
+        Optional<OauthSession> session = config.oauthSessionRepository().lookup(oauthSessionId);
 
         if (params.isEmpty() || !params.containsKey("password")) // just display login page with no attempts at anything else
             return new ContentResponse(
                     200,
                     ContentResponse.Content.LOGIN_PAGE,
                     Optional.of(oauthSessionId))
-                    .withParam("acceptingSignup", Boolean.toString(config.userRepository().isAcceptingSignup()));
+                    .withParam("acceptingSignup", Boolean.toString(config.userRepository().acceptingSignup()));
 
 
         // its a login attempt
         String password = params.get("password");
         String username = params.get("username");
 
-        Optional<User> endUser = config.userRepository().attemptUserLogin(username, password);
+        Optional<User> endUser = config.userRepository().login(username, password);
 
 //        https://openid.net/specs/openid-connect-core-1_0.html#AuthResponse
         if (endUser.isPresent()) {
-            session = config.oauthSessionRepository().authenticateSession(oauthSessionId, endUser.get().userId());
+            session = config.oauthSessionRepository().authenticate(oauthSessionId, endUser.get().userId());
 
-            Optional<AuthRequest> authRequest = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId);
+            Optional<AuthRequest> authRequest = config.authRequestRepository().lookup(oauthSessionId);
             if (authRequest.isEmpty()) {
                 return new ContentResponse(
                         400,
@@ -151,13 +151,13 @@ public class Oauth2 {
                     200,
                     ContentResponse.Content.LOGIN_PAGE,
                     Optional.of(oauthSessionId))
-                    .withParam("acceptingSignup", Boolean.toString(config.userRepository().isAcceptingSignup()))
+                    .withParam("acceptingSignup", Boolean.toString(config.userRepository().acceptingSignup()))
                     .withParam("message", "Authorization Failed - Please try again");
         }
     }
 
     public OperationResponse signup(Map<String, String> params, String oauthSessionId) throws IOException {
-        if (!config.userRepository().isAcceptingSignup())
+        if (!config.userRepository().acceptingSignup())
             return new ContentResponse(
                     400,
                     ContentResponse.Content.ERROR_PAGE,
@@ -173,9 +173,9 @@ public class Oauth2 {
         // attempt signup
         String password = params.get("password");
         String username = params.get("username");
-        Optional<User> endUser = config.userRepository().createUser(username, password);
+        Optional<User> endUser = config.userRepository().create(username, password);
 
-        Optional<AuthRequest> authRequest = config.authRequestRepository().lookupByOauthSessionId(oauthSessionId);
+        Optional<AuthRequest> authRequest = config.authRequestRepository().lookup(oauthSessionId);
         if (authRequest.isEmpty()) {
             return new ContentResponse(
                     400,
@@ -185,7 +185,7 @@ public class Oauth2 {
         }
 
         if (endUser.isPresent()) {
-            config.oauthSessionRepository().authenticateSession(oauthSessionId, endUser.get().userId());
+            config.oauthSessionRepository().authenticate(oauthSessionId, endUser.get().userId());
             return redirectAfterSuccessfulAuth(oauthSessionId, authRequest.get());
         }
 
@@ -238,7 +238,7 @@ public class Oauth2 {
                 obj.put("error", "No matching auth codes"); // OR expired
                 return new RenderedContentResponse(400, obj.toJSONString(), "application/json", oauthSessionId, false);
             }
-            Optional<OauthSession> session = config.oauthSessionRepository().lookupSession(authCode.get().oauthSessionId());
+            Optional<OauthSession> session = config.oauthSessionRepository().lookup(authCode.get().oauthSessionId());
             if (session.isEmpty()) {
                 JSONObject obj = new JSONObject();
                 obj.put("error", "Session has expired"); // OR expired

@@ -1,4 +1,4 @@
-package com.kncept.oauth2.session;
+package com.kncept.oauth2.config.session;
 
 import java.util.Optional;
 

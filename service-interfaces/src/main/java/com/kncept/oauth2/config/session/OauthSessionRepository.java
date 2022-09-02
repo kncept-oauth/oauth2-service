@@ -1,4 +1,4 @@
-package com.kncept.oauth2.session;
+package com.kncept.oauth2.config.session;
 
 import java.util.Optional;
 
@@ -8,9 +8,9 @@ public interface OauthSessionRepository {
     OauthSession createSession();
 
     // looks up an (unexpired) session by id
-    Optional<OauthSession> lookupSession(String oauthSessionId);
+    Optional<OauthSession> lookup(String oauthSessionId);
 
     // AUTHENTICATES a session with a userId
-    Optional<OauthSession> authenticateSession(String oauthSessionId, String userId);
+    Optional<OauthSession> authenticate(String oauthSessionId, String userId);
 
 }
