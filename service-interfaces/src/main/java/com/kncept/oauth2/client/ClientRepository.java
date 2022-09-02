@@ -1,6 +1,4 @@
-package com.kncept.oauth2.client.repository;
-
-import com.kncept.oauth2.client.Client;
+package com.kncept.oauth2.client;
 
 import java.util.Optional;
 

@@ -1,6 +1,4 @@
-package com.kncept.oauth2.session.repository;
-
-import com.kncept.oauth2.session.OauthSession;
+package com.kncept.oauth2.session;
 
 import java.util.Optional;
 

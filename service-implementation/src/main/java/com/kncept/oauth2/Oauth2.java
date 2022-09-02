@@ -8,7 +8,7 @@ import com.kncept.oauth2.client.Client;
 import com.kncept.oauth2.config.Oauth2Configuration;
 import com.kncept.oauth2.crypto.ExpiringKeyPair;
 import com.kncept.oauth2.crypto.KeyVendor;
-import com.kncept.oauth2.html.HtmlPageVendor;
+import com.kncept.oauth2.content.HtmlPageVendor;
 import com.kncept.oauth2.operation.response.ContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
 import com.kncept.oauth2.operation.response.RedirectResponse;

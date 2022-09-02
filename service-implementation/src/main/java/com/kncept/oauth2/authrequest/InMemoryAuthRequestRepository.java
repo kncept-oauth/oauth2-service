@@ -1,6 +1,4 @@
-package com.kncept.oauth2.authrequest.repository;
-
-import com.kncept.oauth2.authrequest.AuthRequest;
+package com.kncept.oauth2.authrequest;
 
 import java.util.Map;
 import java.util.Optional;
@@ -12,7 +10,6 @@ public class InMemoryAuthRequestRepository implements AuthRequestRepository {
     @Override
     public AuthRequest createAuthRequest(
             String oauthSessionId,
-            String code,
             Optional<String> state,
             Optional<String> nonce,
             String redirectUri,
@@ -21,7 +18,6 @@ public class InMemoryAuthRequestRepository implements AuthRequestRepository {
     ) {
         SimpleAuthRequest authRequest = new SimpleAuthRequest(
                 oauthSessionId,
-                code,
                 state,
                 nonce,
                 redirectUri,
@@ -37,16 +33,8 @@ public class InMemoryAuthRequestRepository implements AuthRequestRepository {
         return Optional.ofNullable(activeRequests.get(oauthSessionId));
     }
 
-    @Override
-    public Optional<AuthRequest> lookupByCode(String code) {
-        return (Optional) activeRequests.values().stream()
-                .filter(r -> r.code().equals(code))
-                .findAny();
-    }
-
     private static class SimpleAuthRequest implements AuthRequest {
         private final String oauthSessionId;
-        private final String code;
         private final Optional<String> state;
         private final Optional<String> nonce;
         private final String redirectUri;
@@ -55,7 +43,6 @@ public class InMemoryAuthRequestRepository implements AuthRequestRepository {
 
         public SimpleAuthRequest(
                 String oauthSessionId,
-                String code,
                 Optional<String> state,
                 Optional<String> nonce,
                 String redirectUri,
@@ -63,7 +50,6 @@ public class InMemoryAuthRequestRepository implements AuthRequestRepository {
                 String responseType
         ) {
             this.oauthSessionId = oauthSessionId;
-            this.code = code;
             this.state = state;
             this.nonce = nonce;
             this.redirectUri = redirectUri;
@@ -89,11 +75,6 @@ public class InMemoryAuthRequestRepository implements AuthRequestRepository {
         @Override
         public String responseType() {
             return responseType;
-        }
-
-        @Override
-        public String code() {
-            return code;
         }
 
         @Override

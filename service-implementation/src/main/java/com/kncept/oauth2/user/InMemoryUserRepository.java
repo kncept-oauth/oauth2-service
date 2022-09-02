@@ -1,6 +1,4 @@
-package com.kncept.oauth2.user.repository;
-
-import com.kncept.oauth2.user.User;
+package com.kncept.oauth2.user;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

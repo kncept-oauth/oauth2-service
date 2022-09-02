@@ -1,4 +1,4 @@
-package com.kncept.oauth2.html;
+package com.kncept.oauth2.content;
 
 import java.util.HashMap;
 import java.util.Map;

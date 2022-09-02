@@ -1,11 +1,11 @@
 package com.kncept.oauth2.configuration;
 
-import com.kncept.oauth2.authcode.repository.AuthcodeRepository;
-import com.kncept.oauth2.authrequest.repository.AuthRequestRepository;
-import com.kncept.oauth2.client.repository.ClientRepository;
+import com.kncept.oauth2.authcode.AuthcodeRepository;
+import com.kncept.oauth2.authrequest.AuthRequestRepository;
+import com.kncept.oauth2.client.ClientRepository;
 import com.kncept.oauth2.config.Oauth2Configuration;
-import com.kncept.oauth2.session.repository.OauthSessionRepository;
-import com.kncept.oauth2.user.repository.UserRepository;
+import com.kncept.oauth2.session.OauthSessionRepository;
+import com.kncept.oauth2.user.UserRepository;
 
 public class SystemProperyConfiguration implements Oauth2Configuration {
 

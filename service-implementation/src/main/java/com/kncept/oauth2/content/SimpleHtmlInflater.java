@@ -1,4 +1,4 @@
-package com.kncept.oauth2.html;
+package com.kncept.oauth2.content;
 
 import java.io.IOException;
 import java.io.InputStream;

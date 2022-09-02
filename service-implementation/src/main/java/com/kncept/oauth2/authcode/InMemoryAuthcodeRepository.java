@@ -1,6 +1,4 @@
-package com.kncept.oauth2.authcode.repository;
-
-import com.kncept.oauth2.authcode.Authcode;
+package com.kncept.oauth2.authcode;
 
 import java.util.HashMap;
 import java.util.Map;

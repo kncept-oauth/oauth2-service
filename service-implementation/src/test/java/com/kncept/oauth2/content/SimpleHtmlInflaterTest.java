@@ -1,4 +1,4 @@
-package com.kncept.oauth2.html;
+package com.kncept.oauth2.content;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
