@@ -72,7 +72,6 @@ public class Oauth2 {
         if (client.isEmpty()) {
             return new ContentResponse(
                     400,
-                    "text/html",
                     ContentResponse.Content.ERROR_PAGE,
                     oauthSessionId)
                     .withParam("error", "Unknown Client ID: " + clientId);
@@ -112,7 +111,6 @@ public class Oauth2 {
 
         return new ContentResponse(
                 200,
-                "text/html",
                 ContentResponse.Content.LOGIN_PAGE,
                 Optional.of(session.oauthSessionId()))
                 .withParam("acceptingSignup", Boolean.toString(config.userRepository().isAcceptingSignup()));
@@ -125,7 +123,6 @@ public class Oauth2 {
         if (params.isEmpty() || !params.containsKey("password")) // just display login page with no attempts at anything else
             return new ContentResponse(
                     200,
-                    "text/html",
                     ContentResponse.Content.LOGIN_PAGE,
                     Optional.of(oauthSessionId))
                     .withParam("acceptingSignup", Boolean.toString(config.userRepository().isAcceptingSignup()));
@@ -145,7 +142,6 @@ public class Oauth2 {
             if (authRequest.isEmpty()) {
                 return new ContentResponse(
                         400,
-                        "text/html",
                         ContentResponse.Content.ERROR_PAGE,
                         Optional.of(oauthSessionId))
                         .withParam("error", "OIDC Auth Request Timed out");
@@ -154,7 +150,6 @@ public class Oauth2 {
         } else {
             return new ContentResponse(
                     200,
-                    "text/html",
                     ContentResponse.Content.LOGIN_PAGE,
                     Optional.of(oauthSessionId))
                     .withParam("acceptingSignup", Boolean.toString(config.userRepository().isAcceptingSignup()))
@@ -166,7 +161,6 @@ public class Oauth2 {
         if (!config.userRepository().isAcceptingSignup())
             return new ContentResponse(
                     400,
-                    "text/html",
                     ContentResponse.Content.ERROR_PAGE,
                     Optional.of(oauthSessionId))
                     .withParam("error", "Signup is not currently enabled");
@@ -174,7 +168,6 @@ public class Oauth2 {
         if (params.isEmpty() || !params.containsKey("password")) // just display signup page with no attempts at anything else
             return new ContentResponse(
                     200,
-                    "text/html",
                     ContentResponse.Content.SIGNUP_PAGE,
                     Optional.of(oauthSessionId));
 
@@ -187,7 +180,6 @@ public class Oauth2 {
         if (authRequest.isEmpty()) {
             return new ContentResponse(
                     400,
-                    "text/html",
                     ContentResponse.Content.ERROR_PAGE,
                     Optional.of(oauthSessionId))
                     .withParam("error", "OIDC Auth Request Timed out");
@@ -200,7 +192,6 @@ public class Oauth2 {
 
         return new ContentResponse(
                 200,
-                "text/html",
                 ContentResponse.Content.SIGNUP_PAGE,
                 Optional.of(oauthSessionId))
                 .withParam("message", "Signup failed");
@@ -245,13 +236,13 @@ public class Oauth2 {
             if (authRequest.isEmpty()) {
                 JSONObject obj = new JSONObject();
                 obj.put("error", "No matching auth codes"); // OR expired
-                return new RenderedContentResponse(400, obj.toJSONString(), "application/json", oauthSessionId);
+                return new RenderedContentResponse(400, obj.toJSONString(), "application/json", oauthSessionId, false);
             }
             Optional<OauthSession> session = config.oauthSessionRepository().lookupSession(authRequest.get().oauthSessionId());
             if (session.isEmpty()) {
                 JSONObject obj = new JSONObject();
                 obj.put("error", "Session has expired"); // OR expired
-                return new RenderedContentResponse(400, obj.toJSONString(), "application/json", oauthSessionId);
+                return new RenderedContentResponse(400, obj.toJSONString(), "application/json", oauthSessionId, false);
             }
 
             String responseType = authRequest.map(AuthRequest::responseType).get(); // code vs authorization code
@@ -279,22 +270,22 @@ public class Oauth2 {
             //        jwt.put("refresh_token", "xxxx")
 
             // needs to be json
-            return new RenderedContentResponse(200, jwt.toJSONString(), "application/json", oauthSessionId)
+            return new RenderedContentResponse(200, jwt.toJSONString(), "application/json", oauthSessionId, false)
                     .addHeader("Cache-Control", "no-store")
                     .addHeader("Pragma", "no-cache");
 
         } catch (RuntimeException e) {
             JSONObject obj = new JSONObject();
             obj.put("error", e.getMessage());
-            return new RenderedContentResponse(400, obj.toJSONString(), "application/json", oauthSessionId);
+            return new RenderedContentResponse(400, obj.toJSONString(), "application/json", oauthSessionId, false);
         }
     }
 
     public RenderedContentResponse renderCss() {
-        return render(new ContentResponse(200, "text/css", ContentResponse.Content.CSS, Optional.empty()));
+        return render(new ContentResponse(200, ContentResponse.Content.CSS, Optional.empty()));
     }
     public RenderedContentResponse render(ContentResponse response) {
-        return new RenderedContentResponse(response ,renderContentToString(response));
+        return new RenderedContentResponse(response ,renderContentToString(response), response.content() == ContentResponse.Content.CSS ? "text/css" : "text/html", false);
     }
     public String renderContentToString(ContentResponse response) {
         Map<String, String> params = response.params();

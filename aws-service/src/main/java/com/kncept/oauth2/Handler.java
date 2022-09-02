@@ -60,7 +60,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
         headers.putAll(response.headers());
         APIGatewayProxyResponseEvent responseEvent = new APIGatewayProxyResponseEvent();
         responseEvent.setHeaders(headers);
-        responseEvent.setIsBase64Encoded(false);
+        responseEvent.setIsBase64Encoded(response.base64Encoded());
         responseEvent.setBody(response.content());
         responseEvent.setStatusCode(response.responseCode());
         return responseEvent;

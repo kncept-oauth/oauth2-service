@@ -14,10 +14,7 @@ import com.sun.net.httpserver.spi.HttpServerProvider;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Executors;
 
 public class KnceptOauth2Server implements HttpHandler {
@@ -102,7 +99,11 @@ public class KnceptOauth2Server implements HttpHandler {
         });
         response.headers().forEach(responseHeaders::add);
         exchange.sendResponseHeaders(response.responseCode(), 0);
-        exchange.getResponseBody().write(response.content().getBytes());
+        if (response.base64Encoded()) {
+            exchange.getResponseBody().write(Base64.getDecoder().decode(response.content()));
+        } else {
+            exchange.getResponseBody().write(response.content().getBytes());
+        }
         exchange.getResponseBody().close();
     }
     private void handleResponse(HttpExchange exchange, ContentResponse response) throws IOException {

@@ -9,24 +9,28 @@ public class RenderedContentResponse implements OperationResponse {
     private final int responseCode;
     private final String content;
     private final Optional<String> oauthSessionId;
+    private final boolean base64Encoded;
 
     public RenderedContentResponse(
         int responseCode,
         String content,
         String contentType,
-        Optional<String> oauthSessionId
+        Optional<String> oauthSessionId,
+        boolean base64Encoded
     ) {
         this.responseCode = responseCode;
         this.content = content;
         this.oauthSessionId = oauthSessionId;
         headers.put("Content-Type", contentType);
+        this.base64Encoded = base64Encoded;
     }
 
-    public RenderedContentResponse(ContentResponse source, String content) {
+    public RenderedContentResponse(ContentResponse source, String content, String contentType, boolean base64Encoded) {
         this.responseCode = source.responseCode();
         this.content = content;
         this.oauthSessionId = source.oauthSessionId();
-        this.headers.putAll(source.headers());
+        headers.put("Content-Type", contentType);
+        this.base64Encoded = base64Encoded;
     }
 
     @Override
@@ -49,5 +53,9 @@ public class RenderedContentResponse implements OperationResponse {
 
     public Optional<String> oauthSessionId() {
         return oauthSessionId;
+    }
+
+    public boolean base64Encoded() {
+        return base64Encoded;
     }
 }
