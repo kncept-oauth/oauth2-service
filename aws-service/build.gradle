@@ -35,13 +35,22 @@ task buildZip(type: Zip) {
 }
 
 jar {
-    manifest {
+/*    manifest {
         // Class-Path: MyUtils.jar
 //        attributes 'Main-Class': "${mainClassName}"
         attributes 'Implementation-Title': 'Kncept Oauth2 Service Lambda'
     }
+*/
     // archiveBaseName = "${rootProject.name}"
     from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+}
+
+task libJar(type: Jar) {
+	from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtimeClasspath
+    }
 }
 
 
@@ -63,6 +72,10 @@ dependencies {
 	// implementation 'software.amazon.awssdk:lambda'
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.1'
     implementation 'com.amazonaws:aws-lambda-java-events:3.11.0'
+
+
+    implementation platform('software.amazon.awssdk:bom:2.17.266')
+    implementation 'software.amazon.awssdk:dynamodb'
 
     // project dependencies
     implementation project(':service-implementation')

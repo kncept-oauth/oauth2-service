@@ -1,6 +1,5 @@
-package com.kncept.oauth2.configuration;
+package com.kncept.oauth2.config;
 
-import com.kncept.oauth2.config.SystemProperyConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

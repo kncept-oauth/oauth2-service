@@ -5,3 +5,6 @@ bin
 .idea
 aws-deploy.properties
 .gradle-cache-*
+**/.classpath
+**/.project
+**/.settings

@@ -9,7 +9,7 @@ public class AnyClientRepository implements ClientRepository {
         return Optional.of(new AnyClient(clientId));
     }
 
-    static class AnyClient implements Client {
+    private static class AnyClient implements Client {
         private final String clientId;
 
         public AnyClient(String clientId) {
@@ -19,6 +19,11 @@ public class AnyClientRepository implements ClientRepository {
         @Override
         public String clientId() {
             return clientId;
+        }
+
+        @Override
+        public boolean enabled() {
+            return true;
         }
     }
 }

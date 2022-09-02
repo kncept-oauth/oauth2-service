@@ -35,7 +35,7 @@ public class InMemoryUserRepository implements UserRepository {
         password = password.trim();
         if (password.length() < 3) return Optional.empty();
         if (users.containsKey(username)) return Optional.empty();
-        SimpleUser user = new SimpleUser(username, hash(username, password));
+        SimpleUser user = new SimpleUser(username, username, hash(username, password));
         users.put(username, user);
         return Optional.of(user);
     }
@@ -53,36 +53,6 @@ public class InMemoryUserRepository implements UserRepository {
             return Base64.getEncoder().encodeToString(simpleHash);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    private static class SimpleUser implements User {
-
-        private final String username;
-        private String passhash;
-        private final String userId;
-
-        public SimpleUser(String username, String passhash) {
-            this(username, passhash, UUID.randomUUID().toString());
-        }
-        public SimpleUser(String username, String passhash, String userId) {
-            this.username = username;
-            this.passhash = passhash;
-            this.userId = userId;
-        }
-
-        @Override
-        public String username() {
-            return username;
-        }
-
-        public String getPasshash() {
-            return passhash;
-        }
-
-        @Override
-        public String userId() {
-            return userId;
         }
     }
 }

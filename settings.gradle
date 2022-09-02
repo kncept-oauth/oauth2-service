@@ -1,4 +1,4 @@
-rootProject.name='Kncept Oauth2 Service'
+rootProject.name='Kncept OIDC Service'
 
 // include any subfolders with a build.gradle file in them
 for(file in rootDir.listFiles()) {
