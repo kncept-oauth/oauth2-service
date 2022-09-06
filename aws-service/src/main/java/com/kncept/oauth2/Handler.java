@@ -4,7 +4,6 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.kncept.oauth2.config.InMemoryConfiguration;
 import com.kncept.oauth2.config.Oauth2Configuration;
 import com.kncept.oauth2.config.client.Client;
 import com.kncept.oauth2.config.client.SimpleClient;
@@ -21,17 +20,17 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
     private static final String knceptClient = "kncept-client"; // kncept-oidc
     private final Oauth2 oauth2;
     public Handler() {
-
-        // bootstrap a client config
-        Oauth2Configuration config = new InMemoryConfiguration(); // BAD for a lambda
+        this(Oauth2Configuration.loadConfigurationFromEnvProperty(
+                "oidc_config",
+                () -> new com.kncept.oauth2.config.DynoDbOauth2Configuration()));
+    }
+    public Handler(Oauth2Configuration config) {
         if(config.clientRepository().lookup(knceptClient).isEmpty()) {
             Client knceptOidcClient = new SimpleClient(knceptClient, true);
             config.clientRepository().update(knceptOidcClient);
         }
         oauth2 = new Oauth2(config);
     }
-
-
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
@@ -42,6 +41,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
             Map<String, String> cookies = headerCookies(input);
             Optional<String> oauthSessionId = Optional.ofNullable(cookies.get("oauthSessionId"));
 
+            log("Handling path " + path);
             if (path.equals("/authorize")) {
                 return handleResponse(oauth2.authorize(bodyOrQueryParams(input), oauthSessionId));
             } else if (path.equals("/login")) {
@@ -56,7 +56,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
                 return emptyErrorResponse(404);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
             return emptyErrorResponse(500);
         }
     }
@@ -80,6 +80,9 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
         responseEvent.setIsBase64Encoded(response.base64Encoded());
         responseEvent.setBody(response.content());
         responseEvent.setStatusCode(response.responseCode());
+
+        System.out.println("RenderedContentResponse: " + responseEvent);
+
         return responseEvent;
     }
     private APIGatewayProxyResponseEvent handleResponse(ContentResponse response) {
@@ -92,11 +95,14 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
         APIGatewayProxyResponseEvent responseEvent = new APIGatewayProxyResponseEvent();
         responseEvent.setHeaders(headers);
         responseEvent.setStatusCode(response.responseCode());
+        System.out.println("RedirectResponse: " + responseEvent);
         return responseEvent;
     }
     private APIGatewayProxyResponseEvent emptyErrorResponse(int statusCode) {
         APIGatewayProxyResponseEvent responseEvent = new APIGatewayProxyResponseEvent();
         responseEvent.setStatusCode(statusCode);
+        responseEvent.setBody("");
+        System.out.println("emptyErrorResponse: " + responseEvent);
         return responseEvent;
     }
 
@@ -114,18 +120,22 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
     }
 
     private Map<String, String> bodyOrQueryParams(APIGatewayProxyRequestEvent input) throws IOException {
+        log("bodyOrQueryParams");
         return input.getHttpMethod().toLowerCase().equals("post") ?
                 bodyParams(input) : queryParams(input);
     }
     private Map<String, String> queryParams(APIGatewayProxyRequestEvent input) {
         Map<String, String> params = input.getQueryStringParameters();
+        log("queryParams " + params);
         if (params == null) params = new HashMap<>();
         return params;
     }
     private Map<String, String> bodyParams(APIGatewayProxyRequestEvent input) throws IOException {
+        log("bodyOrQueryParams");
         return extractSimpleParams(input.getBody());
     }
-    public static Map<String, String> extractSimpleParams(String query) throws IOException {
+    public Map<String, String> extractSimpleParams(String query) throws IOException {
+        log("extractSimpleParams: " + query);
         Map<String, String> params = new HashMap<String, String>();
         if (query != null) for (String param : query.split("&")) {
             String pair[] = param.split("=");
@@ -136,6 +146,11 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
             }
             params.put(key, value);
         }
+        log("extractSimpleParams: EXIT " + params);
         return params;
+    }
+
+    public void log(String s) {
+        System.out.println(getClass().getSimpleName() + " " + s);
     }
 }

@@ -1,8 +1,8 @@
 package com.kncept.oauth2.config.client;
 
-import com.kncept.oauth2.config.annotation.OidcIdField;
+import com.kncept.oauth2.config.annotation.OidcId;
 
 public interface Client {
-    @OidcIdField String clientId();
+    @OidcId String clientId();
     boolean enabled();
 }

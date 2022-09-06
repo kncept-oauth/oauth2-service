@@ -1,9 +1,12 @@
 package com.kncept.oauth2.config.authcode;
 
-import com.kncept.oauth2.config.annotation.OidcIdField;
+import com.kncept.oauth2.config.annotation.OidcExpiryTime;
+import com.kncept.oauth2.config.annotation.OidcId;
 
 public interface Authcode {
 
-    @OidcIdField String authCode();
+    @OidcId String authCode();
     String oauthSessionId();
+
+    @OidcExpiryTime long expiryTime();
 }

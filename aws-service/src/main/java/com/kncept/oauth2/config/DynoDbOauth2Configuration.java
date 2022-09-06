@@ -26,7 +26,11 @@ public class DynoDbOauth2Configuration implements Oauth2Configuration {
     private DynamoDbUserRepository userRepository;
     private DynamoDbOauthSessionRepository oauthSessionRepository;
 
-    public DynoDbOauth2Configuration(boolean requirePkce, boolean acceptingSignup,  boolean autocreateTables) {
+    public DynoDbOauth2Configuration() {
+        this(false, true, true);
+    }
+
+    public DynoDbOauth2Configuration(boolean requirePkce, boolean acceptingSignup, boolean autocreateTables) {
         this.requirePkce = requirePkce;
         this.acceptingSignup = acceptingSignup;
         this.autocreateTables = autocreateTables;

@@ -17,9 +17,21 @@ export class OidcDockerLambda extends cdk.Stack {
 
     const role = new iam.Role(this, 'Role', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-      roleName: 'kncept-oauth',
+      roleName: `kncept-${functionName}`,
       description: 'OIDC Lambda role',
     })
+
+    // eg: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_lambda-access-dynamodb.html
+    role.addToPrincipalPolicy(new iam.PolicyStatement({
+      sid: 'KnceptOidcDdbTables',
+      actions: [
+        'dynamodb:*',
+      ],
+      resources: [
+        'arn:aws:dynamodb:*:*:table/KnceptOidc*'
+      ],
+      effect: iam.Effect.ALLOW,
+    }))
 
     const lambdaLogGroup = new logs.LogGroup(this, 'log-group', {
       logGroupName: `/aws/lambda/${functionName}`,
@@ -36,14 +48,14 @@ export class OidcDockerLambda extends cdk.Stack {
       }
       ),
       functionName,
-      timeout: cdk.Duration.seconds(30),
+      description: `Kncept OIDC Lambda`,
+      timeout: cdk.Duration.seconds(29), // API Gateway 30sec timeout
       environment: {
         // can't have dots . or dashes -
-        // :(
-        'oidc_test_property': 'com.kncept.xxx.Xyz'
+        'oidc_config': 'com.kncept.oauth2.config.DynoDbOauth2Configuration',
       },
       role,
-      logRetention:  logs.RetentionDays.ONE_MONTH
+      // logRetention:  logs.RetentionDays.ONE_MONTH
     })
 
     const api = new apigateway.RestApi(this, "kncept-oidc-api", {

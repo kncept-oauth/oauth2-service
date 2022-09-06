@@ -1,8 +1,8 @@
 package com.kncept.oauth2.config.user;
 
-import com.kncept.oauth2.config.annotation.OidcIdField;
+import com.kncept.oauth2.config.annotation.OidcId;
 
 public interface User {
-    @OidcIdField String userId(); // content of SUB (Subject) claim, the USER ID
+    @OidcId String userId(); // content of SUB (Subject) claim, the USER ID
     String username();
 }

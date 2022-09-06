@@ -10,7 +10,7 @@ public class InMemoryAuthcodeRepository implements AuthcodeRepository {
 
     @Override
     public Authcode create(String authCode, String oauthSessionId) {
-        Authcode code = new SimpleAuthcode(authCode, oauthSessionId);
+        Authcode code = new SimpleAuthcode(authCode, oauthSessionId, 0);
         codes.put(authCode, code);
         return code;
     }

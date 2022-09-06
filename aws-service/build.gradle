@@ -55,14 +55,11 @@ task zipDist(type: Zip) {
 }
 
 task copyJars(type: Copy) {
-//    doFirst(
-//            project.file('build/libs').mkdirs()
-//    )
+    doFirst {
+        project.file('build/dependency-libs').mkdirs()
+    }
     from configurations.runtimeClasspath
-//    from processResources
-//    from compileJava
-    into project.file('build/libs')
-//    include('*.jar')
+    into project.file('build/dependency-libs')
 }
 
 task dist {}

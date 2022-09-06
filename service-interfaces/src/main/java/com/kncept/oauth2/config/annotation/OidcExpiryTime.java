@@ -7,5 +7,9 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface OidcIdField {
+/**
+ * This might be different between implmentations
+ * eg: AWS DynamoDB uses epoch SECONDS
+ */
+public @interface OidcExpiryTime {
 }

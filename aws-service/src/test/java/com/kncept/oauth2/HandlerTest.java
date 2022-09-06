@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.kncept.oauth2.config.InMemoryConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,7 @@ public class HandlerTest {
 
     @Test
     public void canInvokeHandler() {
-        Handler handler = new Handler();
+        Handler handler = new Handler(new InMemoryConfiguration());
 
         APIGatewayProxyResponseEvent result = handler.handleRequest(createSyntheticEvent(), createSyntheticContext());
         Assertions.assertEquals(404, result.getStatusCode());
@@ -23,7 +24,7 @@ public class HandlerTest {
 
     @Test
     public void canInvokeCssHandler() {
-        Handler handler = new Handler();
+        Handler handler = new Handler(new InMemoryConfiguration());
         APIGatewayProxyRequestEvent event = createSyntheticEvent();
         event.setPath("/style.css");
         APIGatewayProxyResponseEvent result = handler.handleRequest(event, createSyntheticContext());

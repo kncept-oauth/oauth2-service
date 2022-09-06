@@ -5,8 +5,11 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class DynamoDbOauthSessionRepository extends DynamoDbRepository<OauthSession> implements OauthSessionRepository {
+
+    long sessionDuration = TimeUnit.SECONDS.toSeconds(300);
 
     public DynamoDbOauthSessionRepository(DynamoDbClient client, String tableName) {
         super(
@@ -16,9 +19,13 @@ public class DynamoDbOauthSessionRepository extends DynamoDbRepository<OauthSess
         );
     }
 
+
     @Override
     public OauthSession createSession() {
-        SimpleOauthSession session = new SimpleOauthSession(UUID.randomUUID().toString(), Optional.empty());
+        SimpleOauthSession session = new SimpleOauthSession(
+                UUID.randomUUID().toString(),
+                Optional.empty(),
+                epochSecondsExpiry(sessionDuration));
         write(session);
         return session;
     }
@@ -32,7 +39,10 @@ public class DynamoDbOauthSessionRepository extends DynamoDbRepository<OauthSess
     public Optional<OauthSession> authenticate(String oauthSessionId, String userId) {
         OauthSession session = findById(oauthSessionId);
         if (session != null) {
-            session = new SimpleOauthSession(oauthSessionId, Optional.of(userId));
+            session = new SimpleOauthSession(
+                    oauthSessionId,
+                    Optional.of(userId),
+                    epochSecondsExpiry(sessionDuration));
             write(session);
         }
         return Optional.ofNullable(session);

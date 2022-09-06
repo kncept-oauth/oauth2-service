@@ -22,7 +22,8 @@ public class InMemoryAuthRequestRepository implements AuthRequestRepository {
                 nonce,
                 redirectUri,
                 clientId,
-                responseType
+                responseType,
+                0
         );
         activeRequests.put(oauthSessionId, authRequest);
         return authRequest;

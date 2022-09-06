@@ -9,6 +9,7 @@ public class SimpleAuthRequest implements AuthRequest {
     private final String redirectUri;
     private final String clientId;
     private final String responseType;
+    private final long expiryTime;
 
     public SimpleAuthRequest(
             String oauthSessionId,
@@ -16,7 +17,8 @@ public class SimpleAuthRequest implements AuthRequest {
             Optional<String> nonce,
             String redirectUri,
             String clientId,
-            String responseType
+            String responseType,
+            long expiryTime
     ) {
         this.oauthSessionId = oauthSessionId;
         this.state = state;
@@ -24,6 +26,7 @@ public class SimpleAuthRequest implements AuthRequest {
         this.redirectUri = redirectUri;
         this.clientId = clientId;
         this.responseType = responseType;
+        this.expiryTime = expiryTime;
     }
 
     @Override
@@ -54,5 +57,10 @@ public class SimpleAuthRequest implements AuthRequest {
     @Override
     public Optional<String> nonce() {
         return nonce;
+    }
+
+    @Override
+    public long expiryTime() {
+        return expiryTime;
     }
 }

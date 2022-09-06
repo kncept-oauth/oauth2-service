@@ -51,7 +51,8 @@ public class DynamoDbRepositoryTest {
                 Optional.empty(), // nonce,
                 "redirectUri string",
                 "clientId string",
-                "responseType string"
+                "responseType string",
+                0
         		);
         Map<String, AttributeValue> converted = repository.convert(original);
         AuthRequest reconstitued = (AuthRequest)repository.reflectiveItemConverter(converted);

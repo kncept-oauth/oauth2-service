@@ -4,8 +4,11 @@ import com.kncept.oauth2.config.DynamoDbRepository;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 public class DynamoDbAuthRequestRepository extends DynamoDbRepository<AuthRequest> implements AuthRequestRepository {
+
+    long sessionDuration = TimeUnit.SECONDS.toSeconds(300);
 
     public DynamoDbAuthRequestRepository (DynamoDbClient client, String tableName) {
         super(
@@ -23,7 +26,8 @@ public class DynamoDbAuthRequestRepository extends DynamoDbRepository<AuthReques
                 nonce,
                 redirectUri,
                 clientId,
-                responseType
+                responseType,
+                epochSecondsExpiry(sessionDuration)
         );
         write(authReqeust);
         return authReqeust;
