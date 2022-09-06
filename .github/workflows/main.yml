@@ -37,16 +37,9 @@ jobs:
 # Upload the core API and Implementation as github artifacts
       - uses: actions/upload-artifact@v3
         with:
-          name: service-interfaces
-          path: service-interfaces/build/libs
-      - uses: actions/upload-artifact@v3
-        with:
-          name: service-crypto
-          path: service-crypto/build/libs
-      - uses: actions/upload-artifact@v3
-        with:
-          name: service-implementation
-          path: service-implementation/build/libs
+          name: service-artifacts
+          path: service-*/build/libs/service-*-0.0.1.jar
+          retention-days: 7
 
       - name: Build AWS Lambda Deployment
         run: ./gradlew :aws-service:dist
