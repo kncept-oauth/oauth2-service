@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Proxy;
+import java.util.HashMap;
 
 public class HandlerTest {
 
@@ -17,7 +18,15 @@ public class HandlerTest {
         Handler handler = new Handler();
 
         APIGatewayProxyResponseEvent result = handler.handleRequest(createSyntheticEvent(), createSyntheticContext());
+        Assertions.assertEquals(404, result.getStatusCode());
+    }
 
+    @Test
+    public void canInvokeCssHandler() {
+        Handler handler = new Handler();
+        APIGatewayProxyRequestEvent event = createSyntheticEvent();
+        event.setPath("/style.css");
+        APIGatewayProxyResponseEvent result = handler.handleRequest(event, createSyntheticContext());
         Assertions.assertEquals(200, result.getStatusCode());
     }
 
@@ -39,10 +48,11 @@ public class HandlerTest {
         });
     }
 
-    // because a publicly accessible builder so people can test locally would be too convinient
     private APIGatewayProxyRequestEvent createSyntheticEvent() {
-        return new APIGatewayProxyRequestEvent();
-
+        APIGatewayProxyRequestEvent event =  new APIGatewayProxyRequestEvent();
+        event.setPath("/");
+        event.setMultiValueHeaders(new HashMap<>());
+        return event;
     }
 
 }

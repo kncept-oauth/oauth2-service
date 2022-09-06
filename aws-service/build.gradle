@@ -4,20 +4,7 @@ apply plugin: 'java'
 group = 'com.kncept.oauth2'
 version = '0.0.1'
 
-
-//
-// Addressed by using a Java-11 docker image via batect
-//
-//java {
-//    toolchain {
-//        // because AWS CBF to update to an (over a) year old LTS release
-//        languageVersion = JavaLanguageVersion.of(11)
-//    }
-//}
-
-
-
-defaultTasks 'jar'
+defaultTasks 'libJar'
 
 // workaround to include resources
 sourceSets.main {
@@ -33,19 +20,14 @@ task buildZip(type: Zip) {
         from configurations.runtimeClasspath
     }
 }
-
-jar {
-/*    manifest {
-        // Class-Path: MyUtils.jar
-//        attributes 'Main-Class': "${mainClassName}"
-        attributes 'Implementation-Title': 'Kncept Oauth2 Service Lambda'
-    }
-*/
-    // archiveBaseName = "${rootProject.name}"
-    from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-}
-
 task libJar(type: Jar) {
+    manifest {
+//         Class-Path: MyUtils.jar
+//        attributes 'Main-Class': "${mainClassName}"
+//        attributes 'Implementation-Title': 'Kncept Oauth2 Service Lambda'
+    }
+    archiveBaseName = "aws-service-bundle-" + archiveVersion
+
 	from compileJava
     from processResources
     into('lib') {
