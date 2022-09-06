@@ -25,22 +25,22 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
                 () -> new com.kncept.oauth2.config.DynoDbOauth2Configuration()));
     }
     public Handler(Oauth2Configuration config) {
+        System.out.println("NEW Handler");
+        oauth2 = new Oauth2(config);
+        oauth2.init(false); // easier init of tables
         if(config.clientRepository().lookup(knceptClient).isEmpty()) {
             Client knceptOidcClient = new SimpleClient(knceptClient, true);
             config.clientRepository().update(knceptOidcClient);
         }
-        oauth2 = new Oauth2(config);
     }
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
         try {
-
             String path = input.getPath();
             path = path == null ? "" : path.toLowerCase();
             Map<String, String> cookies = headerCookies(input);
             Optional<String> oauthSessionId = Optional.ofNullable(cookies.get("oauthSessionId"));
-
             if (path.equals("/authorize")) {
                 return handleResponse(oauth2.authorize(bodyOrQueryParams(input), oauthSessionId));
             } else if (path.equals("/login")) {
@@ -51,6 +51,9 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
                 return handleResponse(oauth2.renderCss());
             } else if (path.equals("/token") || path.equals("/oauth/token")) {
                 return handleResponse(oauth2.token(bodyOrQueryParams(input)));
+            } else if (path.equals("/init")) {
+                oauth2.init(true);
+                return emptyErrorResponse(200);
             } else {
                 return emptyErrorResponse(404);
             }
@@ -60,7 +63,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
         }
     }
 
-    private APIGatewayProxyResponseEvent handleResponse(OperationResponse response) throws IOException {
+    private APIGatewayProxyResponseEvent handleResponse(OperationResponse response) {
         if (response.isRenderedContentResponse()) return handleResponse(response.asRenderedContentResponse());
         else if (response.isContent()) return handleResponse(response.asContent());
         else if (response.isRedirect()) return handleResponse(response.asRedirect());
@@ -68,20 +71,15 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
     }
     private APIGatewayProxyResponseEvent handleResponse(RenderedContentResponse response) {
         Map<String, String> headers = new TreeMap<>();
-
         response.oauthSessionId().ifPresent(oauthSessionId -> {
             headers.put("Set-Cookie", "oauthSessionId=" + oauthSessionId + "; HttpOnly");
         });
-
         headers.putAll(response.headers());
         APIGatewayProxyResponseEvent responseEvent = new APIGatewayProxyResponseEvent();
         responseEvent.setHeaders(headers);
         responseEvent.setIsBase64Encoded(response.base64Encoded());
         responseEvent.setBody(response.content());
         responseEvent.setStatusCode(response.responseCode());
-
-        System.out.println("RenderedContentResponse: " + responseEvent);
-
         return responseEvent;
     }
     private APIGatewayProxyResponseEvent handleResponse(ContentResponse response) {
@@ -90,18 +88,15 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
     private APIGatewayProxyResponseEvent handleResponse(RedirectResponse response) {
         Map<String, String> headers = new TreeMap<>();
         headers.put("Location", response.redirectUri());
-
         APIGatewayProxyResponseEvent responseEvent = new APIGatewayProxyResponseEvent();
         responseEvent.setHeaders(headers);
         responseEvent.setStatusCode(response.responseCode());
-        System.out.println("RedirectResponse: " + responseEvent);
         return responseEvent;
     }
     private APIGatewayProxyResponseEvent emptyErrorResponse(int statusCode) {
         APIGatewayProxyResponseEvent responseEvent = new APIGatewayProxyResponseEvent();
         responseEvent.setStatusCode(statusCode);
         responseEvent.setBody("");
-        System.out.println("emptyErrorResponse: " + responseEvent);
         return responseEvent;
     }
 

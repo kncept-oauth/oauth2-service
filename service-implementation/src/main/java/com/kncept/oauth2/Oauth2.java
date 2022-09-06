@@ -23,9 +23,10 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class Oauth2 {
 
@@ -220,7 +221,6 @@ public class Oauth2 {
 
         return new RedirectResponse(redirectUri);
     }
-
     // https://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
     public RenderedContentResponse token(Map<String, String> params) {
         Optional<String> oauthSessionId = Optional.empty();
@@ -279,6 +279,23 @@ public class Oauth2 {
             JSONObject obj = new JSONObject();
             obj.put("error", e.getMessage());
             return new RenderedContentResponse(400, obj.toJSONString(), "application/json", oauthSessionId, false);
+        }
+    }
+
+    public void init(boolean await) {
+        List<Runnable> tasks = new ArrayList<>();
+        tasks.add(() -> config.clientRepository());
+        tasks.add(() -> config.authcodeRepository());
+        tasks.add(() -> config.oauthSessionRepository());
+        tasks.add(() -> config.authRequestRepository());
+        tasks.add(() -> config.userRepository());
+        ExecutorService service = Executors.newFixedThreadPool(tasks.size());
+        tasks.forEach(service::execute);
+        service.shutdown();
+        if (await) try {
+            service.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 

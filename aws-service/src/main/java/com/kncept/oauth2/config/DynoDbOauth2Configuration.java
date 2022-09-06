@@ -45,7 +45,7 @@ public class DynoDbOauth2Configuration implements Oauth2Configuration {
         return "KnceptOidc" + interfaceType.getSimpleName();
     }
 
-    public DynamoDbClient dynamoDbClient() {
+    public synchronized DynamoDbClient dynamoDbClient() {
         if (client == null) {
             client = DynamoDbClient.create();
         }
@@ -55,10 +55,12 @@ public class DynoDbOauth2Configuration implements Oauth2Configuration {
     @Override
     public DynamoDbClientRepository clientRepository() {
         if (clientRepository == null) {
-            clientRepository = new DynamoDbClientRepository(
-                    dynamoDbClient(),
-                    tableName(ClientRepository.class)
-            );
+            synchronized (this) {
+                if(clientRepository == null) clientRepository = new DynamoDbClientRepository(
+                        dynamoDbClient(),
+                        tableName(ClientRepository.class)
+                );
+            }
             if (autocreateTables) clientRepository.createTableIfNotExists();
         }
         return clientRepository;
@@ -67,10 +69,12 @@ public class DynoDbOauth2Configuration implements Oauth2Configuration {
     @Override
     public DynamoDbAuthRequestRepository authRequestRepository() {
         if (authRequestRepository == null) {
-            authRequestRepository = new DynamoDbAuthRequestRepository(
-                    dynamoDbClient(),
-                    tableName(AuthRequestRepository.class)
-            );
+            synchronized (this) {
+                if (authRequestRepository == null) authRequestRepository = new DynamoDbAuthRequestRepository(
+                        dynamoDbClient(),
+                        tableName(AuthRequestRepository.class)
+                );
+            }
             if (autocreateTables) authRequestRepository.createTableIfNotExists();
         }
         return authRequestRepository;
@@ -79,10 +83,12 @@ public class DynoDbOauth2Configuration implements Oauth2Configuration {
     @Override
     public DynamoDbAuthcodeRepository authcodeRepository() {
         if (authcodeRepository == null) {
-            authcodeRepository = new DynamoDbAuthcodeRepository(
-                    dynamoDbClient(),
-                    tableName(AuthcodeRepository.class)
-            );
+            synchronized (this) {
+                if (authcodeRepository == null) authcodeRepository = new DynamoDbAuthcodeRepository(
+                        dynamoDbClient(),
+                        tableName(AuthcodeRepository.class)
+                );
+            }
             if (autocreateTables) authcodeRepository.createTableIfNotExists();
         }
         return authcodeRepository;
@@ -91,11 +97,13 @@ public class DynoDbOauth2Configuration implements Oauth2Configuration {
     @Override
     public DynamoDbUserRepository userRepository() {
         if (userRepository == null) {
-            userRepository = new DynamoDbUserRepository(
-                    dynamoDbClient(),
-                    tableName(UserRepository.class),
-                    acceptingSignup
-            );
+            synchronized (this) {
+                if (userRepository == null) userRepository = new DynamoDbUserRepository(
+                        dynamoDbClient(),
+                        tableName(UserRepository.class),
+                        acceptingSignup
+                );
+            }
             if (autocreateTables) userRepository.createTableIfNotExists();
         }
         return userRepository;
@@ -104,10 +112,12 @@ public class DynoDbOauth2Configuration implements Oauth2Configuration {
     @Override
     public DynamoDbOauthSessionRepository oauthSessionRepository() {
         if (oauthSessionRepository == null) {
-            oauthSessionRepository = new DynamoDbOauthSessionRepository(
-                    dynamoDbClient(),
-                    tableName(OauthSessionRepository.class)
-            );
+            synchronized (this) {
+                if (oauthSessionRepository == null) oauthSessionRepository = new DynamoDbOauthSessionRepository(
+                        dynamoDbClient(),
+                        tableName(OauthSessionRepository.class)
+                );
+            }
             if (autocreateTables) oauthSessionRepository.createTableIfNotExists();
         }
         return oauthSessionRepository;
