@@ -35,10 +35,6 @@ public class DynamoDbRepository<T> {
         if (!valueInterface.isInterface()) throw new RuntimeException("Must be an interface");
     }
 
-    public void log(String s) {
-        System.out.println(getClass().getSimpleName() + " " + s);
-    }
-
     public long epochSecondsExpiry(long secondsDuration) {
         long epochSecond = System.currentTimeMillis() / 1000L;
         return epochSecond + secondsDuration;
@@ -102,7 +98,6 @@ public class DynamoDbRepository<T> {
 
     // https://github.com/awsdocs/aws-doc-sdk-examples/blob/main/javav2/example_code/dynamodb/src/main/java/com/example/dynamodb/CreateTable.java
     public synchronized void createTableIfNotExists() {
-        log("createTableIfNotExists:entry");
         DescribeTableRequest describeTable = DescribeTableRequest.builder()
                 .tableName(tableName)
                 .build();
@@ -112,7 +107,6 @@ public class DynamoDbRepository<T> {
             exists = response != null;
         } catch (ResourceNotFoundException rnf) {
         }
-        log("createTableIfNotExists:exists=" + exists);
         if (!exists) {
             DynamoDbWaiter waiter = client.waiter();
             client.createTable(CreateTableRequest.builder()
@@ -151,7 +145,6 @@ public class DynamoDbRepository<T> {
             }
 
             ttlField().ifPresent(ttlFieldName -> {
-                log("createTableIfNotExists:ttlFieldName=" + ttlFieldName);
                 client.updateTimeToLive(UpdateTimeToLiveRequest.builder()
                         .tableName(tableName)
                         .timeToLiveSpecification(TimeToLiveSpecification.builder()
@@ -167,7 +160,6 @@ public class DynamoDbRepository<T> {
 
     // there has to be an easier (and better) way than this.
     T reflectiveItemConverter(Map<String, AttributeValue> item) {
-        log("reflectiveItemConverter:" + item);
         if (item == null || item.isEmpty()) return null;
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         if (classLoader == null) classLoader = getClass().getClassLoader();
@@ -175,7 +167,6 @@ public class DynamoDbRepository<T> {
             @Override
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                 String methodName = method.getName();
-                log("reflectiveItemConverter:proxyhandler:" + methodName);
                 AttributeValue av = item.get(methodName);
                 return fromAttributeValue(av, method);
             }
@@ -247,33 +238,26 @@ public class DynamoDbRepository<T> {
     }
 
     public void write(T value) {
-        log("write ENTRY");
         client.putItem(PutItemRequest.builder()
                 .tableName(tableName)
                 .item(convert(value))
                 .build());
-        log("write EXIT");
     }
 
     public void delete(String key)  {
-        log("delete ENTRY");
         client.deleteItem(DeleteItemRequest.builder()
                 .key(Map.of(idFieldName(), AttributeValue.fromS(key)))
-                .build());
-        log("delete EXIT");
+                .build());;
     }
 
     public T findById(String key) {
-        log("findById ENTRY");
         try {
             GetItemResponse response = client.getItem(GetItemRequest.builder()
                     .tableName(tableName)
                     .key(Map.of(idFieldName(), AttributeValue.fromS(key)))
                     .build());
-            log("delete EXIT");
             return reflectiveItemConverter(response.item());
         } catch (ResourceNotFoundException rnf) {
-            log("delete rnf EXIT");
             return null;
         }
     }

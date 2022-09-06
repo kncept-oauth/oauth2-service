@@ -41,7 +41,6 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
             Map<String, String> cookies = headerCookies(input);
             Optional<String> oauthSessionId = Optional.ofNullable(cookies.get("oauthSessionId"));
 
-            log("Handling path " + path);
             if (path.equals("/authorize")) {
                 return handleResponse(oauth2.authorize(bodyOrQueryParams(input), oauthSessionId));
             } else if (path.equals("/login")) {
@@ -120,22 +119,18 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
     }
 
     private Map<String, String> bodyOrQueryParams(APIGatewayProxyRequestEvent input) throws IOException {
-        log("bodyOrQueryParams");
         return input.getHttpMethod().toLowerCase().equals("post") ?
                 bodyParams(input) : queryParams(input);
     }
     private Map<String, String> queryParams(APIGatewayProxyRequestEvent input) {
         Map<String, String> params = input.getQueryStringParameters();
-        log("queryParams " + params);
         if (params == null) params = new HashMap<>();
         return params;
     }
     private Map<String, String> bodyParams(APIGatewayProxyRequestEvent input) throws IOException {
-        log("bodyOrQueryParams");
         return extractSimpleParams(input.getBody());
     }
     public Map<String, String> extractSimpleParams(String query) throws IOException {
-        log("extractSimpleParams: " + query);
         Map<String, String> params = new HashMap<String, String>();
         if (query != null) for (String param : query.split("&")) {
             String pair[] = param.split("=");
@@ -146,11 +141,6 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
             }
             params.put(key, value);
         }
-        log("extractSimpleParams: EXIT " + params);
         return params;
-    }
-
-    public void log(String s) {
-        System.out.println(getClass().getSimpleName() + " " + s);
     }
 }
