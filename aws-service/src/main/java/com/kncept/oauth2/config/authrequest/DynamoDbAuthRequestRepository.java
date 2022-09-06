@@ -25,7 +25,7 @@ public class DynamoDbAuthRequestRepository extends DynamoDbRepository<AuthReques
                 clientId,
                 responseType
         );
-        write(oauthSessionId, authReqeust);
+        write(authReqeust);
         return authReqeust;
     }
 

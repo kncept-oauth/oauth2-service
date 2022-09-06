@@ -18,7 +18,7 @@ public class DynamoDbAuthcodeRepository extends DynamoDbRepository<Authcode> imp
     @Override
     public Authcode create(String authCode, String oauthSessionId) {
         Authcode code = new SimpleAuthcode(authCode, oauthSessionId);
-        write(authCode, code);
+        write(code);
         return code;
     }
 

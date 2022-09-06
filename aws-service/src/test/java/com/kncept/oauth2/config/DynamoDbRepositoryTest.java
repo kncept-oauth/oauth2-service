@@ -4,6 +4,11 @@ import com.kncept.oauth2.config.authrequest.AuthRequest;
 import com.kncept.oauth2.config.authrequest.SimpleAuthRequest;
 import com.kncept.oauth2.config.client.Client;
 import com.kncept.oauth2.config.client.SimpleClient;
+import com.kncept.oauth2.config.user.SaltedUser;
+import com.kncept.oauth2.config.user.SimpleSaltedUser;
+import com.kncept.oauth2.config.user.SimpleUser;
+import com.kncept.oauth2.config.user.User;
+
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
@@ -21,13 +26,13 @@ public class DynamoDbRepositoryTest {
         String clientId = UUID.randomUUID().toString();
 
         Client original = new SimpleClient(clientId);
-        Map<String, AttributeValue> converted = repository.convert(clientId, original);
+        Map<String, AttributeValue> converted = repository.convert(original);
         assertNotNull(converted);
         
         assertTrue(converted.containsKey("clientId"));
         assertEquals(clientId, converted.get("clientId").s());
         assertTrue(converted.containsKey("enabled"));
-        assertEquals(clientId, converted.get("enabledId").b());
+        assertEquals(original.enabled(), converted.get("enabled").bool());
 
         assertFalse(converted.containsKey("id"));
         
@@ -48,7 +53,7 @@ public class DynamoDbRepositoryTest {
                 "clientId string",
                 "responseType string"
         		);
-        Map<String, AttributeValue> converted = repository.convert(oauthSessionId, original);
+        Map<String, AttributeValue> converted = repository.convert(original);
         AuthRequest reconstitued = (AuthRequest)repository.reflectiveItemConverter(converted);
         assertEquals(original.oauthSessionId(), reconstitued.oauthSessionId());
         assertEquals(original.state(), reconstitued.state());
@@ -60,7 +65,7 @@ public class DynamoDbRepositoryTest {
     
     @Test
     public void typeConversions() {
-    	DynamoDbRepository repository = new DynamoDbRepository(null, null, null);
+    	DynamoDbRepository repository = new DynamoDbRepository(User.class, null, null);
     	AttributeValue av = null;
     	
     	av = repository.toAttributeValue("stringValue");
@@ -81,7 +86,7 @@ public class DynamoDbRepositoryTest {
     
     @Test
     public void typeDeconversions() throws Exception {
-    	DynamoDbRepository repository = new DynamoDbRepository(null, null, null);
+    	DynamoDbRepository repository = new DynamoDbRepository(User.class, null, null);
     	AttributeValue av = null;
     	Object value = null;
     	
@@ -106,4 +111,31 @@ public class DynamoDbRepositoryTest {
     	assertEquals(Optional.of("stringOption"), value);
     }
 
+    @Test
+    public void canConvertSimpleUser() {
+        DynamoDbRepository repository = new DynamoDbRepository<User>(User.class, null, "KnceptOidcSimpleUserRepository");
+        String randomUserId = UUID.randomUUID().toString();
+        SimpleUser original = new SimpleUser(randomUserId, "simpleusername");
+        Map<String, AttributeValue> converted = repository.convert(original);
+        User reconstitued = (User)repository.reflectiveItemConverter(converted);
+        assertEquals(randomUserId, reconstitued.userId());
+    }
+
+    @Test
+    public void canConvertSimpleSaltedUser() {
+        DynamoDbRepository repository = new DynamoDbRepository<SaltedUser>(SaltedUser.class, null, "KnceptOidcSimpleSaltedUserRepository");
+        String randomUserId = UUID.randomUUID().toString();
+        SimpleSaltedUser original = new SimpleSaltedUser(
+                randomUserId,
+                "simpleusername",
+                "salt",
+                "precomputedHash",
+                null
+        );
+        Map<String, AttributeValue> converted = repository.convert(original);
+        SaltedUser reconstitued = (SaltedUser)repository.reflectiveItemConverter(converted);
+        assertEquals(randomUserId, reconstitued.userId());
+        assertNull(reconstitued.hashAlgorithm());
+        assertEquals("salt", reconstitued.salt());
+    }
 }

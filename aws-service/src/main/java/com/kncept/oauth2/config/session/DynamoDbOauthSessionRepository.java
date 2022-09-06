@@ -19,7 +19,7 @@ public class DynamoDbOauthSessionRepository extends DynamoDbRepository<OauthSess
     @Override
     public OauthSession createSession() {
         SimpleOauthSession session = new SimpleOauthSession(UUID.randomUUID().toString(), Optional.empty());
-        write(session.oauthSessionId(), session);
+        write(session);
         return session;
     }
 
@@ -33,7 +33,7 @@ public class DynamoDbOauthSessionRepository extends DynamoDbRepository<OauthSess
         OauthSession session = findById(oauthSessionId);
         if (session != null) {
             session = new SimpleOauthSession(oauthSessionId, Optional.of(userId));
-            write(oauthSessionId, session);
+            write(session);
         }
         return Optional.ofNullable(session);
     }

@@ -6,6 +6,9 @@ import software.amazon.awssdk.services.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.waiters.DynamoDbWaiter;
 
 import java.lang.reflect.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -14,7 +17,8 @@ public class DynamoDbRepository<T> {
     private final Class<T> valueInterface;
     private final DynamoDbClient client;
     private final String tableName;
-
+    private List<Method> methods;
+    
     private String idFieldName;
 
     public DynamoDbRepository(Class<T> valueInterface, String tableName) {
@@ -29,12 +33,39 @@ public class DynamoDbRepository<T> {
         this.valueInterface = valueInterface;
         this.client = client;
         this.tableName = tableName;
+        
+        if (!valueInterface.isInterface()) throw new RuntimeException("Must be an interface");
+    }
+    
+    // add methods from interface (and superinterfaces)
+    // and filter for non-void returns with 0 input paramaters
+    private List<Method> methods() {
+    	if (methods == null) {
+    		List<Method> allMethods = allMethods(valueInterface);
+    		methods = new ArrayList<>();
+    		// now filter them;
+    		for(Method m: allMethods) {
+    			if (void.class != m.getReturnType() && m.getParameterCount() == 0)
+    				methods.add(m);
+    		}
+    		
+    	}
+    	return methods;
+    }
+    private List<Method> allMethods(Class<?> c) {
+    	List<Method> methods = new ArrayList<>();
+    	methods.addAll(Arrays.asList(c.getDeclaredMethods()));
+    	for(Class<?> intf: c.getInterfaces()) {
+    		methods.addAll(allMethods(intf));
+    	}
+    	return methods;
     }
 
     private String idFieldName() {
         if (idFieldName == null) {
-            for (Method m : valueInterface.getDeclaredMethods()) {
+            for (Method m : methods()) {
                 if (m.getAnnotation(OidcIdField.class) != null) {
+                	if (idFieldName != null) throw new IllegalStateException("Multiple ID fields");
                     idFieldName = m.getName();
                 }
             }
@@ -125,10 +156,10 @@ public class DynamoDbRepository<T> {
     	
     	throw new RuntimeException("Unable to convert value of type" + value.getClass().getSimpleName());
     }
-    public Map<String, AttributeValue> convert(String key, T value) {
+    public Map<String, AttributeValue> convert(T value) {
     	try {
 	        Map<String, AttributeValue> ddbValue = new TreeMap<>();
-	        for(Method m: valueInterface.getDeclaredMethods()) {
+	        for(Method m: methods()) {
 	        	Object fieldValue = m.invoke(value);
 	        	ddbValue.put(m.getName(), toAttributeValue(fieldValue));
 	        }
@@ -142,10 +173,10 @@ public class DynamoDbRepository<T> {
 		} 
     }
 
-    public void write(String key, T value) {
+    public void write(T value) {
         client.putItem(PutItemRequest.builder()
                 .tableName(tableName)
-                .item(convert(key, value))
+                .item(convert(value))
                 .build());
     }
 
