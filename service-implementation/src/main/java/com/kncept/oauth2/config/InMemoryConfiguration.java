@@ -16,7 +16,7 @@ public class InMemoryConfiguration implements Oauth2Configuration {
     private InMemoryAuthcodeRepository authcodeRepository;
 
     public InMemoryConfiguration() {
-        requirePkce = true;
+        requirePkce = false;
     }
 
     public InMemoryConfiguration(boolean requirePkce) {

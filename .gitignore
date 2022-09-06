@@ -1,8 +1,14 @@
 .gradle
 build
 .vscode
-bin
 .idea
+
+aws-service/bin/
+java-service/bin/
+service-crypto/bin/
+service-implementation/bin/
+service-interfaces/bin/
+
 aws-deploy.properties
 .gradle-cache-*
 **/.classpath

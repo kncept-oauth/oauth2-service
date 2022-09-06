@@ -19,4 +19,10 @@ public class DynamoDbClientRepository extends DynamoDbRepository<Client> impleme
     public Optional<Client> lookup(String clientId) {
         return Optional.ofNullable(findById(clientId));
     }
+
+    @Override
+    public Optional<Client> update(Client client) {
+        write(client);
+        return Optional.of(client);
+    }
 }

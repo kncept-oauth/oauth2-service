@@ -6,24 +6,11 @@ public class AnyClientRepository implements ClientRepository {
 
     @Override
     public Optional<Client> lookup(String clientId) {
-        return Optional.of(new AnyClient(clientId));
+        return Optional.of(new SimpleClient(clientId, true));
     }
 
-    private static class AnyClient implements Client {
-        private final String clientId;
-
-        public AnyClient(String clientId) {
-            this.clientId = clientId;
-        }
-
-        @Override
-        public String clientId() {
-            return clientId;
-        }
-
-        @Override
-        public boolean enabled() {
-            return true;
-        }
+    @Override
+    public Optional<Client> update(Client client) {
+        return Optional.of(client);
     }
 }

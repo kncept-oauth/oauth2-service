@@ -50,8 +50,6 @@ public class HandlerTest {
 
     private APIGatewayProxyRequestEvent createSyntheticEvent() {
         APIGatewayProxyRequestEvent event =  new APIGatewayProxyRequestEvent();
-        event.setPath("/");
-        event.setMultiValueHeaders(new HashMap<>());
         return event;
     }
 

@@ -40,7 +40,18 @@ tasks:
     description: Build java-11 zip file for aws
     run:
       container: java
-      command: ./gradlew :aws-service:buildZip :aws-service:jar
+      command: ./gradlew :aws-service:jarDist :aws-service:zipDist
 
-
-
+  deployAws:
+    description: Deploys to AWS using the CDK. N.B. you need to have sys props set
+#    prerequisites:
+#      - buildAws
+    run:
+      container: nodejs
+      command: "'npm i && npm run cdk deploy OidcDockerLambda'"
+      entrypoint: /bin/sh -c
+      working_directory: /simple-oidc/aws-deploy
+      environment:
+        AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+        AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+        AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}

@@ -5,6 +5,9 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.kncept.oauth2.config.InMemoryConfiguration;
+import com.kncept.oauth2.config.Oauth2Configuration;
+import com.kncept.oauth2.config.client.Client;
+import com.kncept.oauth2.config.client.SimpleClient;
 import com.kncept.oauth2.operation.response.ContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
 import com.kncept.oauth2.operation.response.RedirectResponse;
@@ -15,13 +18,27 @@ import java.net.URLDecoder;
 import java.util.*;
 
 public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
-    private final Oauth2 oauth2 = new Oauth2(new InMemoryConfiguration()); // BAD for a lambda
+    private static final String knceptClient = "kncept-client"; // kncept-oidc
+    private final Oauth2 oauth2;
+    public Handler() {
+
+        // bootstrap a client config
+        Oauth2Configuration config = new InMemoryConfiguration(); // BAD for a lambda
+        if(config.clientRepository().lookup(knceptClient).isEmpty()) {
+            Client knceptOidcClient = new SimpleClient(knceptClient, true);
+            config.clientRepository().update(knceptOidcClient);
+        }
+        oauth2 = new Oauth2(config);
+    }
+
+
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
         try {
 
-            String path = input.getPath().toLowerCase();
+            String path = input.getPath();
+            path = path == null ? "" : path.toLowerCase();
             Map<String, String> cookies = headerCookies(input);
             Optional<String> oauthSessionId = Optional.ofNullable(cookies.get("oauthSessionId"));
 
@@ -85,6 +102,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
 
     private Map<String, String> headerCookies(APIGatewayProxyRequestEvent input) {
         Map<String, String> cookies = new HashMap<>();
+        if (input.getMultiValueHeaders() == null) return cookies;
         List<String> cookieHeaders = input.getMultiValueHeaders().get("Cookie");
         if (cookieHeaders != null) for(String cookieString: cookieHeaders) {
             for(String cookie: cookieString.split(";")) {

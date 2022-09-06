@@ -10,7 +10,13 @@ public class InMemoryClientRepository implements ClientRepository {
 
     @Override
     public Optional<Client> lookup(String clientId) {
-        return Optional.of(clients.get(clientId));
+        return Optional.ofNullable(clients.get(clientId));
+    }
+
+    @Override
+    public Optional<Client> update(Client client) {
+        clients.put(client.clientId(), new SimpleClient(client.clientId(), client.enabled()));
+        return Optional.of(client);
     }
 
     public void createClient(String clientId) {

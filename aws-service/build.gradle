@@ -13,29 +13,6 @@ sourceSets.main {
     ]
 }
 
-task buildZip(type: Zip) {
-    from compileJava
-    from processResources
-    into('lib') {
-        from configurations.runtimeClasspath
-    }
-}
-task libJar(type: Jar) {
-    manifest {
-//         Class-Path: MyUtils.jar
-//        attributes 'Main-Class': "${mainClassName}"
-//        attributes 'Implementation-Title': 'Kncept Oauth2 Service Lambda'
-    }
-    archiveBaseName = "aws-service-bundle-" + archiveVersion
-
-	from compileJava
-    from processResources
-    into('lib') {
-        from configurations.runtimeClasspath
-    }
-}
-
-
 // use JUnit5 Platform for testing
 test {
     useJUnitPlatform()
@@ -67,3 +44,29 @@ dependencies {
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:' + junit5version
 	testImplementation 'org.junit.jupiter:junit-jupiter-engine:' + junit5version
 }
+
+
+task zipDist(type: Zip) {
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtimeClasspath
+    }
+}
+
+task copyJars(type: Copy) {
+//    doFirst(
+//            project.file('build/libs').mkdirs()
+//    )
+    from configurations.runtimeClasspath
+//    from processResources
+//    from compileJava
+    into project.file('build/libs')
+//    include('*.jar')
+}
+
+task dist {}
+
+dist.dependsOn zipDist
+dist.dependsOn jar
+dist.dependsOn copyJars

@@ -36,3 +36,22 @@ dependencies {
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:' + junit5version
 	testImplementation 'org.junit.jupiter:junit-jupiter-engine:' + junit5version
 }
+
+
+task jarDist(type: Jar) {
+	manifest {
+		attributes 'Class-Path': configurations.runtimeClasspath.collect {"lib/" + it.name}.join(' ')
+		attributes 'Main-Class': mainClassName
+		attributes 'Name': 'Kncept OIDC'
+		attributes 'Implementation-Title': 'Kncept OIDC Service'
+		attributes 'Implementation-Vendor': 'Kncept'
+//		attributes 'Implementation-Version': archiveVersion
+	}
+	archiveFileName = 'kncept-oidc-service.jar'
+	destinationDirectory = file("build/distributions")
+
+	from compileJava
+	into('lib') {
+		from configurations.runtimeClasspath
+	}
+}

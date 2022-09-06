@@ -6,5 +6,7 @@ import java.util.Optional;
 public interface ClientRepository {
 
     Optional<Client> lookup(String clientId);
+
+    Optional<Client> update(Client client);
 }
 
