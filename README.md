@@ -1,45 +1,76 @@
-# oauth2-service
-OAuth2 Service
+# Simple-OIDC
+A Lightweight OIDC over OAuth2 Service
 
-A lightweight extensible Oauth2 solution, designed to be able to tie into existing auth systems with minimal configuration. 
+The bulk of this project is an integration-ready oidc processor that can be
+embedded into an application of choice.
 
-Retrofitted for Java11 because AWS doesn't support modern things
+The configuration can be partially or completely extended and configured.
+This project includes fully working and deployable solutions, with the option 
+to customise via environment properties. At the other end of the spectrum 
+it's possible to integrated directly against the OIDC processor as a library,
+and provide custom code level configurations to deal with any use case imaginable.
 
-## How to use
+## Quickstart (aws)
+Requires docker and nodejs.
+- Clone this project `git clone git@github.com:kncept-oauth/simple-oidc.git`
+- Build java components `./batect dist` / `batect dist`
+- Configure AWS keys `export AWS_ACCESS_KEY_ID=...` / `set AWS_ACCESS_KEY_ID=...`
+- Deploy `cd aws-deploy && npm i && npm run cdk deploy OidcDockerLambda`
 
-There are a few different ways to use this project.
-The recommended way is to deploy and configure
+The URL that is output is the URL_BASE to use for endpoints to integrate against.
+- Authorize Endpoint: ${URL_BASE}/authorize
+- Token Endpoint: ${URL_BASE}/oauth/token
 
-### Run simple java server locally
-    `gradlew :java-service:run` 
+### Run simple dev server locally
+This assumes that you also have Java installed on your system
+`./gradlew :java-service:run` / `gradlew :java-service:run` will run the java-service on :8080 configured for development
+- Authorize Endpoint: http://localhost:8080/authorize
+- Token Endpoint: http://localhost:8080/oauth/token
 
-### Deploy and Configure
-Deploy the .zip file as a lambda, and configure the appropriate configuration options.
+# Integration
 
-### Configuration points:
-See [Oauth2Configuration](service-implementation/src/main/java/com/kncept/oauth2/configuration/Oauth2Configuration.java) for details
-  - oauth2.require-pkce
-    - boolean
-    - `true` to force PKCE , otherwise empty or `false`
-  - oauth2.client-repository
-    - java classname
-    - Client Repository Details, defaults to allowing any client id
-  - oauth2.authrequest-repository
-    - java classname
-    - Auth Request Persistence, defaults to in memory.
-  - oauth2.user-repository
-    - java classname
-    - End User Authentication
+## As a Library
+    Oauth2Configuration config = ...
+    Oauth2Processor oauth2 = new Oauth2(config)
+Then hook up the the Oauth2Processor interface to your web application.
+This makes overriding and extending config trivial, and gives the most flexibility, but requires the most effort.
+N.B. provider specific libraries (eg: AWS Dynamo DB config) will be in provider specific jars.
 
-## Deployment
+## Using a prepared solution
+The prepared solutions read from the `oidc_config` environment property.
+This can be configured to point to a full implementation of the Oauth2Configuration
+interface, or can be left blank and individual points can be configured.
+
+Note that if you intend to parially override an existing class, it must be on the
+classpath of the running application to be usable.
+
+The following `oidc_config` classes are shipped:
+- `com.kncept.oauth2.config.SystemProperyConfiguration` - Detailed below
+- `com.kncept.oauth2.config.DynoDbOauth2Configuration` - in service-aws, DyndoDB tables, including including auto table creation.
+- `com.kncept.oauth2.config.InMemoryConfiguration` - In memory volatile store, useful for testing
+
+You probably want to extend something like DynoDbOauth2Configuration and override the UserRepository
+with your own implementation.
+
+### SystemProperyConfiguration 
+By default, the prepared soutions use a
+[SystemProperyConfiguration](service-implementation/src/main/java/com/kncept/oauth2/config/SystemProperyConfiguration.java)
+which needs the following environment properties set:
+    - `oidc_config_pkce`  true to require PKCE, false if it is optional
+    - `oidc_config_clients` a [ClientRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/client/ClientRepository.java)
+    - `oidc_config_authrequests` an [AuthRequestRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/authrequest/AuthRequestRepository.java)
+    - `oidc_config_users` a [UserRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/user/UserRepository.java)
+    - `oidc_config_sessions` an [OauthSessionRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/session/OauthSessionRepository.java)
+    - `oidc_config_authcodes`an [AuthcodeRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/authcode/AuthcodeRepository.java)
+
+## AWS Deployment
 A default aws deployment is provided in the `aws-deploy` folder
 
-You to use as-is, you will need to `set` or `export` your own deployment keys
+You to use as-is, you will need to `export` or `set` your own deployment keys
 
-    - AWS_ACCESS_KEY_ID
-    - AWS_SECRET_ACCESS_KEY
-    - AWS_DEFAULT_REGION
+    AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY
+    AWS_DEFAULT_REGION
 
-If someone wants to build me an equivalent azure one, please do :)
-
-
+You can add your own classes into the Dockerfile, but as long as project-specific code
+isn't pushed upstream, you can always modify a repository fork.

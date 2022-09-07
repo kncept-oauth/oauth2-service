@@ -10,6 +10,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.function.Supplier;
 
 public interface Oauth2Configuration {
+        String OIDC_CONFIGURATION_ROOT_PROPERTY = "oidc_config";
+
         boolean requirePkce();
         ClientRepository clientRepository();
         AuthRequestRepository authRequestRepository();
@@ -17,9 +19,9 @@ public interface Oauth2Configuration {
         UserRepository userRepository();
         OauthSessionRepository oauthSessionRepository();
 
-        static Oauth2Configuration loadConfigurationFromEnvProperty(String property, Supplier<? extends Oauth2Configuration> defaultValue) {
+        static Oauth2Configuration loadConfigurationFromEnvProperty(Supplier<? extends Oauth2Configuration> defaultValue) {
                 try {
-                        String configClassName = System.getenv(property);
+                        String configClassName = System.getenv(OIDC_CONFIGURATION_ROOT_PROPERTY);
                         if (configClassName == null) return defaultValue.get();
                         Class configClass = Class.forName(configClassName);
                         return (Oauth2Configuration)configClass.getDeclaredConstructor().newInstance();

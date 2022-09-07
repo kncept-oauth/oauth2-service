@@ -28,7 +28,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class Oauth2 {
+public class Oauth2 implements Oauth2Processor {
 
     enum ResponseType {
             code ; //, token;

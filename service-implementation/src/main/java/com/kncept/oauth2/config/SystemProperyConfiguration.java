@@ -3,7 +3,6 @@ package com.kncept.oauth2.config;
 import com.kncept.oauth2.config.authcode.AuthcodeRepository;
 import com.kncept.oauth2.config.authrequest.AuthRequestRepository;
 import com.kncept.oauth2.config.client.ClientRepository;
-import com.kncept.oauth2.config.Oauth2Configuration;
 import com.kncept.oauth2.config.session.OauthSessionRepository;
 import com.kncept.oauth2.config.user.UserRepository;
 
@@ -16,10 +15,11 @@ public class SystemProperyConfiguration implements Oauth2Configuration {
     private OauthSessionRepository oauthSessionRepository;
     private AuthcodeRepository authcodeRepository;
 
+
     @Override
     public synchronized boolean requirePkce() {
         if (requirePkce == null) {
-            requirePkce = getBooleanSystemProperty("oauth2.require-pkce");
+            requirePkce = getBooleanEnvProperty("pkce");
             if (requirePkce == null) throw new NullPointerException();
         }
         return requirePkce;
@@ -28,7 +28,7 @@ public class SystemProperyConfiguration implements Oauth2Configuration {
     @Override
     public synchronized ClientRepository clientRepository() {
         if (clientRepository == null) {
-            clientRepository = loadClassFromSystemProperty("oauth2.client-repository", ClientRepository.class);
+            clientRepository = loadClassFromEnvProperty("clients", ClientRepository.class);
         }
         return clientRepository;
     }
@@ -36,7 +36,7 @@ public class SystemProperyConfiguration implements Oauth2Configuration {
     @Override
     public synchronized AuthRequestRepository authRequestRepository() {
         if (authRequestRepository == null) {
-            authRequestRepository = loadClassFromSystemProperty("oauth2.authrequest-repository", AuthRequestRepository.class);
+            authRequestRepository = loadClassFromEnvProperty("authrequests", AuthRequestRepository.class);
         }
         return authRequestRepository;
     }
@@ -44,7 +44,7 @@ public class SystemProperyConfiguration implements Oauth2Configuration {
     @Override
     public synchronized UserRepository userRepository() {
         if (userRepository == null) {
-            userRepository = loadClassFromSystemProperty("oauth2.user-repository", UserRepository.class);
+            userRepository = loadClassFromEnvProperty("users", UserRepository.class);
         }
         return userRepository;
     }
@@ -52,7 +52,7 @@ public class SystemProperyConfiguration implements Oauth2Configuration {
     @Override
     public synchronized OauthSessionRepository oauthSessionRepository() {
         if (oauthSessionRepository == null) {
-            oauthSessionRepository = loadClassFromSystemProperty("oauth2.session-repository", OauthSessionRepository.class);
+            oauthSessionRepository = loadClassFromEnvProperty("sessions", OauthSessionRepository.class);
         }
         return oauthSessionRepository;
     }
@@ -60,24 +60,24 @@ public class SystemProperyConfiguration implements Oauth2Configuration {
     @Override
     public AuthcodeRepository authcodeRepository() {
         if (authcodeRepository == null) {
-            authcodeRepository = loadClassFromSystemProperty("oauth2.authcode-repository", AuthcodeRepository.class);
+            authcodeRepository = loadClassFromEnvProperty("authcodes", AuthcodeRepository.class);
         }
         return authcodeRepository;
     }
 
-    private static String getSystemProperty(String name) {
-        String value = System.getProperty(name);
+    private static String getEnvProperty(String suffix) {
+        String value = System.getenv(OIDC_CONFIGURATION_ROOT_PROPERTY + "_" + suffix);
         if (value == null) return null;
         value = value.trim();
         if (value.equals("")) return null;
         return value;
     }
     // will return null if system property is empty/absent
-    public static <T> T loadClassFromSystemProperty(
+    private static <T> T loadClassFromEnvProperty(
             String propertyName,
             Class<T> type
     ) {
-        String className = getSystemProperty(propertyName);
+        String className = getEnvProperty(propertyName);
         if (className == null) throw new NullPointerException();
         try {
             Object configuredImpl = Thread.currentThread().getContextClassLoader().loadClass(className);
@@ -89,8 +89,9 @@ public class SystemProperyConfiguration implements Oauth2Configuration {
         }
     }
 
-    private Boolean getBooleanSystemProperty(String propertyName) {
-        String booleanValue = getSystemProperty(propertyName);
+    // no dots or dashes :/
+    private Boolean getBooleanEnvProperty(String suffix) {
+        String booleanValue = getEnvProperty(suffix);
         if (booleanValue == null) return null;
        return Boolean.valueOf(booleanValue);
     }

@@ -55,3 +55,8 @@ task jarDist(type: Jar) {
 		from configurations.runtimeClasspath
 	}
 }
+
+
+run {
+	environment("oidc_config","com.kncept.oauth2.config.InMemoryConfiguration")
+}

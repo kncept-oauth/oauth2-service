@@ -5,6 +5,7 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.kncept.oauth2.config.Oauth2Configuration;
+import com.kncept.oauth2.config.SystemProperyConfiguration;
 import com.kncept.oauth2.config.client.Client;
 import com.kncept.oauth2.config.client.SimpleClient;
 import com.kncept.oauth2.operation.response.ContentResponse;
@@ -17,15 +18,13 @@ import java.net.URLDecoder;
 import java.util.*;
 
 public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
-    private static final String knceptClient = "kncept-client"; // kncept-oidc
-    private final Oauth2 oauth2;
+    private static final String knceptClient = "kncept-oidc-client";
+    private final Oauth2Processor oauth2;
     public Handler() {
         this(Oauth2Configuration.loadConfigurationFromEnvProperty(
-                "oidc_config",
-                () -> new com.kncept.oauth2.config.DynoDbOauth2Configuration()));
+                () -> new SystemProperyConfiguration()));
     }
     public Handler(Oauth2Configuration config) {
-        System.out.println("NEW Handler");
         oauth2 = new Oauth2(config);
         oauth2.init(false); // easier init of tables
         if(config.clientRepository().lookup(knceptClient).isEmpty()) {

@@ -1,6 +1,9 @@
 package com.kncept.oauth2;
 
-import com.kncept.oauth2.config.InMemoryConfiguration;
+import com.kncept.oauth2.config.Oauth2Configuration;
+import com.kncept.oauth2.config.SystemProperyConfiguration;
+import com.kncept.oauth2.config.client.Client;
+import com.kncept.oauth2.config.client.SimpleClient;
 import com.kncept.oauth2.operation.response.ContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
 import com.kncept.oauth2.operation.response.RedirectResponse;
@@ -18,9 +21,9 @@ import java.util.*;
 import java.util.concurrent.Executors;
 
 public class KnceptOauth2Server implements HttpHandler {
+    private static final String knceptClient = "kncept-oidc-client";
 
     public static void main(String[] args) throws IOException {
-
         HttpServer server;
 
         // localhost or 127.0.0.1
@@ -40,25 +43,18 @@ public class KnceptOauth2Server implements HttpHandler {
 
         server.start();
         System.out.println("started " + hostname + ":" + port + " (" + mode + ")");
-
-        // shouldn't need this, but allow it to be switched if you must
-        if (System.getProperties().containsKey("wait")) {
-            synchronized (server) {
-                try {
-                    server.wait();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException("Error waiting for server", e);
-                }
-            }
-        }
     }
 
-    private final Oauth2 oauth2;
+    private final Oauth2Processor oauth2;
 
     public KnceptOauth2Server() {
-        InMemoryConfiguration config = new InMemoryConfiguration();
-        config.clientRepository().createClient("kncept-oauth");
+        Oauth2Configuration config = Oauth2Configuration.loadConfigurationFromEnvProperty(() -> new SystemProperyConfiguration());
+        if(config.clientRepository().lookup(knceptClient).isEmpty()) {
+            Client knceptOidcClient = new SimpleClient(knceptClient, true);
+            config.clientRepository().update(knceptOidcClient);
+        }
         oauth2 = new Oauth2(config);
+        oauth2.init(false); // easier init of tables
     }
 
     @Override
