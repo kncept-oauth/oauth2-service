@@ -1,12 +1,12 @@
-# Simple-OIDC
+# [Simple-OIDC](https://github.com/kncept-oauth/simple-oidc)
 A Lightweight OIDC over OAuth2 Service
 
 The bulk of this project is an integration-ready oidc processor that can be
 embedded into an application of choice.
 
 The configuration can be partially or completely extended and configured.
-This project includes fully working and deployable solutions, with the option 
-to customise via environment properties. At the other end of the spectrum 
+This project includes fully working and deployable solutions, with the option
+to customise via environment properties. At the other end of the spectrum
 it's possible to integrated directly against the OIDC processor as a library,
 and provide custom code level configurations to deal with any use case imaginable.
 
@@ -52,7 +52,7 @@ The following `oidc_config` classes are shipped:
 You probably want to extend something like DynoDbOauth2Configuration and override the UserRepository
 with your own implementation.
 
-### SystemProperyConfiguration 
+### SystemProperyConfiguration
 By default, the prepared soutions use a
 [SystemProperyConfiguration](service-implementation/src/main/java/com/kncept/oauth2/config/SystemProperyConfiguration.java)
 which needs the following environment properties set:
