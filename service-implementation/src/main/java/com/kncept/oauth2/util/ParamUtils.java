@@ -7,9 +7,9 @@ public class ParamUtils {
 
     public static String required(String name, Map<String, String> params) {
         String value = params.get(name);
-        if (value == null) throw new RuntimeException("Required Param missing: " + name);
+        if (value == null) throw new ClientRequiredParamException("Required Param missing: " + name);
         value = value.trim();
-        if (value.equals("")) throw new RuntimeException("Required Param is empty: " + name);
+        if (value.equals("")) throw new ClientRequiredParamException("Required Param is empty: " + name);
         return value;
     }
     public static String optional(String name, Map<String, String> params, String defaultValue) {
@@ -25,6 +25,12 @@ public class ParamUtils {
         value = value.trim();
         if (value.equals("")) return Optional.empty();
         return Optional.of(value);
+    }
+
+    static class ClientRequiredParamException extends RuntimeException {
+        public ClientRequiredParamException(String msg) {
+            super(msg);
+        }
     }
 
 }

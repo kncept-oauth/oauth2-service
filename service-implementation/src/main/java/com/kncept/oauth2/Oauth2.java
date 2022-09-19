@@ -11,7 +11,6 @@ import com.kncept.oauth2.subhandler.InitHandler;
 import com.kncept.oauth2.subhandler.LoginSignupHandler;
 import com.kncept.oauth2.subhandler.TokenHandler;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -32,15 +31,15 @@ public class Oauth2 implements Oauth2Processor {
     }
 
     // https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
-    public OperationResponse authorize(Map<String, String> params, Optional<String> oauthSessionId) throws IOException {
+    public OperationResponse authorize(Map<String, String> params, Optional<String> oauthSessionId) {
         return new AuthorizeHandler(config).authorize(params, oauthSessionId);
     }
 
-    public OperationResponse login(Map<String, String> params, String oauthSessionId) throws IOException {
+    public OperationResponse login(Map<String, String> params, String oauthSessionId) {
         return new LoginSignupHandler(config).login(params, oauthSessionId);
     }
 
-    public OperationResponse signup(Map<String, String> params, String oauthSessionId) throws IOException {
+    public OperationResponse signup(Map<String, String> params, String oauthSessionId) {
         return new LoginSignupHandler(config).signup(params, oauthSessionId);
     }
 

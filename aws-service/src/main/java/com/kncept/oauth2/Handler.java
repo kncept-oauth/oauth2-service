@@ -16,8 +16,10 @@ import com.kncept.oauth2.operation.response.RenderedContentResponse;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+    private static final Logger logger = Logger.getLogger(Handler.class.getName());
     private static final String knceptClient = "kncept-oidc-client";
     private final Oauth2Processor oauth2;
     public Handler() {
@@ -40,7 +42,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
             path = path == null ? "" : path.toLowerCase();
             Map<String, String> cookies = headerCookies(input);
             Optional<String> oauthSessionId = Optional.ofNullable(cookies.get("oauthSessionId"));
-            if (path.equals("/authorize")) {
+            if (path.equals("/authorize") || path.equals("/oauth/authorize")) {
                 return handleResponse(oauth2.authorize(bodyOrQueryParams(input), oauthSessionId));
             } else if (path.equals("/login")) {
                 return handleResponse(oauth2.login(bodyParams(input), oauthSessionId.orElseThrow()));
@@ -50,15 +52,17 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
                 return handleResponse(oauth2.renderCss());
             } else if (path.equals("/token") || path.equals("/oauth/token")) {
                 return handleResponse(oauth2.token(bodyOrQueryParams(input)));
+            } else if (path.equals("/access_token") || path.equals("/oauth/access_token")) {
+                return handleResponse(oauth2.token(bodyOrQueryParams(input)));
             } else if (path.equals("/init")) {
                 oauth2.init(true);
-                return emptyErrorResponse(200);
+                return emptyResponse(200);
             } else {
-                return emptyErrorResponse(404);
+                return emptyResponse(404);
             }
         } catch (Exception e) {
-            e.printStackTrace(System.out);
-            return emptyErrorResponse(500);
+            logger.severe(e.getMessage());
+            return response(e.getMessage(), 500);
         }
     }
 
@@ -92,11 +96,14 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
         responseEvent.setStatusCode(response.responseCode());
         return responseEvent;
     }
-    private APIGatewayProxyResponseEvent emptyErrorResponse(int statusCode) {
+    private APIGatewayProxyResponseEvent response(String body, int statusCode) {
         APIGatewayProxyResponseEvent responseEvent = new APIGatewayProxyResponseEvent();
         responseEvent.setStatusCode(statusCode);
-        responseEvent.setBody("");
+        responseEvent.setBody(body);
         return responseEvent;
+    }
+    private APIGatewayProxyResponseEvent emptyResponse(int statusCode) {
+        return response("", statusCode);
     }
 
     private Map<String, String> headerCookies(APIGatewayProxyRequestEvent input) {

@@ -42,7 +42,7 @@ public class AuthorizeHandler {
 
 
     // https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
-    public OperationResponse authorize(Map<String, String> params, Optional<String> oauthSessionId) throws IOException {
+    public OperationResponse authorize(Map<String, String> params, Optional<String> oauthSessionId) {
         String scope = required("scope", params); // meant to have 'openid' in it for OIDC
         String responseType = required("response_type", params); // eg: code
         ResponseType.validate(responseType); // inline validation :/ TODO: fix this
@@ -105,29 +105,33 @@ public class AuthorizeHandler {
                 .withParam("acceptingSignup", Boolean.toString(config.userRepository().acceptingSignup()));
     }
 
-    private OperationResponse redirectAfterSuccessfulAuth(String oauthSessionId, AuthRequest authRequest) throws IOException {
-        // redirect back to app.
-        //
-        // Potential option - use an interposing screen.
-        // Use case - ignoring redirect URI and using this service
-        // as an 'index' service
-        // eg: these services have been authorized
-        //   - app1
-        //   - app2
+    private OperationResponse redirectAfterSuccessfulAuth(String oauthSessionId, AuthRequest authRequest) {
+        try {
+            // redirect back to app.
+            //
+            // Potential option - use an interposing screen.
+            // Use case - ignoring redirect URI and using this service
+            // as an 'index' service
+            // eg: these services have been authorized
+            //   - app1
+            //   - app2
 
-        String redirectUri = authRequest.redirectUri();
+            String redirectUri = authRequest.redirectUri();
 
-        if (!redirectUri.endsWith("?")) {
-            redirectUri = redirectUri + "?";
+            if (!redirectUri.endsWith("?")) {
+                redirectUri = redirectUri + "?";
+            }
+
+            Authcode authCode = config.authcodeRepository().create(UUID.randomUUID().toString(), oauthSessionId);
+            redirectUri = redirectUri + "code=" + URLEncoder.encode(authCode.authCode(), "UTF8");
+
+            Optional<String> state = authRequest.state();
+            if (state.isPresent()) redirectUri = redirectUri + "&state=" + URLEncoder.encode(state.get(), "UTF8");
+
+            return new RedirectResponse(redirectUri);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-
-        Authcode authCode = config.authcodeRepository().create(UUID.randomUUID().toString(), oauthSessionId);
-        redirectUri = redirectUri + "code=" + URLEncoder.encode(authCode.authCode(), "UTF8");
-
-        Optional<String> state = authRequest.state();
-        if (state.isPresent()) redirectUri = redirectUri + "&state=" + URLEncoder.encode(state.get(), "UTF8");
-
-        return new RedirectResponse(redirectUri);
     }
 
 
