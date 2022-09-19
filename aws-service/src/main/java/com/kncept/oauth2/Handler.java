@@ -99,7 +99,11 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
     private APIGatewayProxyResponseEvent response(String body, int statusCode) {
         APIGatewayProxyResponseEvent responseEvent = new APIGatewayProxyResponseEvent();
         responseEvent.setStatusCode(statusCode);
+        if (body == null) body = "";
         responseEvent.setBody(body);
+        if (body.equals("")) {
+            responseEvent.getHeaders().put("Content-Type", "text/plain");
+        }
         return responseEvent;
     }
     private APIGatewayProxyResponseEvent emptyResponse(int statusCode) {
