@@ -74,8 +74,9 @@ public class AuthorizeHandler {
         if (oauthSessionId.isPresent()) {
             Optional<OauthSession> session = config.oauthSessionRepository().lookup(oauthSessionId.get());
             if (session.isPresent() && session.get().authenticated()) {
-                Optional<AuthRequest> ar = config.authRequestRepository().lookup(oauthSessionId.get());
-                if (!ar.isPresent()) config.authRequestRepository().createAuthRequest(
+                // for each new inbound auth request, just create a new auth request.
+                // otherwise old state can be picked up
+                AuthRequest ar = config.authRequestRepository().createAuthRequest(
                         oauthSessionId.get(),
                         state,
                         nonce,
@@ -83,7 +84,7 @@ public class AuthorizeHandler {
                         clientId,
                         responseType
                 );
-                return redirectAfterSuccessfulAuth(oauthSessionId.get(), ar.get());
+                return redirectAfterSuccessfulAuth(oauthSessionId.get(), ar);
             }
         }
 
