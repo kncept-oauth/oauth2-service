@@ -102,6 +102,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
         if (body == null) body = "";
         responseEvent.setBody(body);
         if (body.equals("")) {
+            responseEvent.setHeaders(new TreeMap<>());
             responseEvent.getHeaders().put("Content-Type", "text/plain");
         }
         return responseEvent;

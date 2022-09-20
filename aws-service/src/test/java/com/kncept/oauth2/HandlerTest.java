@@ -19,6 +19,7 @@ public class HandlerTest {
         Handler handler = new Handler(new InMemoryConfiguration());
 
         APIGatewayProxyResponseEvent result = handler.handleRequest(createSyntheticEvent(), createSyntheticContext());
+        Assertions.assertEquals("", result.getBody());
         Assertions.assertEquals(404, result.getStatusCode());
     }
 
