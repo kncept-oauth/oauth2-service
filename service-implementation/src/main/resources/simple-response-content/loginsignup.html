@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <title>${title}</title>
+        <link rel="stylesheet" href="${root}style.css">
+    </head>
+    <body>
+        <div class="container">
+            <div id="login-signup-form">
+                <h1>${title}</h1>
+                <form action="${root}${action}" method="post">
+                    ${message}
+                    <div class="form-line">
+                        <label for="username">Username:</label>
+                        <input id="username" name="username" type="text" placeholder="username" class="form-control">
+                    </div>
+                    <div class="form-line">
+                        <label for="password">Password:</label>
+                        <input id="password" name="password" type="password" placeholder="password" class="form-control">
+                    </div>
+                    <div class="form-line">
+                        <button type="submit" class="btn btn-primary">&nbsp;${buttonText}&nbsp;</button>
+                        ${trailer}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>
