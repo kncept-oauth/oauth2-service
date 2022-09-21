@@ -30,9 +30,9 @@ public class ManagedKeypairConverter {
                 key.id(),
                 parser.outputPrivate(key.keyPair().getPrivate()),
                 parser.outputPublic(key.keyPair().getPublic()),
-                key.validity().start().toEpochSecond(ZoneOffset.UTC),
-                key.validity().end().toEpochSecond(ZoneOffset.UTC),
-                key.validity().end().toEpochSecond(ZoneOffset.UTC)
+                key.validity().start().getEpochSecond(),
+                key.validity().end().getEpochSecond(),
+                key.validity().end().getEpochSecond()
         );
     }
 }

@@ -15,7 +15,11 @@ public class InMemoryOauthSessionRepository implements OauthSessionRepository {
 
     @Override
     public OauthSession createSession() {
-        SimpleOauthSession session = new SimpleOauthSession(UUID.randomUUID().toString(), Optional.empty(), -1);
+        SimpleOauthSession session = new SimpleOauthSession(
+                UUID.randomUUID().toString(),
+                Optional.empty(),
+                -1
+        );
         sessions.put(session.oauthSessionId(), session);
         return session;
     }

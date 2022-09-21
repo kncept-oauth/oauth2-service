@@ -1,27 +1,25 @@
 package com.kncept.oauth2.date;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.Instant;
 
 public class DateRange {
-
     public static long epochSecond() {
         return System.currentTimeMillis() / 1000;
     }
 
-    private static LocalDateTime min = LocalDateTime.ofEpochSecond(Long.MIN_VALUE, 0, ZoneOffset.UTC);
-    private static LocalDateTime max = LocalDateTime.ofEpochSecond(Long.MAX_VALUE, 0, ZoneOffset.UTC);
+    private static Instant min = Instant.MIN; //Instant.ofEpochSecond(Long.MIN_VALUE);
+    private static Instant max = Instant.MAX; //Instant.ofEpochSecond(Long.MAX_VALUE);
 
-    public static DateRange infinite = new DateRange(true, true, LocalDateTime.MIN, LocalDateTime.MAX);
+    public static DateRange infinite = new DateRange(true, true, min, max);
 
     private final boolean includesStart;
     private final boolean includesEnd;
-    private final LocalDateTime start;
-    private final LocalDateTime end;
+    private final Instant start;
+    private final Instant end;
 
     public DateRange(
-            LocalDateTime start,
-            LocalDateTime end
+            Instant start,
+            Instant end
     ) {
         this(true, false, start, end);
     }
@@ -29,8 +27,8 @@ public class DateRange {
     public DateRange(
             boolean includesStart,
             boolean includesEnd,
-            LocalDateTime start,
-            LocalDateTime end
+            Instant start,
+            Instant end
     ) {
         this.includesStart = includesStart;
         this.includesEnd = includesEnd;
@@ -44,23 +42,23 @@ public class DateRange {
     ) {
         includesStart = true;
         includesEnd = false;
-        this.start = LocalDateTime.ofEpochSecond(start, 0, ZoneOffset.UTC);
-        this.end = LocalDateTime.ofEpochSecond(end, 0, ZoneOffset.UTC);
+        this.start = Instant.ofEpochSecond(start);
+        this.end = Instant.ofEpochSecond(end);
     }
 
-    public boolean contains(LocalDateTime when) {
+    public boolean contains(Instant when) {
         if (when.isBefore(start)) return false;
-        if (includesStart && when.isEqual(start)) return true;
         if (when.isAfter(end)) return false;
-        if (includesEnd && when.isEqual(end)) return true;
+        if (when.compareTo(start) == 0) return includesStart;
+        if (when.compareTo(end) == 0) return includesEnd;
         return true;
     }
 
-    public LocalDateTime start() {
+    public Instant start() {
         return start;
     }
 
-    public LocalDateTime end() {
+    public Instant end() {
         return end;
     }
 

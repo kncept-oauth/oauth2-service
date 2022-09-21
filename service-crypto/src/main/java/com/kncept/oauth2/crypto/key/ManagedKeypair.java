@@ -3,7 +3,7 @@ package com.kncept.oauth2.crypto.key;
 import com.kncept.oauth2.date.DateRange;
 
 import java.security.KeyPair;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public class ManagedKeypair {
     private final String id;
@@ -33,7 +33,7 @@ public class ManagedKeypair {
     }
 
     public boolean isValid() {
-        return validity == null || validity.contains(LocalDateTime.now());
+        return validity == null || validity.contains(Instant.now());
     }
 
 }
