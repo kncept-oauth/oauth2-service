@@ -125,8 +125,11 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
     }
 
     private Map<String, String> bodyOrQueryParams(APIGatewayProxyRequestEvent input) throws IOException {
-        return input.getHttpMethod().toLowerCase().equals("post") ?
-                bodyParams(input) : queryParams(input);
+        Map<String, String> allParams = new HashMap<>();
+        allParams.putAll(queryParams(input));
+        if (input.getHttpMethod().toLowerCase().equals("post"))
+            allParams.putAll(bodyParams(input));
+        return allParams;
     }
     private Map<String, String> queryParams(APIGatewayProxyRequestEvent input) {
         Map<String, String> params = input.getQueryStringParameters();

@@ -74,7 +74,7 @@ public class EnvPropertyConfiguration implements Oauth2Configuration {
         return env(OIDC_CONFIGURATION_ROOT_PROPERTY + "_" + suffix);
     }
     // will return null if system property is empty/absent
-    private static <T> T loadClassFromEnvProperty(
+    static <T> T loadClassFromEnvProperty(
             String suffix,
             Supplier<T> defaultValue
     ) {

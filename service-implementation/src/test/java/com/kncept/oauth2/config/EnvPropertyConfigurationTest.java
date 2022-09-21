@@ -14,4 +14,11 @@ class EnvPropertyConfigurationTest {
         assertEquals("ExpiringKeypair", config.propertySuffixFromInterface(ExpiringKeypairRepository.class));
     }
 
+    @Test
+    public void defaultValueIsUsedWhenEnvPropertyIsNotDefined() {
+        Object defaultObj = new Object();
+        Object loaded = config.loadClassFromEnvProperty("non existent", () -> defaultObj);
+        assertEquals(defaultObj, loaded);
+    }
+
 }
