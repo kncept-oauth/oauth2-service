@@ -7,61 +7,59 @@ import com.kncept.oauth2.config.parameter.ParameterRepository;
 import com.kncept.oauth2.config.session.OauthSessionRepository;
 import com.kncept.oauth2.config.user.UserRepository;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
+
 public class SystemProperyConfiguration implements Oauth2Configuration {
 
-    private Boolean requirePkce;
-    private ClientRepository clientRepository;
-    private AuthRequestRepository authRequestRepository;
-    private UserRepository userRepository;
-    private OauthSessionRepository oauthSessionRepository;
-    private AuthcodeRepository authcodeRepository;
-    private ParameterRepository parameterRepository;
+    private ConcurrentHashMap<Class, Object> repositories = new ConcurrentHashMap<>();
+
+    public <T> T loadFromEnvProperty(Class<T> interfaceType) {
+        return loadFromEnvProperty(interfaceType, null);
+    }
+    public <T> T loadFromEnvProperty(Class<T> interfaceType, Supplier<T> defaultValue) {
+        return (T)repositories.computeIfAbsent(interfaceType, key -> {
+            String propertySuffix = propertySuffixFromInterface(interfaceType);
+            return loadClassFromEnvProperty(propertySuffix, interfaceType, defaultValue);
+        });
+    }
+
+    String propertySuffixFromInterface(Class iface) {
+        String name = iface.getSimpleName();
+        if (name.endsWith("Repository")) {
+            name = name.substring(0, name.length() - 10);
+        } else throw new IllegalStateException("No strategy to obtain short property name from " + name);
+
+        return name.toLowerCase();
+    }
 
     @Override
-    public synchronized ClientRepository clientRepository() {
-        if (clientRepository == null) {
-            clientRepository = loadClassFromEnvProperty("clients", ClientRepository.class);
-        }
-        return clientRepository;
+    public ClientRepository clientRepository() {
+        return loadFromEnvProperty(ClientRepository.class);
     }
 
     @Override
     public synchronized AuthRequestRepository authRequestRepository() {
-        if (authRequestRepository == null) {
-            authRequestRepository = loadClassFromEnvProperty("authrequests", AuthRequestRepository.class);
-        }
-        return authRequestRepository;
+        return loadFromEnvProperty(AuthRequestRepository.class);
     }
 
     @Override
     public synchronized UserRepository userRepository() {
-        if (userRepository == null) {
-            userRepository = loadClassFromEnvProperty("users", UserRepository.class);
-        }
-        return userRepository;
+        return loadFromEnvProperty(UserRepository.class);
     }
 
     @Override
     public synchronized OauthSessionRepository oauthSessionRepository() {
-        if (oauthSessionRepository == null) {
-            oauthSessionRepository = loadClassFromEnvProperty("sessions", OauthSessionRepository.class);
-        }
-        return oauthSessionRepository;
+        return loadFromEnvProperty(OauthSessionRepository.class);
     }
 
     @Override
     public AuthcodeRepository authcodeRepository() {
-        if (authcodeRepository == null) {
-            authcodeRepository = loadClassFromEnvProperty("authcodes", AuthcodeRepository.class);
-        }
-        return authcodeRepository;
+        return loadFromEnvProperty(AuthcodeRepository.class);
     }
     @Override
     public ParameterRepository parameterRepository() {
-        if (parameterRepository == null) {
-            parameterRepository = loadClassFromEnvProperty("parameter", ParameterRepository.class);
-        }
-        return parameterRepository;
+        return loadFromEnvProperty(ParameterRepository.class);
     }
 
     private static String getEnvProperty(String suffix) {
@@ -73,16 +71,20 @@ public class SystemProperyConfiguration implements Oauth2Configuration {
     }
     // will return null if system property is empty/absent
     private static <T> T loadClassFromEnvProperty(
-            String propertyName,
-            Class<T> type
+            String suffix,
+            Class<T> type,
+            Supplier<T> defaultValue
     ) {
-        String className = getEnvProperty(propertyName);
-        if (className == null) throw new NullPointerException();
+        T loaded = null;
+        String className = getEnvProperty(suffix);
+        if (className == null && defaultValue != null) {
+            loaded = defaultValue.get();
+        }
+        if (className == null && loaded == null) {
+            throw new RuntimeException("Property is not defined or has no value: " + OIDC_CONFIGURATION_ROOT_PROPERTY + "_" + suffix);
+        }
         try {
-            Object configuredImpl = Thread.currentThread().getContextClassLoader().loadClass(className);
-            if(type.isAssignableFrom(configuredImpl.getClass()))
-                return (T)configuredImpl;
-            throw new RuntimeException(className + " is not a " + type.getName());
+            return (T)Thread.currentThread().getContextClassLoader().loadClass(className);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException("Unable to load class " + className, e);
         }

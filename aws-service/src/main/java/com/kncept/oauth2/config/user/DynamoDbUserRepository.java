@@ -7,12 +7,23 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 import java.util.Optional;
 
+import static com.kncept.oauth2.config.DynoDbOauth2Configuration.defaultTableName;
+
 public class DynamoDbUserRepository extends DynamoDbRepository<SaltedUser> implements UserRepository {
     private AuthCrypto crypto;
 
+    public DynamoDbUserRepository(DynamoDbClient client) {
+        super(
+                SaltedUser.class,
+                client,
+                defaultTableName(UserRepository.class)
+        );
+        crypto = new AuthCrypto();
+    }
+
     public DynamoDbUserRepository(DynamoDbClient client, String tableName) {
         super(
-        		SaltedUser.class,
+                SaltedUser.class,
                 client,
                 tableName
         );

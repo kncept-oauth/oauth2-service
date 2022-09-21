@@ -9,7 +9,7 @@ public class DynoDbOauth2ConfigurationTest {
     @Test
     public void generatesExpectedDefaultTablenames() {
         DynoDbOauth2Configuration configuration = new DynoDbOauth2Configuration(false);
-        String generatedTableName = configuration.tableName(AuthRequestRepository.class);
+        String generatedTableName = configuration.defaultTableName(AuthRequestRepository.class);
         Assertions.assertEquals("KnceptOidcAuthRequestRepository", generatedTableName);
     }
 }

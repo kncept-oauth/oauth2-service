@@ -9,9 +9,11 @@ public enum ConfigParameters {
     issuerName("kncept-oauth"),
     ;
 
-    private String defaultValue = "";
+    private final String defaultValue;
 
-    ConfigParameters(){}
+    ConfigParameters(){
+        defaultValue = "";
+    }
     ConfigParameters(String defaultValue) {
         this.defaultValue = defaultValue;
     }

@@ -45,25 +45,26 @@ interface, or can be left blank and individual points can be configured.
 Note that if you intend to parially override an existing class, it must be on the
 classpath of the running application to be usable.
 
-The following `oidc_config` classes are shipped:
-- `com.kncept.oauth2.config.SystemProperyConfiguration` - Detailed below
-- `com.kncept.oauth2.config.DynoDbOauth2Configuration` - in service-aws, DyndoDB tables, including auto table creation.
+The following `OIDC_Config` classes are shipped (provider specific class in the provider specific jar:
+- `com.kncept.oauth2.config.SystemProperyConfiguration` - Detailed below.
 - `com.kncept.oauth2.config.InMemoryConfiguration` - In memory volatile store, useful for testing
+- `com.kncept.oauth2.config.DynoDbOauth2Configuration` - in service-aws, DynamoDB tables
+  - uses the default SystemProperyConfiguration override points before providing DynamoDB implementations
+  - the additional property `OIDC_ConfigAutocreate` can be configured (defaults to true) to control table autocreation. 
 
 You probably want to extend something like DynoDbOauth2Configuration and override the UserRepository
 with your own implementation.
 
 ### SystemProperyConfiguration
-Set the `oidc_config` system property to `com.kncept.oauth2.config.SystemProperyConfiguration`.
+Set the `OIDC_Config` system property to `com.kncept.oauth2.config.SystemProperyConfiguration`
 This will vend a [SystemProperyConfiguration](service-implementation/src/main/java/com/kncept/oauth2/config/SystemProperyConfiguration.java)
 which needs the following environment properties set:
-    - `oidc_config_pkce`  true to require PKCE, false if it is optional
-    - `oidc_config_clients` a [ClientRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/client/ClientRepository.java)
-    - `oidc_config_authrequests` an [AuthRequestRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/authrequest/AuthRequestRepository.java)
-    - `oidc_config_users` a [UserRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/user/UserRepository.java)
-    - `oidc_config_sessions` an [OauthSessionRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/session/OauthSessionRepository.java)
-    - `oidc_config_authcodes`an [AuthcodeRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/authcode/AuthcodeRepository.java)
-    - `oidc_config_parameter`a [ParameterRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/parameter/ParameterRepository.java)
+    - `OIDC_Config_Client` a [ClientRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/client/ClientRepository.java)
+    - `OIDC_Config_AuthRequest` an [AuthRequestRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/authrequest/AuthRequestRepository.java)
+    - `OIDC_Config_User` a [UserRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/user/UserRepository.java)
+    - `OIDC_Config_OauthSession` an [OauthSessionRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/session/OauthSessionRepository.java)
+    - `OIDC_Config_Authcode`an [AuthcodeRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/authcode/AuthcodeRepository.java)
+    - `OIDC_Config_Parameter`a [ParameterRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/parameter/ParameterRepository.java)
 
 
 ### ParameterRepository configuration

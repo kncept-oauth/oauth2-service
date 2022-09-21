@@ -7,9 +7,19 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static com.kncept.oauth2.config.DynoDbOauth2Configuration.defaultTableName;
+
 public class DynamoDbOauthSessionRepository extends DynamoDbRepository<OauthSession> implements OauthSessionRepository {
 
     long sessionDuration = TimeUnit.SECONDS.toSeconds(300);
+
+    public DynamoDbOauthSessionRepository(DynamoDbClient client) {
+        super(
+                OauthSession.class,
+                client,
+                defaultTableName(OauthSessionRepository.class)
+        );
+    }
 
     public DynamoDbOauthSessionRepository(DynamoDbClient client, String tableName) {
         super(

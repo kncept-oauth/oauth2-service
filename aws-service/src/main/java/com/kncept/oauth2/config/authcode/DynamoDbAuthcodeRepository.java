@@ -6,9 +6,19 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static com.kncept.oauth2.config.DynoDbOauth2Configuration.defaultTableName;
+
 public class DynamoDbAuthcodeRepository extends DynamoDbRepository<Authcode> implements AuthcodeRepository {
 
     long sessionDuration = TimeUnit.SECONDS.toSeconds(30);
+
+    public DynamoDbAuthcodeRepository (DynamoDbClient client) {
+        super(
+                Authcode.class,
+                client,
+                defaultTableName(AuthcodeRepository.class)
+        );
+    }
 
     public DynamoDbAuthcodeRepository (DynamoDbClient client, String tableName) {
         super(

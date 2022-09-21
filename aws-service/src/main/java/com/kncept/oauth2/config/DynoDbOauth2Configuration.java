@@ -20,22 +20,26 @@ public class DynoDbOauth2Configuration implements Oauth2Configuration {
 
     private DynamoDbClient client;
 
-    private DynamoDbClientRepository clientRepository;
-    private DynamoDbAuthRequestRepository authRequestRepository;
-    private DynamoDbAuthcodeRepository authcodeRepository;
-    private DynamoDbUserRepository userRepository;
-    private DynamoDbOauthSessionRepository oauthSessionRepository;
-    private DynamoDbParameterRepository parameterRepository;
+    private final SystemProperyConfiguration config;
+
+    private static boolean isAutocrate() {
+        String value = System.getenv(OIDC_CONFIGURATION_ROOT_PROPERTY + "Autocreate");
+        if (value ==  null) return true;
+        value = value.trim();
+        if (value.equals("")) return true;
+        return Boolean.parseBoolean(value);
+    }
 
     public DynoDbOauth2Configuration() {
-        this(true);
+        this(isAutocrate());
     }
 
     public DynoDbOauth2Configuration(boolean autocreateTables) {
         this.autocreateTables = autocreateTables;
+        this.config = new SystemProperyConfiguration();
     }
 
-    public String tableName(Class interfaceType) {
+    public static String defaultTableName(Class interfaceType) {
         return "KnceptOidc" + interfaceType.getSimpleName();
     }
 
@@ -47,86 +51,56 @@ public class DynoDbOauth2Configuration implements Oauth2Configuration {
     }
 
     @Override
-    public DynamoDbClientRepository clientRepository() {
-        if (clientRepository == null) {
-            synchronized (this) {
-                if(clientRepository == null) clientRepository = new DynamoDbClientRepository(
-                        dynamoDbClient(),
-                        tableName(ClientRepository.class)
-                );
-            }
-            if (autocreateTables) clientRepository.createTableIfNotExists();
-        }
-        return clientRepository;
+    public ClientRepository clientRepository() {
+        return config.loadFromEnvProperty(ClientRepository.class, () -> {
+            DynamoDbClientRepository repo = new DynamoDbClientRepository(dynamoDbClient());
+            if (autocreateTables) repo.createTableIfNotExists();
+            return repo;
+        });
     }
 
     @Override
-    public DynamoDbAuthRequestRepository authRequestRepository() {
-        if (authRequestRepository == null) {
-            synchronized (this) {
-                if (authRequestRepository == null) authRequestRepository = new DynamoDbAuthRequestRepository(
-                        dynamoDbClient(),
-                        tableName(AuthRequestRepository.class)
-                );
-            }
-            if (autocreateTables) authRequestRepository.createTableIfNotExists();
-        }
-        return authRequestRepository;
+    public AuthRequestRepository authRequestRepository() {
+        return config.loadFromEnvProperty(AuthRequestRepository.class, () -> {
+            DynamoDbAuthRequestRepository repo = new DynamoDbAuthRequestRepository(dynamoDbClient());
+            if (autocreateTables) repo.createTableIfNotExists();
+            return repo;
+        });
     }
 
     @Override
-    public DynamoDbAuthcodeRepository authcodeRepository() {
-        if (authcodeRepository == null) {
-            synchronized (this) {
-                if (authcodeRepository == null) authcodeRepository = new DynamoDbAuthcodeRepository(
-                        dynamoDbClient(),
-                        tableName(AuthcodeRepository.class)
-                );
-            }
-            if (autocreateTables) authcodeRepository.createTableIfNotExists();
-        }
-        return authcodeRepository;
+    public AuthcodeRepository authcodeRepository() {
+        return config.loadFromEnvProperty(AuthcodeRepository.class, () -> {
+            DynamoDbAuthcodeRepository repo = new DynamoDbAuthcodeRepository(dynamoDbClient());
+            if (autocreateTables) repo.createTableIfNotExists();
+            return repo;
+        });
     }
 
     @Override
-    public DynamoDbUserRepository userRepository() {
-        if (userRepository == null) {
-            synchronized (this) {
-                if (userRepository == null) userRepository = new DynamoDbUserRepository(
-                        dynamoDbClient(),
-                        tableName(UserRepository.class)
-                );
-            }
-            if (autocreateTables) userRepository.createTableIfNotExists();
-        }
-        return userRepository;
+    public UserRepository userRepository() {
+        return config.loadFromEnvProperty(UserRepository.class, () -> {
+            DynamoDbUserRepository repo = new DynamoDbUserRepository(dynamoDbClient());
+            if (autocreateTables) repo.createTableIfNotExists();
+            return repo;
+        });
     }
 
     @Override
-    public DynamoDbOauthSessionRepository oauthSessionRepository() {
-        if (oauthSessionRepository == null) {
-            synchronized (this) {
-                if (oauthSessionRepository == null) oauthSessionRepository = new DynamoDbOauthSessionRepository(
-                        dynamoDbClient(),
-                        tableName(OauthSessionRepository.class)
-                );
-            }
-            if (autocreateTables) oauthSessionRepository.createTableIfNotExists();
-        }
-        return oauthSessionRepository;
+    public OauthSessionRepository oauthSessionRepository() {
+        return config.loadFromEnvProperty(OauthSessionRepository.class, () -> {
+            DynamoDbOauthSessionRepository repo = new DynamoDbOauthSessionRepository(dynamoDbClient());
+            if (autocreateTables) repo.createTableIfNotExists();
+            return repo;
+        });
     }
 
     @Override
     public ParameterRepository parameterRepository() {
-        if (parameterRepository == null) {
-            synchronized (this) {
-                if (parameterRepository == null) parameterRepository = new DynamoDbParameterRepository(
-                        dynamoDbClient(),
-                        tableName(OauthSessionRepository.class)
-                );
-            }
-            if (autocreateTables) parameterRepository.createTableIfNotExists();
-        }
-        return parameterRepository;
+        return config.loadFromEnvProperty(ParameterRepository.class, () -> {
+            DynamoDbParameterRepository repo = new DynamoDbParameterRepository(dynamoDbClient());
+            if (autocreateTables) repo.createTableIfNotExists();
+            return repo;
+        });
     }
 }

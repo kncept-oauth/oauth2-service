@@ -11,7 +11,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.function.Supplier;
 
 public interface Oauth2Configuration {
-        String OIDC_CONFIGURATION_ROOT_PROPERTY = "oidc_config";
+        String OIDC_CONFIGURATION_ROOT_PROPERTY = "OIDC_Config";
 
         ClientRepository clientRepository();
         AuthRequestRepository authRequestRepository();
