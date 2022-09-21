@@ -1,5 +1,6 @@
-package com.kncept.oauth2.crypto;
+package com.kncept.oauth2.crypto.key;
 
+import com.kncept.oauth2.crypto.key.KeyVendor;
 import com.kncept.oauth2.date.DateRange;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

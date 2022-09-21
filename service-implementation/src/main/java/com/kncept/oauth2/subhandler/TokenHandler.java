@@ -5,8 +5,8 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.kncept.oauth2.config.Oauth2Configuration;
 import com.kncept.oauth2.config.authcode.Authcode;
 import com.kncept.oauth2.config.session.OauthSession;
-import com.kncept.oauth2.crypto.ExpiringKeyPair;
-import com.kncept.oauth2.crypto.KeyVendor;
+import com.kncept.oauth2.crypto.key.ExpiringKeyPair;
+import com.kncept.oauth2.crypto.key.KeyVendor;
 import com.kncept.oauth2.operation.response.RenderedContentResponse;
 import org.json.simple.JSONObject;
 

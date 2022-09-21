@@ -10,12 +10,13 @@ to customise via environment properties. At the other end of the spectrum
 it's possible to integrated directly against the OIDC processor as a library,
 and provide custom code level configurations to deal with any use case imaginable.
 
+
 ## Quickstart (aws)
 Requires docker and nodejs.
-- Clone this project `git clone git@github.com:kncept-oauth/simple-oidc.git`
-- Build java components `./batect dist` / `batect dist`
-- Configure AWS keys `export AWS_ACCESS_KEY_ID=...` / `set AWS_ACCESS_KEY_ID=...`
-- Deploy `cd aws-deploy && npm i && npm run cdk deploy OidcDockerLambda`
+1. Clone this project `git clone git@github.com:kncept-oauth/simple-oidc.git`
+1. Build java components `./batect dist` / `batect dist`
+1. Configure AWS keys `export AWS_ACCESS_KEY_ID=...` / `set AWS_ACCESS_KEY_ID=...`
+1. Deploy `cd aws-deploy && npm i && npm run cdk deploy OidcDockerLambda`
 
 The URL that is output is the URL_BASE to use for endpoints to integrate against.
 - Authorize Endpoint: ${URL_BASE}/authorize
@@ -74,3 +75,11 @@ You to use as-is, you will need to `export` or `set` your own deployment keys
 
 You can add your own classes into the Dockerfile, but as long as project-specific code
 isn't pushed upstream, you can always modify a repository fork.
+
+## Forked Repo
+
+You can of course fork the repo for yourself.
+if you do any bugfixes, submit a patch :)
+
+Otherwise, the github workflow will need configuration (AWS keys, as above), and will deploy to a default (random) URL.
+You can see the URL in the outputs of the Cloudformation stack in the AWS console.

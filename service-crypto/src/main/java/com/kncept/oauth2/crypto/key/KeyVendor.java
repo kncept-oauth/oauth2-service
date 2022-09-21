@@ -1,11 +1,10 @@
-package com.kncept.oauth2.crypto;
+package com.kncept.oauth2.crypto.key;
 
 import com.kncept.oauth2.date.DateRange;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;

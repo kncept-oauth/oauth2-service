@@ -1,4 +1,4 @@
-package com.kncept.oauth2.crypto;
+package com.kncept.oauth2.crypto.key;
 
 import com.kncept.oauth2.date.DateRange;
 
@@ -6,9 +6,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 
 // This part is subject to change..
 // TODO: add nice import/export capability (eg: ship with pregenerated pem files)

@@ -2,7 +2,7 @@ package com.kncept.oauth2;
 
 import com.kncept.oauth2.config.Oauth2Configuration;
 import com.kncept.oauth2.content.HtmlPageVendor;
-import com.kncept.oauth2.crypto.KeyVendor;
+import com.kncept.oauth2.crypto.key.KeyVendor;
 import com.kncept.oauth2.operation.response.ContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
 import com.kncept.oauth2.operation.response.RenderedContentResponse;

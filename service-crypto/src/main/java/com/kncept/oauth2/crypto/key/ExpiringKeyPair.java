@@ -1,4 +1,4 @@
-package com.kncept.oauth2.crypto;
+package com.kncept.oauth2.crypto.key;
 
 import com.kncept.oauth2.date.DateRange;
 
@@ -26,7 +26,7 @@ public class ExpiringKeyPair {
     }
 
     public boolean isValid() {
-        return validity.contains(LocalDateTime.now());
+        return validity == null || validity.contains(LocalDateTime.now());
     }
 
 }
