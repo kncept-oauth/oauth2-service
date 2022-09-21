@@ -22,8 +22,8 @@ public class EnvPropertyConfiguration implements Oauth2Configuration {
     }
     public <T> T loadFromEnvProperty(Class<T> interfaceType, Supplier<T> defaultValue) {
         return (T)repositories.computeIfAbsent(interfaceType, key -> {
-            String propertySuffix = propertySuffixFromInterface(interfaceType);
-            return loadClassFromEnvProperty(propertySuffix, interfaceType, defaultValue);
+            String propertySuffix = propertySuffixFromInterface(key);
+            return loadClassFromEnvProperty(propertySuffix, defaultValue);
         });
     }
 
@@ -76,15 +76,14 @@ public class EnvPropertyConfiguration implements Oauth2Configuration {
     // will return null if system property is empty/absent
     private static <T> T loadClassFromEnvProperty(
             String suffix,
-            Class<T> type,
             Supplier<T> defaultValue
     ) {
-        T loaded = null;
         String className = getEnvProperty(suffix);
-        if (className == null && defaultValue != null) {
-            loaded = defaultValue.get();
-        }
-        if (className == null && loaded == null) {
+        if (className == null) {
+            if (defaultValue != null) {
+                T loaded = defaultValue.get();
+                if (loaded != null) return loaded;
+            }
             throw new RuntimeException("Property is not defined or has no value: " + OIDC_CONFIGURATION_ROOT_PROPERTY + "_" + suffix);
         }
         try {
