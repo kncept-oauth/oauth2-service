@@ -5,20 +5,27 @@ import com.kncept.oauth2.date.DateRange;
 import java.security.KeyPair;
 import java.time.LocalDateTime;
 
-public class ExpiringKeyPair {
+public class ManagedKeypair {
+    private final String id;
     private final KeyPair keyPair;
     private final DateRange validity;
 
-    public ExpiringKeyPair(
+    public ManagedKeypair(
+            String id,
             KeyPair keyPair,
             DateRange validity
     ) {
+        this.id = id;
         this.keyPair = keyPair;
         this.validity = validity;
     }
 
     public DateRange validity() {
         return validity;
+    }
+
+    public String id() {
+        return id;
     }
 
     public KeyPair keyPair() {

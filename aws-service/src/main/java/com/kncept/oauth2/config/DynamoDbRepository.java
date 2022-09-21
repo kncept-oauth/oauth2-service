@@ -4,15 +4,15 @@ import com.kncept.oauth2.config.annotation.OidcExpiryTime;
 import com.kncept.oauth2.config.annotation.OidcId;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
-import software.amazon.awssdk.services.dynamodb.waiters.DynamoDbWaiter;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class DynamoDbRepository<T> {
     private final Class<T> valueInterface;
-    private final DynamoDbClient client;
-    private final String tableName;
+    public final DynamoDbClient client;
+    public final String tableName;
 
     private List<Method> methods;
     private String idFieldName;
@@ -249,6 +249,9 @@ public class DynamoDbRepository<T> {
         }
     }
 
-
+    public List<T> list() {
+        ScanResponse scanResponse = client.scan(ScanRequest.builder().tableName(tableName).build());
+        return scanResponse.items().stream().map(this::reflectiveItemConverter).collect(Collectors.toList());
+    }
 
 }

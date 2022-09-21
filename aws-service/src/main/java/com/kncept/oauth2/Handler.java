@@ -4,8 +4,8 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.kncept.oauth2.config.EnvPropertyConfiguration;
 import com.kncept.oauth2.config.Oauth2Configuration;
-import com.kncept.oauth2.config.SystemProperyConfiguration;
 import com.kncept.oauth2.config.client.Client;
 import com.kncept.oauth2.config.client.SimpleClient;
 import com.kncept.oauth2.operation.response.ContentResponse;
@@ -24,7 +24,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
     private final Oauth2Processor oauth2;
     public Handler() {
         this(Oauth2Configuration.loadConfigurationFromEnvProperty(
-                () -> new SystemProperyConfiguration()));
+                () -> new EnvPropertyConfiguration()));
     }
     public Handler(Oauth2Configuration config) {
         oauth2 = new Oauth2(config);

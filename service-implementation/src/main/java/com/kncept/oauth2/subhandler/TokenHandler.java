@@ -6,8 +6,8 @@ import com.kncept.oauth2.config.Oauth2Configuration;
 import com.kncept.oauth2.config.authcode.Authcode;
 import com.kncept.oauth2.config.parameter.ConfigParameters;
 import com.kncept.oauth2.config.session.OauthSession;
-import com.kncept.oauth2.crypto.key.ExpiringKeyPair;
-import com.kncept.oauth2.crypto.key.KeyVendor;
+import com.kncept.oauth2.crypto.key.KeyManager;
+import com.kncept.oauth2.crypto.key.ManagedKeypair;
 import com.kncept.oauth2.operation.response.RenderedContentResponse;
 import org.json.simple.JSONObject;
 
@@ -25,14 +25,14 @@ import static com.kncept.oauth2.util.ParamUtils.required;
 public class TokenHandler {
 
     private final Oauth2Configuration config;
-    private final KeyVendor keyVendor;
+    private final KeyManager keyManager;
 
     public TokenHandler(
             Oauth2Configuration config,
-            KeyVendor keyVendor
+            KeyManager keyManager
     ) {
         this.config = config;
-        this.keyVendor = keyVendor;
+        this.keyManager = keyManager;
     }
 
     // https://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
@@ -64,7 +64,7 @@ public class TokenHandler {
 
             Instant iat = LocalDateTime.now().toInstant(ZoneOffset.UTC);
 
-            ExpiringKeyPair keys = keyVendor.getPair();
+            ManagedKeypair keys = keyManager.current();
             Algorithm algorithm = Algorithm.RSA256(
                     (RSAPublicKey) keys.keyPair().getPublic(),
                     (RSAPrivateKey) keys.keyPair().getPrivate());

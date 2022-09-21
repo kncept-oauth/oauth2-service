@@ -20,6 +20,8 @@ repositories {
 
 def junit5version = '5.8.2'
 dependencies {
+	implementation project(':service-interfaces')
+
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:' + junit5version
 	testImplementation 'org.junit.jupiter:junit-jupiter-engine:' + junit5version
 }

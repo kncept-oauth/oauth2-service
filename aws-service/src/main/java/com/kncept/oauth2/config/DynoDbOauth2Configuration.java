@@ -6,6 +6,8 @@ import com.kncept.oauth2.config.authrequest.AuthRequestRepository;
 import com.kncept.oauth2.config.authrequest.DynamoDbAuthRequestRepository;
 import com.kncept.oauth2.config.client.ClientRepository;
 import com.kncept.oauth2.config.client.DynamoDbClientRepository;
+import com.kncept.oauth2.config.crypto.DynamoDbExpiringKeypairRepository;
+import com.kncept.oauth2.config.crypto.ExpiringKeypairRepository;
 import com.kncept.oauth2.config.parameter.DynamoDbParameterRepository;
 import com.kncept.oauth2.config.parameter.ParameterRepository;
 import com.kncept.oauth2.config.session.DynamoDbOauthSessionRepository;
@@ -20,7 +22,7 @@ public class DynoDbOauth2Configuration implements Oauth2Configuration {
 
     private DynamoDbClient client;
 
-    private final SystemProperyConfiguration config;
+    private final EnvPropertyConfiguration config;
 
     private static boolean isAutocrate() {
         String value = System.getenv(OIDC_CONFIGURATION_ROOT_PROPERTY + "Autocreate");
@@ -36,7 +38,7 @@ public class DynoDbOauth2Configuration implements Oauth2Configuration {
 
     public DynoDbOauth2Configuration(boolean autocreateTables) {
         this.autocreateTables = autocreateTables;
-        this.config = new SystemProperyConfiguration();
+        this.config = new EnvPropertyConfiguration();
     }
 
     public static String defaultTableName(Class interfaceType) {
@@ -99,6 +101,15 @@ public class DynoDbOauth2Configuration implements Oauth2Configuration {
     public ParameterRepository parameterRepository() {
         return config.loadFromEnvProperty(ParameterRepository.class, () -> {
             DynamoDbParameterRepository repo = new DynamoDbParameterRepository(dynamoDbClient());
+            if (autocreateTables) repo.createTableIfNotExists();
+            return repo;
+        });
+    }
+
+    @Override
+    public ExpiringKeypairRepository expiringKeypairRepository() {
+        return config.loadFromEnvProperty(ExpiringKeypairRepository.class, () -> {
+            DynamoDbExpiringKeypairRepository repo = new DynamoDbExpiringKeypairRepository(dynamoDbClient());
             if (autocreateTables) repo.createTableIfNotExists();
             return repo;
         });

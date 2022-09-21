@@ -1,8 +1,18 @@
 package com.kncept.oauth2.date;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 public class DateRange {
+
+    public static long epochSecond() {
+        return System.currentTimeMillis() / 1000;
+    }
+
+    private static LocalDateTime min = LocalDateTime.ofEpochSecond(Long.MIN_VALUE, 0, ZoneOffset.UTC);
+    private static LocalDateTime max = LocalDateTime.ofEpochSecond(Long.MAX_VALUE, 0, ZoneOffset.UTC);
+
+    public static DateRange infinite = new DateRange(true, true, LocalDateTime.MIN, LocalDateTime.MAX);
 
     private final boolean includesStart;
     private final boolean includesEnd;
@@ -26,6 +36,16 @@ public class DateRange {
         this.includesEnd = includesEnd;
         this.start = start;
         this.end = end;
+    }
+
+    public DateRange(
+            long start,
+            long end
+    ) {
+        includesStart = true;
+        includesEnd = false;
+        this.start = LocalDateTime.ofEpochSecond(start, 0, ZoneOffset.UTC);
+        this.end = LocalDateTime.ofEpochSecond(end, 0, ZoneOffset.UTC);
     }
 
     public boolean contains(LocalDateTime when) {

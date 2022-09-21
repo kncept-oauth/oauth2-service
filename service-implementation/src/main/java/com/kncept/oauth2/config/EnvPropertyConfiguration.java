@@ -3,6 +3,7 @@ package com.kncept.oauth2.config;
 import com.kncept.oauth2.config.authcode.AuthcodeRepository;
 import com.kncept.oauth2.config.authrequest.AuthRequestRepository;
 import com.kncept.oauth2.config.client.ClientRepository;
+import com.kncept.oauth2.config.crypto.ExpiringKeypairRepository;
 import com.kncept.oauth2.config.parameter.ParameterRepository;
 import com.kncept.oauth2.config.session.OauthSessionRepository;
 import com.kncept.oauth2.config.user.UserRepository;
@@ -10,7 +11,9 @@ import com.kncept.oauth2.config.user.UserRepository;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-public class SystemProperyConfiguration implements Oauth2Configuration {
+import static com.kncept.oauth2.config.Oauth2Configuration.env;
+
+public class EnvPropertyConfiguration implements Oauth2Configuration {
 
     private ConcurrentHashMap<Class, Object> repositories = new ConcurrentHashMap<>();
 
@@ -62,12 +65,13 @@ public class SystemProperyConfiguration implements Oauth2Configuration {
         return loadFromEnvProperty(ParameterRepository.class);
     }
 
+    @Override
+    public ExpiringKeypairRepository expiringKeypairRepository() {
+        return loadFromEnvProperty(ExpiringKeypairRepository.class);
+    }
+
     private static String getEnvProperty(String suffix) {
-        String value = System.getenv(OIDC_CONFIGURATION_ROOT_PROPERTY + "_" + suffix);
-        if (value == null) return null;
-        value = value.trim();
-        if (value.equals("")) return null;
-        return value;
+        return env(OIDC_CONFIGURATION_ROOT_PROPERTY + "_" + suffix);
     }
     // will return null if system property is empty/absent
     private static <T> T loadClassFromEnvProperty(

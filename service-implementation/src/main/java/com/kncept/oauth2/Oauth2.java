@@ -2,7 +2,7 @@ package com.kncept.oauth2;
 
 import com.kncept.oauth2.config.Oauth2Configuration;
 import com.kncept.oauth2.content.HtmlPageVendor;
-import com.kncept.oauth2.crypto.key.KeyVendor;
+import com.kncept.oauth2.crypto.key.KeyManager;
 import com.kncept.oauth2.operation.response.ContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
 import com.kncept.oauth2.operation.response.RenderedContentResponse;
@@ -23,11 +23,12 @@ public class Oauth2 implements Oauth2Processor {
     private static Logger logger = Logger.getLogger(Oauth2.class.getName());
 
     private final Oauth2Configuration config;
-    private final KeyVendor keyVendor = new KeyVendor();
+    private final KeyManager keyManager;
     private final HtmlPageVendor htmlPageVendor = new HtmlPageVendor();
 
     public Oauth2(Oauth2Configuration config) {
         this.config = config;
+        keyManager = new KeyManager(config);
     }
 
     // https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
@@ -45,7 +46,7 @@ public class Oauth2 implements Oauth2Processor {
 
     // https://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
     public RenderedContentResponse token(Map<String, String> params) {
-        return new TokenHandler(config, keyVendor).token(params);
+        return new TokenHandler(config, keyManager).token(params);
     }
 
     public void init(boolean await) {

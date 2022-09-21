@@ -24,7 +24,7 @@ public class DynamoDbParameterRepository extends DynamoDbRepository<Parameter> i
     }
 
     @Override
-    public Parameter getParameter(String name) {
+    public Parameter parameter(String name) {
         return findById(name);
     }
 }

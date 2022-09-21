@@ -3,6 +3,7 @@ package com.kncept.oauth2.config;
 import com.kncept.oauth2.config.authcode.AuthcodeRepository;
 import com.kncept.oauth2.config.authrequest.AuthRequestRepository;
 import com.kncept.oauth2.config.client.ClientRepository;
+import com.kncept.oauth2.config.crypto.ExpiringKeypairRepository;
 import com.kncept.oauth2.config.parameter.ParameterRepository;
 import com.kncept.oauth2.config.session.OauthSessionRepository;
 import com.kncept.oauth2.config.user.UserRepository;
@@ -19,10 +20,19 @@ public interface Oauth2Configuration {
         UserRepository userRepository();
         OauthSessionRepository oauthSessionRepository();
         ParameterRepository parameterRepository();
+        ExpiringKeypairRepository expiringKeypairRepository();
+
+        static String env(String name) {
+                String value = System.getenv(name);
+                if (value == null) return null;
+                value = value.trim();
+                if (value.equals("")) return null;
+                return value;
+        }
 
         static Oauth2Configuration loadConfigurationFromEnvProperty(Supplier<? extends Oauth2Configuration> defaultValue) {
                 try {
-                        String configClassName = System.getenv(OIDC_CONFIGURATION_ROOT_PROPERTY);
+                        String configClassName = env(OIDC_CONFIGURATION_ROOT_PROPERTY);
                         if (configClassName == null) return defaultValue.get();
                         Class configClass = Class.forName(configClassName);
                         return (Oauth2Configuration)configClass.getDeclaredConstructor().newInstance();

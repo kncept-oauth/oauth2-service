@@ -1,7 +1,7 @@
 package com.kncept.oauth2;
 
+import com.kncept.oauth2.config.EnvPropertyConfiguration;
 import com.kncept.oauth2.config.Oauth2Configuration;
-import com.kncept.oauth2.config.SystemProperyConfiguration;
 import com.kncept.oauth2.config.client.Client;
 import com.kncept.oauth2.config.client.SimpleClient;
 import com.kncept.oauth2.operation.response.ContentResponse;
@@ -48,7 +48,7 @@ public class KnceptOauth2Server implements HttpHandler {
     private final Oauth2Processor oauth2;
 
     public KnceptOauth2Server() {
-        Oauth2Configuration config = Oauth2Configuration.loadConfigurationFromEnvProperty(() -> new SystemProperyConfiguration());
+        Oauth2Configuration config = Oauth2Configuration.loadConfigurationFromEnvProperty(() -> new EnvPropertyConfiguration());
         if(config.clientRepository().lookup(knceptClient).isEmpty()) {
             Client knceptOidcClient = new SimpleClient(knceptClient, true);
             config.clientRepository().update(knceptOidcClient);

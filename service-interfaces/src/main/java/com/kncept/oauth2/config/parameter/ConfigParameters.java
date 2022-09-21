@@ -19,7 +19,7 @@ public enum ConfigParameters {
     }
 
     public String get(ParameterRepository repository) {
-        Parameter param = repository.getParameter(name());
+        Parameter param = repository.parameter(name());
         if (param == null || param.value() == null)
             return defaultValue;
         return param.value();

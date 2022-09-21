@@ -3,6 +3,7 @@ package com.kncept.oauth2.config;
 import com.kncept.oauth2.config.authcode.InMemoryAuthcodeRepository;
 import com.kncept.oauth2.config.authrequest.InMemoryAuthRequestRepository;
 import com.kncept.oauth2.config.client.InMemoryClientRepository;
+import com.kncept.oauth2.config.crypto.InMemoryExpiringKeypairRepository;
 import com.kncept.oauth2.config.parameter.EmptyParameterRepository;
 import com.kncept.oauth2.config.session.InMemoryOauthSessionRepository;
 import com.kncept.oauth2.config.user.InMemoryUserRepository;
@@ -16,7 +17,7 @@ public class InMemoryConfiguration implements Oauth2Configuration {
     private InMemoryOauthSessionRepository oauthSessionRepository;
     private InMemoryAuthcodeRepository authcodeRepository;
     private EmptyParameterRepository parameterRepository;
-
+    private InMemoryExpiringKeypairRepository expiringKeypairRepository;
 
     @Override
     public synchronized InMemoryClientRepository clientRepository() {
@@ -64,5 +65,13 @@ public class InMemoryConfiguration implements Oauth2Configuration {
             parameterRepository = new EmptyParameterRepository();
         }
         return parameterRepository;
+    }
+
+    @Override
+    public synchronized InMemoryExpiringKeypairRepository expiringKeypairRepository() {
+        if (expiringKeypairRepository == null) {
+            expiringKeypairRepository = new InMemoryExpiringKeypairRepository();
+        }
+        return expiringKeypairRepository;
     }
 }
