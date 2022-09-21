@@ -4,6 +4,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.kncept.oauth2.config.Oauth2Configuration;
 import com.kncept.oauth2.config.authcode.Authcode;
+import com.kncept.oauth2.config.parameter.ConfigParameters;
 import com.kncept.oauth2.config.session.OauthSession;
 import com.kncept.oauth2.crypto.key.ExpiringKeyPair;
 import com.kncept.oauth2.crypto.key.KeyVendor;
@@ -12,6 +13,7 @@ import org.json.simple.JSONObject;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
@@ -60,15 +62,17 @@ public class TokenHandler {
             // if the code matches, VEND a JWT token!!
             // https://github.com/auth0/java-jwt
 
+            Instant iat = LocalDateTime.now().toInstant(ZoneOffset.UTC);
+
             ExpiringKeyPair keys = keyVendor.getPair();
             Algorithm algorithm = Algorithm.RSA256(
                     (RSAPublicKey) keys.keyPair().getPublic(),
                     (RSAPrivateKey) keys.keyPair().getPrivate());
             String token = JWT.create()
-                    .withIssuer("kncept-oauth")
+                    .withIssuer(issuerName())
                     .withSubject(session.get().userId().get())
-                    .withIssuedAt(LocalDateTime.now().toInstant(ZoneOffset.UTC))
-                    .withExpiresAt(LocalDateTime.now().plusHours(18).toInstant(ZoneOffset.UTC))
+                    .withIssuedAt(iat)
+                    .withExpiresAt(iat.plusSeconds(sessionDurationInSeconds()))
 //                    .withClaim("nonce", authRequest.getnonce)
                     .sign(algorithm);
 
@@ -76,7 +80,7 @@ public class TokenHandler {
             JSONObject jwt = new JSONObject();
             jwt.put("token_type", "Bearer");
             jwt.put("id_token", token);
-            jwt.put("expires_in", 3600);
+            jwt.put("expires_in", sessionDurationInSeconds());
             //        jwt.put("refresh_token", "xxxx")
 
             // needs to be json
@@ -87,6 +91,14 @@ public class TokenHandler {
         } catch (RuntimeException e) {
             return jsonError(e.getMessage(), oauthSessionId);
         }
+    }
+
+    String issuerName() {
+        return ConfigParameters.issuerName.get(config.parameterRepository());
+    }
+
+    int sessionDurationInSeconds() {
+        return Integer.parseInt(ConfigParameters.sessionDuration.get(config.parameterRepository()));
     }
 
 }

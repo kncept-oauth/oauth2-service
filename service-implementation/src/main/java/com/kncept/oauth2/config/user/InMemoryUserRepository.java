@@ -18,12 +18,6 @@ public class InMemoryUserRepository implements UserRepository {
 
     public InMemoryUserRepository() {
     }
-
-    @Override
-    public boolean acceptingSignup() {
-        return true;
-    }
-
     @Override
     public Optional<User> login(String username, String password) {
         SimpleSaltedUser user = users.get(username);

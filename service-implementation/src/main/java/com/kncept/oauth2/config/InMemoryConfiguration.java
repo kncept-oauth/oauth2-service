@@ -3,6 +3,7 @@ package com.kncept.oauth2.config;
 import com.kncept.oauth2.config.authcode.InMemoryAuthcodeRepository;
 import com.kncept.oauth2.config.authrequest.InMemoryAuthRequestRepository;
 import com.kncept.oauth2.config.client.InMemoryClientRepository;
+import com.kncept.oauth2.config.parameter.EmptyParameterRepository;
 import com.kncept.oauth2.config.session.InMemoryOauthSessionRepository;
 import com.kncept.oauth2.config.user.InMemoryUserRepository;
 
@@ -14,19 +15,8 @@ public class InMemoryConfiguration implements Oauth2Configuration {
     private InMemoryUserRepository userRepository;
     private InMemoryOauthSessionRepository oauthSessionRepository;
     private InMemoryAuthcodeRepository authcodeRepository;
+    private EmptyParameterRepository parameterRepository;
 
-    public InMemoryConfiguration() {
-        requirePkce = false;
-    }
-
-    public InMemoryConfiguration(boolean requirePkce) {
-        this.requirePkce = requirePkce;
-    }
-
-    @Override
-    public synchronized boolean requirePkce() {
-        return requirePkce;
-    }
 
     @Override
     public synchronized InMemoryClientRepository clientRepository() {
@@ -66,5 +56,13 @@ public class InMemoryConfiguration implements Oauth2Configuration {
             authcodeRepository = new InMemoryAuthcodeRepository();
         }
         return authcodeRepository;
+    }
+
+    @Override
+    public EmptyParameterRepository parameterRepository() {
+        if (parameterRepository == null) {
+            parameterRepository = new EmptyParameterRepository();
+        }
+        return parameterRepository;
     }
 }

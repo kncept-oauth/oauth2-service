@@ -8,23 +8,15 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import java.util.Optional;
 
 public class DynamoDbUserRepository extends DynamoDbRepository<SaltedUser> implements UserRepository {
-
-    private boolean acceptingSignup;
     private AuthCrypto crypto;
 
-    public DynamoDbUserRepository(DynamoDbClient client, String tableName, boolean acceptingSignup) {
+    public DynamoDbUserRepository(DynamoDbClient client, String tableName) {
         super(
         		SaltedUser.class,
                 client,
                 tableName
         );
-        this.acceptingSignup = acceptingSignup;
         crypto = new AuthCrypto();
-    }
-
-    @Override
-    public boolean acceptingSignup() {
-        return acceptingSignup;
     }
 
     @Override

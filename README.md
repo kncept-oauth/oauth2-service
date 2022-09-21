@@ -47,15 +47,15 @@ classpath of the running application to be usable.
 
 The following `oidc_config` classes are shipped:
 - `com.kncept.oauth2.config.SystemProperyConfiguration` - Detailed below
-- `com.kncept.oauth2.config.DynoDbOauth2Configuration` - in service-aws, DyndoDB tables, including including auto table creation.
+- `com.kncept.oauth2.config.DynoDbOauth2Configuration` - in service-aws, DyndoDB tables, including auto table creation.
 - `com.kncept.oauth2.config.InMemoryConfiguration` - In memory volatile store, useful for testing
 
 You probably want to extend something like DynoDbOauth2Configuration and override the UserRepository
 with your own implementation.
 
 ### SystemProperyConfiguration
-By default, the prepared soutions use a
-[SystemProperyConfiguration](service-implementation/src/main/java/com/kncept/oauth2/config/SystemProperyConfiguration.java)
+Set the `oidc_config` system property to `com.kncept.oauth2.config.SystemProperyConfiguration`.
+This will vend a [SystemProperyConfiguration](service-implementation/src/main/java/com/kncept/oauth2/config/SystemProperyConfiguration.java)
 which needs the following environment properties set:
     - `oidc_config_pkce`  true to require PKCE, false if it is optional
     - `oidc_config_clients` a [ClientRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/client/ClientRepository.java)
@@ -63,6 +63,11 @@ which needs the following environment properties set:
     - `oidc_config_users` a [UserRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/user/UserRepository.java)
     - `oidc_config_sessions` an [OauthSessionRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/session/OauthSessionRepository.java)
     - `oidc_config_authcodes`an [AuthcodeRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/authcode/AuthcodeRepository.java)
+    - `oidc_config_parameter`a [ParameterRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/parameter/ParameterRepository.java)
+
+
+### ParameterRepository configuration
+This points to a table that has simple values in it - see the ConfigParameters enum
 
 ## AWS Deployment
 A default aws deployment is provided in the `aws-deploy` folder

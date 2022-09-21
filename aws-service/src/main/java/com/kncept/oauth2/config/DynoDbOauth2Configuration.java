@@ -6,6 +6,8 @@ import com.kncept.oauth2.config.authrequest.AuthRequestRepository;
 import com.kncept.oauth2.config.authrequest.DynamoDbAuthRequestRepository;
 import com.kncept.oauth2.config.client.ClientRepository;
 import com.kncept.oauth2.config.client.DynamoDbClientRepository;
+import com.kncept.oauth2.config.parameter.DynamoDbParameterRepository;
+import com.kncept.oauth2.config.parameter.ParameterRepository;
 import com.kncept.oauth2.config.session.DynamoDbOauthSessionRepository;
 import com.kncept.oauth2.config.session.OauthSessionRepository;
 import com.kncept.oauth2.config.user.DynamoDbUserRepository;
@@ -14,8 +16,6 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 public class DynoDbOauth2Configuration implements Oauth2Configuration {
 
-    private final boolean requirePkce;
-    private final boolean acceptingSignup;
     private final boolean autocreateTables;
 
     private DynamoDbClient client;
@@ -25,20 +25,14 @@ public class DynoDbOauth2Configuration implements Oauth2Configuration {
     private DynamoDbAuthcodeRepository authcodeRepository;
     private DynamoDbUserRepository userRepository;
     private DynamoDbOauthSessionRepository oauthSessionRepository;
+    private DynamoDbParameterRepository parameterRepository;
 
     public DynoDbOauth2Configuration() {
-        this(false, true, true);
+        this(true);
     }
 
-    public DynoDbOauth2Configuration(boolean requirePkce, boolean acceptingSignup, boolean autocreateTables) {
-        this.requirePkce = requirePkce;
-        this.acceptingSignup = acceptingSignup;
+    public DynoDbOauth2Configuration(boolean autocreateTables) {
         this.autocreateTables = autocreateTables;
-    }
-
-    @Override
-    public boolean requirePkce() {
-        return requirePkce;
     }
 
     public String tableName(Class interfaceType) {
@@ -100,8 +94,7 @@ public class DynoDbOauth2Configuration implements Oauth2Configuration {
             synchronized (this) {
                 if (userRepository == null) userRepository = new DynamoDbUserRepository(
                         dynamoDbClient(),
-                        tableName(UserRepository.class),
-                        acceptingSignup
+                        tableName(UserRepository.class)
                 );
             }
             if (autocreateTables) userRepository.createTableIfNotExists();
@@ -121,5 +114,19 @@ public class DynoDbOauth2Configuration implements Oauth2Configuration {
             if (autocreateTables) oauthSessionRepository.createTableIfNotExists();
         }
         return oauthSessionRepository;
+    }
+
+    @Override
+    public ParameterRepository parameterRepository() {
+        if (parameterRepository == null) {
+            synchronized (this) {
+                if (parameterRepository == null) parameterRepository = new DynamoDbParameterRepository(
+                        dynamoDbClient(),
+                        tableName(OauthSessionRepository.class)
+                );
+            }
+            if (autocreateTables) parameterRepository.createTableIfNotExists();
+        }
+        return parameterRepository;
     }
 }

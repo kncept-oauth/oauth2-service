@@ -4,6 +4,7 @@ import com.kncept.oauth2.config.Oauth2Configuration;
 import com.kncept.oauth2.config.authcode.Authcode;
 import com.kncept.oauth2.config.authrequest.AuthRequest;
 import com.kncept.oauth2.config.client.Client;
+import com.kncept.oauth2.config.parameter.ConfigParameters;
 import com.kncept.oauth2.config.session.OauthSession;
 import com.kncept.oauth2.operation.response.ContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
@@ -52,12 +53,12 @@ public class AuthorizeHandler {
         Optional<String> state = optional("state", params);
         Optional<String> nonce = optional("nonce", params);
 
-        boolean isPkce = config.requirePkce() || params.containsKey("code_challenge");
-        if (isPkce) {
-            String codeChallenge = required("code_challenge", params);
-            String codeChallengeMethod = optional("code_challenge_method", params, "S256");
-            String code_verifier = optional("code_verifier", params, null);
-        }
+//        boolean isPkce = config.requirePkce() || params.containsKey("code_challenge");
+//        if (isPkce) {
+//            String codeChallenge = required("code_challenge", params);
+//            String codeChallengeMethod = optional("code_challenge_method", params, "S256");
+//            String code_verifier = optional("code_verifier", params, null);
+//        }
 
         Optional<Client> client = config.clientRepository().lookup(clientId);
         if (client.isEmpty()) {
@@ -103,7 +104,11 @@ public class AuthorizeHandler {
                 200,
                 ContentResponse.Content.LOGIN_PAGE,
                 Optional.of(session.oauthSessionId()))
-                .withParam("acceptingSignup", Boolean.toString(config.userRepository().acceptingSignup()));
+                .withParam("acceptingSignup", Boolean.toString(acceptingSignup()));
+    }
+
+    boolean acceptingSignup() {
+        return Boolean.valueOf(ConfigParameters.signupEnabled.get(config.parameterRepository()));
     }
 
     private OperationResponse redirectAfterSuccessfulAuth(String oauthSessionId, AuthRequest authRequest) {

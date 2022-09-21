@@ -3,6 +3,7 @@ package com.kncept.oauth2.config;
 import com.kncept.oauth2.config.authcode.AuthcodeRepository;
 import com.kncept.oauth2.config.authrequest.AuthRequestRepository;
 import com.kncept.oauth2.config.client.ClientRepository;
+import com.kncept.oauth2.config.parameter.ParameterRepository;
 import com.kncept.oauth2.config.session.OauthSessionRepository;
 import com.kncept.oauth2.config.user.UserRepository;
 
@@ -14,16 +15,7 @@ public class SystemProperyConfiguration implements Oauth2Configuration {
     private UserRepository userRepository;
     private OauthSessionRepository oauthSessionRepository;
     private AuthcodeRepository authcodeRepository;
-
-
-    @Override
-    public synchronized boolean requirePkce() {
-        if (requirePkce == null) {
-            requirePkce = getBooleanEnvProperty("pkce");
-            if (requirePkce == null) throw new NullPointerException();
-        }
-        return requirePkce;
-    }
+    private ParameterRepository parameterRepository;
 
     @Override
     public synchronized ClientRepository clientRepository() {
@@ -63,6 +55,13 @@ public class SystemProperyConfiguration implements Oauth2Configuration {
             authcodeRepository = loadClassFromEnvProperty("authcodes", AuthcodeRepository.class);
         }
         return authcodeRepository;
+    }
+    @Override
+    public ParameterRepository parameterRepository() {
+        if (parameterRepository == null) {
+            parameterRepository = loadClassFromEnvProperty("parameter", ParameterRepository.class);
+        }
+        return parameterRepository;
     }
 
     private static String getEnvProperty(String suffix) {

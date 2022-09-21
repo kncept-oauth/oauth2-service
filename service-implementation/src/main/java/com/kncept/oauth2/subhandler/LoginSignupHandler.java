@@ -3,6 +3,7 @@ package com.kncept.oauth2.subhandler;
 import com.kncept.oauth2.config.Oauth2Configuration;
 import com.kncept.oauth2.config.authcode.Authcode;
 import com.kncept.oauth2.config.authrequest.AuthRequest;
+import com.kncept.oauth2.config.parameter.ConfigParameters;
 import com.kncept.oauth2.config.session.OauthSession;
 import com.kncept.oauth2.config.user.User;
 import com.kncept.oauth2.operation.response.ContentResponse;
@@ -32,7 +33,7 @@ public class LoginSignupHandler {
                     200,
                     ContentResponse.Content.LOGIN_PAGE,
                     Optional.of(oauthSessionId))
-                    .withParam("acceptingSignup", Boolean.toString(config.userRepository().acceptingSignup()));
+                    .withParam("acceptingSignup", Boolean.toString(acceptingSignup()));
 
 
         // its a login attempt
@@ -59,13 +60,13 @@ public class LoginSignupHandler {
                     200,
                     ContentResponse.Content.LOGIN_PAGE,
                     Optional.of(oauthSessionId))
-                    .withParam("acceptingSignup", Boolean.toString(config.userRepository().acceptingSignup()))
+                    .withParam("acceptingSignup", Boolean.toString(acceptingSignup()))
                     .withParam("message", "Authorization Failed - Please try again");
         }
     }
 
     public OperationResponse signup(Map<String, String> params, String oauthSessionId) {
-        if (!config.userRepository().acceptingSignup())
+        if (!acceptingSignup())
             return new ContentResponse(
                     400,
                     ContentResponse.Content.ERROR_PAGE,
@@ -102,6 +103,10 @@ public class LoginSignupHandler {
                 ContentResponse.Content.SIGNUP_PAGE,
                 Optional.of(oauthSessionId))
                 .withParam("message", "Signup failed");
+    }
+
+    boolean acceptingSignup() {
+        return Boolean.valueOf(ConfigParameters.signupEnabled.get(config.parameterRepository()));
     }
 
     private OperationResponse redirectAfterSuccessfulAuth(String oauthSessionId, AuthRequest authRequest) {
