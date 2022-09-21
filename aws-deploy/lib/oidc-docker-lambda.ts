@@ -52,7 +52,7 @@ export class OidcDockerLambda extends cdk.Stack {
       timeout: cdk.Duration.seconds(29), // API Gateway 30sec timeout
       environment: {
         // can't have dots . or dashes -
-        'oidc_config': 'com.kncept.oauth2.config.DynoDbOauth2Configuration',
+        'OIDC_Config': 'com.kncept.oauth2.config.DynoDbOauth2Configuration',
       },
       role,
       // logRetention:  logs.RetentionDays.ONE_MONTH

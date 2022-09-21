@@ -33,7 +33,7 @@ public class EnvPropertyConfiguration implements Oauth2Configuration {
             name = name.substring(0, name.length() - 10);
         } else throw new IllegalStateException("No strategy to obtain short property name from " + name);
 
-        return name.toLowerCase();
+        return name;
     }
 
     @Override
