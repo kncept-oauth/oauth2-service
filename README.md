@@ -67,7 +67,7 @@ which needs the following environment properties set:
 
 
 ### ParameterRepository configuration
-This points to a table that has simple values in it - see the ConfigParameters enum
+This points to a table that has simple values in it - see the [ConfigParameters](service-interfaces/src/main/java/com/kncept/oauth2/config/parameter/ConfigParameters.java) enum
 
 ## AWS Deployment
 A default aws deployment is provided in the `aws-deploy` folder
