@@ -79,7 +79,6 @@ public class KnceptOauth2Server implements HttpHandler {
                 exchange.sendResponseHeaders(404, -1);
             }
         } catch (Exception e) {
-            e.printStackTrace();
             exchange.sendResponseHeaders(500, -1);
         }
     }

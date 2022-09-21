@@ -10,6 +10,9 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class HandlerTest {
 
@@ -19,8 +22,8 @@ public class HandlerTest {
         Handler handler = new Handler(new InMemoryConfiguration());
 
         APIGatewayProxyResponseEvent result = handler.handleRequest(createSyntheticEvent(), createSyntheticContext());
-        Assertions.assertEquals("", result.getBody());
-        Assertions.assertEquals(404, result.getStatusCode());
+        assertEquals("", result.getBody());
+        assertEquals(404, result.getStatusCode());
     }
 
     @Test
@@ -29,7 +32,23 @@ public class HandlerTest {
         APIGatewayProxyRequestEvent event = createSyntheticEvent();
         event.setPath("/style.css");
         APIGatewayProxyResponseEvent result = handler.handleRequest(event, createSyntheticContext());
-        Assertions.assertEquals(200, result.getStatusCode());
+        assertEquals(200, result.getStatusCode());
+    }
+
+    @Test
+    public void canSplitParams() throws Exception {
+        Handler handler = new Handler(new InMemoryConfiguration());
+        String s = "grant_type=authorization_code\n" +
+                "&client_id=kncept-oidc-client\n" +
+                "&client_secret=none\n" +
+                "&redirect_uri=https://openidconnect.net/callback\n" +
+                "&code=8381357e-e02e-4b46-b73e-b2a24f629027";
+        Map<String, String> params = handler.extractSimpleParams(s.replaceAll("\n", ""));
+        assertEquals("kncept-oidc-client", params.get("client_id"));
+
+        params = handler.extractSimpleParams(s);
+        assertEquals("kncept-oidc-client", params.get("client_id").trim());
+
     }
 
     private Context createSyntheticContext() {

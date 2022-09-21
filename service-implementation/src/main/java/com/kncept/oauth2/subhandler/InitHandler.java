@@ -30,7 +30,6 @@ public class InitHandler {
         if (await) try {
             service.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            e.printStackTrace();
         }
     }
 

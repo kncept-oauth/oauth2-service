@@ -23,7 +23,7 @@ public class StaticKeypairStrategy implements KeypairStrategy {
     public ManagedKeypair current() {
         if (cached != null && cached.isValid()) return cached;
         cached = null;
-        ManagedKeypair current = repository.latest().map(ManagedKeypairConverter::convert).get();
+        ManagedKeypair current = repository.latest().map(ManagedKeypairConverter::convert).orElse(null);
         if (current != null && current.isValid()) {
             cached = current;
             return cached;
