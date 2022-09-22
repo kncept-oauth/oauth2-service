@@ -57,6 +57,8 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
             } else if (path.equals("/init")) {
                 oauth2.init(true);
                 return emptyResponse(200);
+            } else if (path.equals("/.well-known/openid-configuration")) {
+                return handleResponse(oauth2.discovery());
             } else {
                 return emptyResponse(404);
             }

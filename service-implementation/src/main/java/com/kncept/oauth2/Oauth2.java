@@ -6,10 +6,7 @@ import com.kncept.oauth2.crypto.key.KeyManager;
 import com.kncept.oauth2.operation.response.ContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
 import com.kncept.oauth2.operation.response.RenderedContentResponse;
-import com.kncept.oauth2.subhandler.AuthorizeHandler;
-import com.kncept.oauth2.subhandler.InitHandler;
-import com.kncept.oauth2.subhandler.LoginSignupHandler;
-import com.kncept.oauth2.subhandler.TokenHandler;
+import com.kncept.oauth2.subhandler.*;
 
 import java.util.Map;
 import java.util.Optional;
@@ -29,6 +26,13 @@ public class Oauth2 implements Oauth2Processor {
     public Oauth2(Oauth2Configuration config) {
         this.config = config;
         keyManager = new KeyManager(config);
+    }
+
+    // https://auth0.com/docs/get-started/applications/configure-applications-with-oidc-discovery
+    // should be on a https://YOUR_DOMAIN(and optional prefix root)/.well-known/openid-configuration URL
+    public RenderedContentResponse discovery() {
+        // WIP
+        return new DiscoveryHandler(config).discovery();
     }
 
     // https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest

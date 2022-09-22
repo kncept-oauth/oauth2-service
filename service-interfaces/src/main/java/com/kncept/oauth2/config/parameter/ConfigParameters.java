@@ -6,7 +6,7 @@ public enum ConfigParameters {
     signupEnabled("true"),
     rootUri,
     sessionDuration("3600"), // seconds
-    issuerName("kncept-oauth"),
+    issuerName("kncept-oauth"), // TODO: rename to 'issuer' and MUST be a URL... might need to scrape from web requests
     ;
 
     private final String defaultValue;

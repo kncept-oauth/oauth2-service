@@ -10,6 +10,8 @@ import java.util.Optional;
 public interface Oauth2Processor {
     void init(boolean await);
 
+    RenderedContentResponse discovery();
+
     OperationResponse authorize(Map<String, String> params, Optional<String> oauthSessionId);
     RenderedContentResponse token(Map<String, String> params);
 

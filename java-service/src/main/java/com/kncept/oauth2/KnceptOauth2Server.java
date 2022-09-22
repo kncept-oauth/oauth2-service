@@ -75,6 +75,8 @@ public class KnceptOauth2Server implements HttpHandler {
                 handleResponse(exchange, oauth2.renderCss());
             } else if (path.equals("/token") || path.equals("/oauth/token")) {
                 handleResponse(exchange, oauth2.token(bodyOrQueryParams(exchange)));
+            } else if (path.equals("/.well-known/openid-configuration")) {
+                handleResponse(exchange, oauth2.discovery());
             } else {
                 exchange.sendResponseHeaders(404, -1);
             }
