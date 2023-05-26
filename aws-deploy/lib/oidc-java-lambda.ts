@@ -108,16 +108,20 @@ export class OidcJavaLambda extends cdk.Stack {
       endpointTypes: [apigateway.EndpointType.REGIONAL],
       minCompressionSize: cdk.Size.bytes(0),
     })
-    new CfnOutput(this, `${functionName}-Api-Url-Output`, {
+    new CfnOutput(this, `${functionName}-Api-Url-Backend`, {
       value: restApi.url
+    })
+    new CfnOutput(this, `${functionName}-Api-Url-Output`, {
+      value: `https://${props.lambdaHostname}/`
     })
 
     const handlerIntegration = new apigateway.LambdaIntegration(handler, {
       allowTestInvoke: false
     })
 
-    restApi.root.addMethod('GET', handlerIntegration)
-    restApi.root.addMethod('POST', handlerIntegration)
+    restApi.root.addProxy({
+      defaultIntegration: handlerIntegration
+    })
 
     const apiCertificate = new cdk.aws_certificatemanager.Certificate(this, `${functionName}-Api-Certificate`, {
       domainName: props.lambdaHostname,

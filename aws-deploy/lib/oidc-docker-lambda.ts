@@ -55,12 +55,12 @@ export class OidcDockerLambda extends cdk.Stack {
         'OIDC_Config': 'com.kncept.oauth2.config.DynoDbOauth2Configuration',
       },
       role,
-      // logRetention:  logs.RetentionDays.ONE_MONTH
+      logRetention:  logs.RetentionDays.ONE_MONTH
     })
 
-    const api = new apigateway.RestApi(this, "kncept-oidc-api", {
-      restApiName: "Kncept OIDC",
-      description: "Oauth2 OIDC Server",
+    const api = new apigateway.RestApi(this, 'kncept-oidc-api', {
+      restApiName: 'Kncept OIDC',
+      description: 'Oauth2 OIDC Server',
     })
     new CfnOutput(this, 'api-internal-url', {
       value: api.url
