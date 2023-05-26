@@ -5,6 +5,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda'
 import * as iam from 'aws-cdk-lib/aws-iam'
 import * as s3 from 'aws-cdk-lib/aws-s3'
 import * as logs from 'aws-cdk-lib/aws-logs'
+import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import * as route53 from 'aws-cdk-lib/aws-route53'
 import * as s3Deployment from 'aws-cdk-lib/aws-s3-deployment'
 
@@ -24,6 +25,10 @@ export class OidcJavaLambda extends cdk.Stack {
 
     const functionName = 'kncept-oidc'
 
+    const vpc = new ec2.Vpc(this, `${functionName}-vpc`, {
+      vpcName: `${functionName}-vpc`,
+    })
+
     let zone: route53.IHostedZone
     if(props.baseHostedZone) {
       zone = route53.HostedZone.fromHostedZoneAttributes(this, `${functionName}-LookupHostedZone`, {
@@ -41,6 +46,10 @@ export class OidcJavaLambda extends cdk.Stack {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       roleName: functionName,
       description: 'OIDC Lambda role',
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaVPCAccessExecutionRole"),
+        iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
+      ]
     })
 
     // eg: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_lambda-access-dynamodb.html
@@ -90,6 +99,7 @@ export class OidcJavaLambda extends cdk.Stack {
       },
       role,
       logRetention:  logs.RetentionDays.ONE_MONTH,
+      vpc
     })
 
     const restApi = new apigateway.RestApi(this, `${functionName}-Api`, {
