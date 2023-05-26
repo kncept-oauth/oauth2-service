@@ -2,7 +2,7 @@
 import 'source-map-support/register'
 import * as cdk from 'aws-cdk-lib'
 import { OidcJavaLambda } from '../lib/oidc-java-lambda'
-import { matchHostedZoneToFQDN } from './domain-tools'
+import { HostedZoneInfo, matchHostedZoneToFQDN } from './domain-tools'
 
 function envVarBooleanValue(varName: string): boolean {
     const val = process.env[varName] || ''
@@ -16,23 +16,18 @@ const lookupBasename = envVarBooleanValue('LOOKUP_BASENAME')
 async function run() {
     const app = new cdk.App()
 
+    let baseHostedZone: HostedZoneInfo | undefined = undefined
     if (lookupBasename) {
-        const baseHostedZone = await matchHostedZoneToFQDN(lambdaHostname)
+        baseHostedZone = await matchHostedZoneToFQDN(lambdaHostname)
         if (baseHostedZone === undefined) {
             throw new Error(`Unable to find existing basename of ${lambdaHostname}`)
         }
-        new OidcJavaLambda(app, 'OidcJavaLambda', {
-            baseHostedZone,
-            lambdaHostname,
-        })
-    } else {
-        new OidcJavaLambda(app, 'OidcJavaLambda', {
-            lambdaHostname,
-        })
+        
     }
-
-    
-
+    new OidcJavaLambda(app, 'OidcJavaLambda', {
+        baseHostedZone,
+        lambdaHostname,
+    })
 }
 
 run()

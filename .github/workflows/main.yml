@@ -49,10 +49,10 @@ jobs:
         with:
           node-version: 18
 
-      - name: AWS CDK Deployment via npm
+      - name: AWS CDK npm init
         run: npm ci
         working-directory: aws-deploy
-      - name: AWS CDK Deploy
+      - name: AWS CDK cdk deploy
         run: npm run cdk deploy OidcJavaLambda
         working-directory: aws-deploy
         env:

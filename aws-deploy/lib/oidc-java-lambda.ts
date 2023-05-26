@@ -94,8 +94,9 @@ export class OidcJavaLambda extends cdk.Stack {
       timeout: cdk.Duration.seconds(29), // behind api gateway = 29s timeout
       environment: {
         // can't have dots . or dashes -
-        // :(
-        'oidc_test_property': 'com.kncept.xxx.Xyz'
+        
+        // use the (default) DDB table for config and control
+          'OIDC_Config': 'com.kncept.oauth2.config.DynoDbOauth2Configuration',
       },
       role,
       logRetention:  logs.RetentionDays.ONE_MONTH,
