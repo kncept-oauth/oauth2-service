@@ -29,13 +29,13 @@ export class OidcJavaLambda extends cdk.Stack {
       vpcName: `${functionName}-vpc`,
     })
 
-    let zone: route53.IHostedZone
+    let zone: route53.IHostedZone | undefined
     if(props.baseHostedZone) {
       zone = route53.HostedZone.fromHostedZoneAttributes(this, `${functionName}-LookupHostedZone`, {
         hostedZoneId: props.baseHostedZone.id,
         zoneName: props.baseHostedZone.name,
       })
-    } else {
+    } else if (props.lambdaHostname !== '') {
       zone = new route53.PublicHostedZone(this, `${functionName}-HostedZone`, {
         caaAmazon: true,
         zoneName: extractHostedZoneFromHostname(props.lambdaHostname),
@@ -88,7 +88,7 @@ export class OidcJavaLambda extends cdk.Stack {
 
     const handler = new lambda.Function(this, `${functionName}-Lambda`, {
       runtime: lambda.Runtime.JAVA_17,
-      functionName: 'oidc-java-service',
+      functionName: 'oidc-service',
       code: lambda.Code.fromBucket(deployedAsset.deployedBucket, objKey),
       handler: 'com.kncept.oauth2.Handler',
       timeout: cdk.Duration.seconds(29), // behind api gateway = 29s timeout
@@ -112,9 +112,6 @@ export class OidcJavaLambda extends cdk.Stack {
     new CfnOutput(this, `${functionName}-Api-Url-Backend`, {
       value: restApi.url
     })
-    new CfnOutput(this, `${functionName}-Api-Url-Output`, {
-      value: `https://${props.lambdaHostname}/`
-    })
 
     const handlerIntegration = new apigateway.LambdaIntegration(handler, {
       allowTestInvoke: false
@@ -124,20 +121,26 @@ export class OidcJavaLambda extends cdk.Stack {
       defaultIntegration: handlerIntegration
     })
 
-    const apiCertificate = new cdk.aws_certificatemanager.Certificate(this, `${functionName}-Api-Certificate`, {
-      domainName: props.lambdaHostname,
-      validation: cdk.aws_certificatemanager.CertificateValidation.fromDns(zone)
-    })
+    if (zone) {
+      const apiCertificate = new cdk.aws_certificatemanager.Certificate(this, `${functionName}-Api-Certificate`, {
+        domainName: props.lambdaHostname,
+        validation: cdk.aws_certificatemanager.CertificateValidation.fromDns(zone)
+      })
 
-    const apiDomainNameMountPoint = restApi.addDomainName(`${functionName}-Api-DomainName`, {
-      domainName: props.lambdaHostname,
-      certificate: apiCertificate,
-    })
+      const apiDomainNameMountPoint = restApi.addDomainName(`${functionName}-Api-DomainName`, {
+        domainName: props.lambdaHostname,
+        certificate: apiCertificate,
+      })
 
-    new route53.CnameRecord(this, `${functionName}-DnsEntry`, {
-      zone,
-      recordName: props.lambdaHostname.substring(0, props.lambdaHostname.length - (extractHostedZoneFromHostname(props.lambdaHostname).length + 1)),
-      domainName: apiDomainNameMountPoint!.domainNameAliasDomainName,
-    })
+      new route53.CnameRecord(this, `${functionName}-DnsEntry`, {
+        zone,
+        recordName: props.lambdaHostname.substring(0, props.lambdaHostname.length - (extractHostedZoneFromHostname(props.lambdaHostname).length + 1)),
+        domainName: apiDomainNameMountPoint!.domainNameAliasDomainName,
+      })
+
+      new CfnOutput(this, `${functionName}-Api-Url-Output`, {
+        value: `https://${props.lambdaHostname}/`
+      })
+    }
   }
 }

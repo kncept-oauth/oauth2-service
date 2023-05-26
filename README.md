@@ -71,13 +71,13 @@ with your own implementation.
 Set the `OIDC_Config` system property to `com.kncept.oauth2.config.EnvPropertyConfiguration`
 This will vend an [EnvPropertyConfiguration](service-implementation/src/main/java/com/kncept/oauth2/config/SystemProperyConfiguration.java)
 which needs the following environment properties set:
-    - `OIDC_Config_Client` a [ClientRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/client/ClientRepository.java)
-    - `OIDC_Config_AuthRequest` an [AuthRequestRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/authrequest/AuthRequestRepository.java)
-    - `OIDC_Config_User` a [UserRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/user/UserRepository.java)
-    - `OIDC_Config_OauthSession` an [OauthSessionRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/session/OauthSessionRepository.java)
-    - `OIDC_Config_Authcode` an [AuthcodeRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/authcode/AuthcodeRepository.java)
-    - `OIDC_Config_Parameter` a [ParameterRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/parameter/ParameterRepository.java)
-    - `OIDC_Config_ExpiringKeypair` an [ExpiringKeypairRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/crypto/ExpiringKeypairRepository.java)
+  -  `OIDC_Config_Client` a [ClientRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/client/ClientRepository.java)
+  - `OIDC_Config_AuthRequest` an [AuthRequestRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/authrequest/AuthRequestRepository.java)
+   - `OIDC_Config_User` a [UserRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/user/UserRepository.java)
+   - `OIDC_Config_OauthSession` an [OauthSessionRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/session/OauthSessionRepository.java)
+   - `OIDC_Config_Authcode` an [AuthcodeRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/authcode/AuthcodeRepository.java)
+   - `OIDC_Config_Parameter` a [ParameterRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/parameter/ParameterRepository.java)
+   - `OIDC_Config_ExpiringKeypair` an [ExpiringKeypairRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/crypto/ExpiringKeypairRepository.java)
 
 ### ParameterRepository configuration
 This points to a table that has simple values in it - see the [ConfigParameters](service-interfaces/src/main/java/com/kncept/oauth2/config/parameter/ConfigParameters.java) enum
@@ -109,5 +109,4 @@ isn't pushed upstream, you can always modify a repository fork.
 You can of course fork the repo for yourself.
 if you do any bugfixes, submit a patch :)
 
-Otherwise, the github workflow will need configuration (AWS keys, as above), and will deploy to a default (random) URL.
-You can see the URL in the outputs of the Cloudformation stack in the AWS console.
+Otherwise, the github workflow will need configuration (AWS keys as secrets, control values as variables, as above), and will deploy on commits to master.
