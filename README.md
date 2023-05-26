@@ -10,25 +10,35 @@ to customise via environment properties. At the other end of the spectrum
 it's possible to integrated directly against the OIDC processor as a library,
 and provide custom code level configurations to deal with any use case imaginable.
 
-
 ## Quickstart (aws)
-Requires docker and nodejs.
+Assuming you are runing in the devcontainer:
 1. Clone this project `git clone git@github.com:kncept-oauth/simple-oidc.git`
-1. Build java components `./batect dist` / `batect dist`
-1. Configure AWS keys `export AWS_ACCESS_KEY_ID=...` / `set AWS_ACCESS_KEY_ID=...`
-1. Deploy `cd aws-deploy && npm i && npm run cdk deploy OidcDockerLambda`
+1. Build java components `./gradlew dist`
+1. Configure AWS keys 
+  ```
+  export AWS_ACCESS_KEY_ID=xxx
+  export AWS_SECRET_ACCESS_KEY=xxx
+  export AWS_REGION=ap-southeast-2
+  ```
+1. Set configuration keys for Lambda control
+  ```
+  export LAMBDA_HOSTNAME=oidc.kncept.com
+  export LOOKUP_BASENAME=true
+  ```
+1. Deploy `cd aws-deploy && npm i && npm run cdk deploy OidcJavaLambda`
 
-The URL that is output is the URL_BASE to use for endpoints to integrate against.
-The default API Gateway URL will be displayed in the 'outputs' section in the Cloudformation stack, 
-and can be viewed via the AWS Console.
+This will result in a URL_BASE of https://${LAMBDA_HOSTNAME}
+if LAMBDA_HOSTNAME is not defined, then the default api gateway url will be used.
+This goes into the 'URL_BASE' Cloudformation stack output, and can be viewed via the AWS Console.
 - Authorize Endpoint: ${URL_BASE}/authorize
 - Token Endpoint: ${URL_BASE}/oauth/token
 
 ### Run simple dev server locally
 This assumes that you also have Java installed on your system
-`./gradlew :java-service:run` / `gradlew :java-service:run` will run the java-service on :8080 configured for development
+`./gradlew :java-service:run` will run the java-service on :8080 configured for development
 - Authorize Endpoint: http://localhost:8080/authorize
 - Token Endpoint: http://localhost:8080/oauth/token
+
 
 # Integration
 

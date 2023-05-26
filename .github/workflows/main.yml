@@ -47,17 +47,18 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18
 
-      - name: Init AWS Deployment npm
+      - name: AWS CDK Deployment via npm
         run: npm i
         working-directory: aws-deploy
       - name: AWS CDK Deploy
-        run: npm run cdk deploy OidcDockerLambda
+        run: npm run cdk deploy OidcJavaLambda
         working-directory: aws-deploy
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-
+          LAMBDA_HOSTNAME: ${{ env.LAMBDA_HOSTNAME }}
+          LOOKUP_BASENAME: ${{ env.LOOKUP_BASENAME }}
 
