@@ -14,13 +14,13 @@ and provide custom code level configurations to deal with any use case imaginabl
 Assuming you are runing in the devcontainer:
 1. Clone this project `git clone git@github.com:kncept-oauth/simple-oidc.git`
 1. Build java components `./gradlew dist`
-1. Configure AWS keys 
+1. Configure AWS keys. eg:
   ```
   export AWS_ACCESS_KEY_ID=xxx
   export AWS_SECRET_ACCESS_KEY=xxx
   export AWS_REGION=ap-southeast-2
   ```
-1. Set configuration keys for Lambda control
+1. Set configuration keys for Lambda control. eg:
   ```
   export LAMBDA_HOSTNAME=oidc.kncept.com
   export LOOKUP_BASENAME=true
