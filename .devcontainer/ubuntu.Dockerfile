@@ -17,7 +17,7 @@ RUN apt-get -y install sudo wget curl vim git
 
 # Java Openjdk install
 ARG OPENJDK_VERSION=17
-RUN apt install openjdk-${OPENJDK_VERSION}-jdk openjdk-${OPENJDK_VERSION}-jre
+RUN apt install -y openjdk-${OPENJDK_VERSION}-jdk openjdk-${OPENJDK_VERSION}-jre
 
 
 # User
@@ -31,7 +31,5 @@ ARG NODE_VERSION=18
 RUN \
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
 RUN bash -c 'source .nvm/nvm.sh && npm install -g ts-node'
-# known location for the current node version bin tools
-RUN ln -s /home/ubuntu/.nvm/versions/node/v${NODE_VERSION}* /home/ubuntu/.local_node
 
 
