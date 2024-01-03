@@ -5,12 +5,7 @@ plugins {
 	id("io.freefair.lombok") version "8.4"
 }
 
-version = '0.0.1'
-// GITHUB_REF_NAME
-// GITHUB_SHA
-
 defaultTasks 'jar'
-
 
 def junit5version = '5.8.2'
 dependencies {

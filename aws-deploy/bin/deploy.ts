@@ -17,6 +17,8 @@ const lookupBasename = envVarBooleanValue('LOOKUP_BASENAME')
 export function calcVersion() {
     const githubRefName = process.env.GITHUB_REF_NAME || '' 
     if (githubRefName.startsWith("v")) return githubRefName.substring(1)
+    const githubSha = (process.env.GITHUB_SHA || '').trim()
+	if (githubSha !== "") return "0.0.0-" + githubSha
     return "0.0.0-SNAPSHOT"
 }
 

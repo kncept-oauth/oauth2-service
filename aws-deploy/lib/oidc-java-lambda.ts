@@ -12,7 +12,6 @@ import * as s3Deployment from 'aws-cdk-lib/aws-s3-deployment'
 
 
 import * as path from 'path'
-import * as fs from 'fs'
 import { HostedZoneInfo, extractHostedZoneFromHostname } from '../bin/domain-tools'
 import { calcVersion } from '../bin/deploy'
 

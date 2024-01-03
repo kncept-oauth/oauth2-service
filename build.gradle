@@ -5,6 +5,10 @@ group = 'com.kncept.oauth2'
 public String calcVersion() {
 	String githubRefName = System.getenv("GITHUB_REF_NAME")
 	if (githubRefName != null && githubRefName.startsWith("v")) return githubRefName.substring(1)
+	String githubSha = System.getenv("GITHUB_SHA")
+	githubSha = githubSha == null ? "" : githubSha.trim()
+	if (!githubSha.isEmpty()) return "0.0.0-" + githubSha
+
 	return "0.0.0-SNAPSHOT"
 }
 version = calcVersion()
