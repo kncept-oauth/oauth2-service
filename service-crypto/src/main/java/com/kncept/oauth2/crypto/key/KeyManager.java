@@ -100,9 +100,6 @@ w0Ls1jF44-csFCur-kEgU8awapJzKnqDKgw",
         jwksFormat.put("kid", keyId.toString());
         jwksFormat.put("use", "sig"); // optional
 
-        System.out.println("key.getAlgorithm() " + key.getAlgorithm());
-        System.out.println(key.getClass().getName());
-
         String alg = key.getAlgorithm();
         jwksFormat.put("alg", alg);
 
@@ -155,6 +152,4 @@ w0Ls1jF44-csFCur-kEgU8awapJzKnqDKgw",
     String b64(BigInteger bigInteger) {
         return Base64.getEncoder().withoutPadding().encodeToString(bigInteger.toByteArray());
     }
-
-
 }
