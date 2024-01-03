@@ -6,6 +6,8 @@ import com.kncept.oauth2.config.authrequest.AuthRequest;
 import com.kncept.oauth2.config.client.Client;
 import com.kncept.oauth2.config.parameter.ConfigParameters;
 import com.kncept.oauth2.config.session.OauthSession;
+import com.kncept.oauth2.config.user.User;
+import com.kncept.oauth2.entity.EntityId;
 import com.kncept.oauth2.operation.response.ContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
 import com.kncept.oauth2.operation.response.RedirectResponse;
@@ -78,7 +80,7 @@ public class AuthorizeHandler {
         // join an existing auth session if possible
         if (oauthSessionId.isPresent()) {
             OauthSession session = config.oauthSessionRepository().read(OauthSession.id(oauthSessionId.get()));
-            if (session != null && session.getUserId().isPresent() && session.getExpiry().isAfter(utcNow())) {
+            if (session != null && session.getRef().type.equals(User.EntityType) && session.getExpiry().isAfter(utcNow())) {
                 // for each new inbound auth request, just create a new auth request.
                 // otherwise old state can be picked up
                 AuthRequest ar = new AuthRequest();
@@ -86,19 +88,19 @@ public class AuthorizeHandler {
                 ar.setState(state);
                 ar.setNonce(nonce);
                 ar.setRedirectUri(redirectUri);
-                ar.setClientId(clientId);
+                ar.setRef(client.getId());
                 ar.setResponseType(responseType);
-
-//                ar.setExpiry();
+                ar.setExpiry(utcNow().plusMinutes(5));
 
                 config.authRequestRepository().create(ar);
-                return redirectAfterSuccessfulAuth(oauthSessionId.get(), ar);
+                return redirectAfterSuccessfulAuth(oauthSessionId.get(), ar, session.getRef());
             }
         }
 
         // create new session then
         OauthSession session = new OauthSession();
         session.setId(OauthSession.id(UUID.randomUUID().toString()));
+        session.setRef(session.getId()); // TODO: This is a bit vexing
         session.setExpiry(utcNow().plusSeconds(sessionDuration));
         config.oauthSessionRepository().create(session);
 //        OauthSession session = config.oauthSessionRepository().createSession();
@@ -107,8 +109,9 @@ public class AuthorizeHandler {
         ar.setState(state);
         ar.setNonce(nonce);
         ar.setRedirectUri(redirectUri);
-        ar.setClientId(clientId);
+        ar.setRef(client.getId());
         ar.setResponseType(responseType);
+        ar.setExpiry(utcNow().plusMinutes(5));
         config.authRequestRepository().create(ar);
 
         return new ContentResponse(
@@ -122,7 +125,7 @@ public class AuthorizeHandler {
         return Boolean.valueOf(ConfigParameters.signupEnabled.get(config.parameterRepository()));
     }
 
-    private OperationResponse redirectAfterSuccessfulAuth(String oauthSessionId, AuthRequest authRequest) {
+    private OperationResponse redirectAfterSuccessfulAuth(String oauthSessionId, AuthRequest authRequest, EntityId userId) {
         try {
             // redirect back to app.
             //
@@ -141,7 +144,9 @@ public class AuthorizeHandler {
 
             Authcode authCode = new Authcode();
             authCode.setId(Authcode.id(UUID.randomUUID().toString()));
+            authCode.setRef(userId);
             authCode.setOauthSessionId(oauthSessionId);
+            authCode.setExpiry(utcNow().plusMinutes(5));
             config.authcodeRepository().create(authCode);
             redirectUri = redirectUri + "code=" + URLEncoder.encode(authCode.getId().value, "UTF8");
 

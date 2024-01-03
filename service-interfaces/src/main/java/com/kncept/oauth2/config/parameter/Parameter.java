@@ -20,6 +20,20 @@ public class Parameter implements IdentifiedEntity {
     String value;
 
     @Override
+    public LocalDateTime getWhen() {
+        return null;
+    }
+
+    @Override
+    public EntityId getRef() {
+        return id;
+    }
+
+    @Override
+    public void validate() {
+    }
+
+    @Override
     public LocalDateTime getExpiry() {
         return null;
     }

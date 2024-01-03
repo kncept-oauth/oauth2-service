@@ -29,7 +29,7 @@ public class UserLogin implements IdentifiedEntity {
     }
 
     EntityId id;
-    EntityId userId;
+    EntityId ref;
 
     boolean verified = false;
 
@@ -50,4 +50,13 @@ public class UserLogin implements IdentifiedEntity {
     public LocalDateTime getExpiry() {
         return null;
     }
+
+    @Override
+    public LocalDateTime getWhen() {
+        return null;
+    }
+
+    @Override
+    public void validate() {}
+
 }

@@ -74,7 +74,7 @@ public class TokenHandler {
                     (RSAPrivateKey) keys.keyPair().getPrivate());
             String token = JWT.create()
                     .withIssuer(hostedUrl)
-                    .withSubject(session.getUserId().get().toString())
+                    .withSubject(session.getRef().toString())
                     .withIssuedAt(iat)
                     .withExpiresAt(iat.plusSeconds(sessionDurationInSeconds()))
 //                    .withClaim("nonce", authRequest.getnonce)

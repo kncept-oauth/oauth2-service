@@ -1,6 +1,5 @@
 package com.kncept.oauth2.entity;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -12,9 +11,6 @@ public class EntityId {
     public EntityId(String type, String value) {
         this.type = type;
         this.value = value;
-
-        // Dev accelerator - validate on create
-        validate();
     }
     public static EntityId parse(String value) {
         if (value == null) throw new IllegalStateException("Cannot parse null value");
@@ -38,25 +34,14 @@ public class EntityId {
         return parse(type + "/" + value);
     }
 
-    public void validate(String... requiredTypes) {
-        if (type == null || type.isEmpty()) throw new IllegalStateException("No type");
-        if (requiredTypes != null && requiredTypes.length != 0) {
-            if (!isOfType(requiredTypes)) {
-                throw new IllegalStateException("Type not valid: " + type);
-            }
-        }
-        if (value == null) throw new IllegalStateException("No value");
-    }
     public void validate(List<String> requiredTypes) {
+        if (type == null || type.isEmpty()) throw new IllegalStateException("No type");
         if (requiredTypes != null && requiredTypes.size() != 0) {
             if (!requiredTypes.contains(type)) {
                 throw new IllegalStateException("Type not valid: " + type);
             }
         }
         if (value == null) throw new IllegalStateException("No value");
-    }
-    public boolean isOfType(String... requiredTypes) {
-        return Arrays.asList(requiredTypes).contains(type);
     }
 
     @Override

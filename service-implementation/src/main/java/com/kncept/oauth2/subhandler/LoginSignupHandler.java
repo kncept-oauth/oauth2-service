@@ -83,12 +83,12 @@ public class LoginSignupHandler {
         user.setUsername(externalcontact);
         user.setSalt(PasswordUtils.generateSalt());
         user.setPassword(PasswordUtils.hash(user.getSalt(), password));
-        user.setCreated(now);
+        user.setWhen(now);
         config.userRepository().create(user);
 
         UserLogin login = new UserLogin();
         login.setId(UserLogin.id(loginType, externalcontact));
-        login.setUserId(user.getId());
+        login.setRef(user.getId());
 
 
         // TODO: This _should_ be configurable
@@ -176,15 +176,15 @@ public class LoginSignupHandler {
         }
 
         // TODO: Handle session does not exist (!)
-            authenticate(oauthSessionId, login.getUserId());
-            return redirectAfterSuccessfulAuth(oauthSessionId, authRequest);
+            authenticate(oauthSessionId, login.getRef());
+            return redirectAfterSuccessfulAuth(oauthSessionId, authRequest, login.getRef());
     }
 
     private OauthSession authenticate(String oauthSessionId, EntityId userId) {
         long sessionDuration = TimeUnit.SECONDS.toSeconds(300);
         OauthSession session = config.oauthSessionRepository().read(OauthSession.id(oauthSessionId));
         if (session != null) {
-            session.setUserId(Optional.of(userId));
+            session.setRef(userId);
             session.setExpiry(utcNow().plusSeconds(sessionDuration));
             config.oauthSessionRepository().update(session);
         }
@@ -234,7 +234,7 @@ public class LoginSignupHandler {
         UserLogin login = config.userLoginRepository().read(UserLogin.id(UserLogin.UserLoginType.email, externalcontact));
         User user = null;
         if(login != null)  {
-            user = config.userRepository().read(login.getUserId());
+            user = config.userRepository().read(login.getRef());
             boolean matches = PasswordUtils.matches(user.getSalt(), user.getPassword(), password);
             if (!matches) user = null;
         }
@@ -252,7 +252,7 @@ public class LoginSignupHandler {
                         Optional.of(oauthSessionId))
                         .withParam("error", "OIDC Auth Request Timed out");
             }
-            return redirectAfterSuccessfulAuth(oauthSessionId, authRequest);
+            return redirectAfterSuccessfulAuth(oauthSessionId, authRequest, user.getId());
         } else {
             return new ContentResponse(
                     200,
@@ -268,7 +268,11 @@ public class LoginSignupHandler {
         return Boolean.valueOf(ConfigParameters.signupEnabled.get(config.parameterRepository()));
     }
 
-    private OperationResponse redirectAfterSuccessfulAuth(String oauthSessionId, AuthRequest authRequest) {
+    private OperationResponse redirectAfterSuccessfulAuth(
+            String oauthSessionId,
+            AuthRequest authRequest,
+            EntityId userId
+    ) {
         try {
             // redirect back to app.
             //
@@ -287,7 +291,9 @@ public class LoginSignupHandler {
 
             Authcode authCode = new Authcode();
             authCode.setId(Authcode.id(UUID.randomUUID().toString()));
+            authCode.setRef(userId);
             authCode.setOauthSessionId(oauthSessionId);
+            authCode.setExpiry(utcNow().plusMinutes(5));
             config.authcodeRepository().create(authCode);
             redirectUri = redirectUri + "code=" + URLEncoder.encode(authCode.getId().value, "UTF8");
 

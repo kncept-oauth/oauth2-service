@@ -21,7 +21,7 @@ public class DynamoDbRepositoryTest {
     @Test
     public void canConvertClient() {
         DynamoDbRepository repository = new DynamoDbRepository(null, "SimpleOidc");
-        repository.registerEntityType(Client.EntityType, Client.class);
+        repository.registerEntityType(Client.EntityType, "*", Client.class);
 
 
         String clientId = UUID.randomUUID().toString();
@@ -47,14 +47,14 @@ public class DynamoDbRepositoryTest {
     @Test
     public void canConvertAuthRequest() {
         DynamoDbRepository repository = new DynamoDbRepository(null, "SimpleOidc");
-        repository.registerEntityType(AuthRequest.EntityType, AuthRequest.class);
+        repository.registerEntityType(AuthRequest.EntityType, "*", AuthRequest.class);
 //        String oauthSessionId = UUID.randomUUID().toString();
         AuthRequest original = new AuthRequest();
         original.setId(AuthRequest.id("oauthSessionId string"));
         original.setState(Optional.of("state string"));
         original.setNonce(Optional.empty());
         original.setRedirectUri("redirectUri string");
-        original.setClientId("clientId string");
+        original.setRef(Client.id("clientId string"));
         original.setResponseType("responseType string");
         original.setExpiry(null);
         Map<String, AttributeValue> converted = repository.convert(original);
@@ -63,7 +63,7 @@ public class DynamoDbRepositoryTest {
         assertEquals(original.getState(), reconstitued.getState());
         assertEquals(original.getNonce(), reconstitued.getNonce());
         assertEquals(original.getRedirectUri(), reconstitued.getRedirectUri());
-        assertEquals(original.getClientId(), reconstitued.getClientId());
+        assertEquals(original.getRef(), reconstitued.getRef());
         assertEquals(original.getResponseType(), reconstitued.getResponseType());
     }
     
@@ -124,7 +124,7 @@ public class DynamoDbRepositoryTest {
     @Test
     public void canConvertUser() {
         DynamoDbRepository repository = new DynamoDbRepository(null, "SimpleOidc");
-        repository.registerEntityType(User.EntityType, User.class);
+        repository.registerEntityType(User.EntityType, "*", User.class);
 
         EntityId randomUserId = User.id();
         User original = new User();
@@ -132,7 +132,7 @@ public class DynamoDbRepositoryTest {
         original.setUsername("simpleusername");
         original.setSalt(" salt");
         original.setPassword("precomputedHash");
-        original.setCreated(LocalDateTime.now(Clock.systemUTC()));
+        original.setWhen(LocalDateTime.now(Clock.systemUTC()));
         Map<String, AttributeValue> converted = repository.convert(original);
         User reconstitued = repository.reflectiveItemConverter(converted);
         assertEquals(randomUserId, reconstitued.getId());

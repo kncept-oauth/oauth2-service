@@ -16,8 +16,8 @@ public class ManagedKeypairConverter {
                         parser.parsePrivate(key.getPublicKey())
                 ),
                 new DateRange(
-                        key.getValidFrom(),
-                        key.getValidTo()
+                        key.getWhen(),
+                        key.getExpiry()
                 )
         );
     }
@@ -28,8 +28,7 @@ public class ManagedKeypairConverter {
         keypair.setId(key.id());
         keypair.setPrivateKey(parser.outputPrivate(key.keyPair().getPrivate()));
         keypair.setPublicKey(parser.outputPublic(key.keyPair().getPublic()));
-        keypair.setValidFrom(key.validity().start());
-        keypair.setValidTo(key.validity().end());
+        keypair.setWhen(key.validity().start());
         keypair.setExpiry(key.validity().end());
         return keypair;
     }

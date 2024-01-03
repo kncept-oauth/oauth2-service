@@ -17,13 +17,18 @@ public class ExpiringKeypair implements IdentifiedEntity {
         return EntityId.parse(EntityType, value);
     }
 
-
+    // TODO: unique keys per client?
+    // this would need a way to differenciate clients for the jwks request though ;/
     EntityId id;
     String privateKey;
     String publicKey;
-    LocalDateTime validFrom;
-    LocalDateTime validTo;
-    LocalDateTime expiry;
+    LocalDateTime when; // valid from
+    LocalDateTime expiry; // valid to
+
+    @Override
+    public EntityId getRef() {
+        return id;
+    }
 
     @Override
     public IdentifiedEntity clone() {
@@ -34,4 +39,11 @@ public class ExpiringKeypair implements IdentifiedEntity {
         }
     }
 
+    @Override
+    public void validate() {
+        if (privateKey == null) throw new IllegalStateException();
+        if (publicKey == null) throw new IllegalStateException();
+        if (when == null) throw new IllegalStateException();
+        if (expiry == null) throw new IllegalStateException();
+    }
 }

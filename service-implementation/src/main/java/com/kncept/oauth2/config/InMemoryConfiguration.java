@@ -23,9 +23,7 @@ public class InMemoryConfiguration extends SingleStorageConfiguration {
         public final Map<EntityId, IdentifiedEntity> repo = new HashMap<>();
 
         @Override
-        public <T extends IdentifiedEntity> void registerEntityType(String entityType, Class<T> javaType) {
-            // meh. irrelevant here (!!)
-        }
+        public <T extends IdentifiedEntity> void registerEntityType(String entityType, String refType, Class<T> javaType) { }
 
         public <T extends IdentifiedEntity> T read(EntityId id) {
             IdentifiedEntity entity = repo.get(id);
@@ -47,8 +45,8 @@ public class InMemoryConfiguration extends SingleStorageConfiguration {
         }
 
         @Override
-        public <T extends IdentifiedEntity> List<T> list(String... entityTypes) {
-            return (List<T>) repo.values().stream().filter(v -> v.getId().isOfType(entityTypes)).collect(Collectors.toList());
+        public <T extends IdentifiedEntity> List<T> list(List<String> entityTypes) {
+            return (List<T>) repo.values().stream().filter(v -> entityTypes.contains(v.getId().type)).collect(Collectors.toList());
         }
     }
 }

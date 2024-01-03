@@ -19,7 +19,7 @@ public class DynamoDbRepository implements SingleStorageConfiguration.CrudRepo {
     public final DynamoDbClient client;
     public final String tableName;
 
-    private final Map<String, Class> typeRegistrations;
+    SingleStorageConfiguration.MultiMapper typeRegistrations;
 
     public DynamoDbRepository(String tableName) {
         this(DynamoDbClient.create(), tableName);
@@ -32,12 +32,12 @@ public class DynamoDbRepository implements SingleStorageConfiguration.CrudRepo {
         this.client = client;
         this.tableName = tableName;
 
-        typeRegistrations = new HashMap<>();
+        typeRegistrations = new SingleStorageConfiguration.MultiMapper();
     }
 
     @Override
-    public <T extends IdentifiedEntity> void registerEntityType(String entityType, Class<T> javaType) {
-        typeRegistrations.put(entityType, javaType);
+    public <T extends IdentifiedEntity> void registerEntityType(String entityType, String refType, Class<T> javaType) {
+        typeRegistrations.registerEntityType(entityType, refType, javaType);
     }
 
     private <T extends IdentifiedEntity> void write(T entity) {
@@ -79,11 +79,11 @@ public class DynamoDbRepository implements SingleStorageConfiguration.CrudRepo {
     }
 
     @Override
-    public <T extends IdentifiedEntity> List<T> list(String... entityTypes) {
+    public <T extends IdentifiedEntity> List<T> list(List<String> entityTypes) {
         // TODO: don't tablescan and filter... push the filter up.
         ScanResponse scanResponse = client.scan(ScanRequest.builder().tableName(tableName).build());
         List<?> unfiltered = scanResponse.items().stream().map(this::reflectiveItemConverter).collect(Collectors.toList());
-        return (List<T>) unfiltered.stream().filter(v -> ((IdentifiedEntity)v).getId().isOfType(entityTypes)).collect(Collectors.toList());
+        return (List<T>) unfiltered.stream().filter(v -> entityTypes.contains(((IdentifiedEntity)v).getId().type)).collect(Collectors.toList());
     }
 
     @Override
@@ -94,7 +94,10 @@ public class DynamoDbRepository implements SingleStorageConfiguration.CrudRepo {
     @Override
     public <T extends IdentifiedEntity> void delete(T entity) {
         client.deleteItem(DeleteItemRequest.builder()
-                .key(Map.of("id", AttributeValue.fromS(entity.getId().toString())))
+                .key(Map.of(
+                        "id", AttributeValue.fromS(entity.getId().toString()),
+                        "ref", AttributeValue.fromS(entity.getRef().toString())
+                ))
                 .build());
     }
 
@@ -126,9 +129,9 @@ public class DynamoDbRepository implements SingleStorageConfiguration.CrudRepo {
     <T extends IdentifiedEntity> T reflectiveItemConverter(Map<String, AttributeValue> item) {
         if (item == null || item.isEmpty()) return null;
 
-        System.out.println(item);
         EntityId id = EntityId.parse(item.get("id").s());
-        Class<?> javaType = typeRegistrations.get(id.type);
+        EntityId ref = EntityId.parse(item.get("ref").s());
+        Class<?> javaType = typeRegistrations.javaTypeFor(id.type, ref.type);
         if (javaType == null) throw new IllegalStateException("Unknown type: " + id.type);
 
         try {
@@ -204,6 +207,9 @@ public class DynamoDbRepository implements SingleStorageConfiguration.CrudRepo {
                 Object fieldValue = get(field, value);
                 ddbValues.put(fieldName, toAttributeValue(fieldValue));
             }
+            // its the same (!!)
+            // This is a hack for the fact that some items don't have a 'ref' field
+            if (!ddbValues.containsKey("ref")) ddbValues.put("ref", ddbValues.get("id"));
 	        return ddbValues;
     	} catch (IllegalAccessException e) {
     		throw new RuntimeException(e);

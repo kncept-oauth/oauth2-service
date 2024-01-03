@@ -42,9 +42,9 @@ public class StaticKeypairStrategy implements KeypairStrategy {
         }
 
         // order by valid from
-        stored.sort(Comparator.comparing(ExpiringKeypair::getValidFrom));
+        stored.sort(Comparator.comparing(ExpiringKeypair::getWhen));
         // trim anything not yet valid
-        stored = stored.stream().filter(v -> v.getValidFrom().isAfter(now)).collect(Collectors.toList());
+        stored = stored.stream().filter(v -> v.getWhen().isAfter(now)).collect(Collectors.toList());
 
 
         // this one will be valid.

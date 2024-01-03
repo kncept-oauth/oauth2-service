@@ -17,6 +17,13 @@ public class Client implements IdentifiedEntity {
 
     private EntityId id; // oauth client id (prefixed 'client/' as per entity id)
     private String secret;
+    boolean enabled;
+
+
+    @Override
+    public EntityId getRef() {
+        return id;
+    }
 
     @Override
     public LocalDateTime getExpiry() {
@@ -32,5 +39,13 @@ public class Client implements IdentifiedEntity {
         }
     }
 
-    boolean enabled;
+    @Override
+    public LocalDateTime getWhen() {
+        return null;
+    }
+
+    @Override
+    public void validate() {
+        if (secret == null) throw new IllegalStateException();
+    }
 }

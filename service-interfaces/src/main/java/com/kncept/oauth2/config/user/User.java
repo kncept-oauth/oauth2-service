@@ -22,7 +22,12 @@ public class User implements IdentifiedEntity  {
     String salt; // includes encoding about salt/encryption type
     String password;
 
-    LocalDateTime created;
+    LocalDateTime when; // created
+
+    @Override
+    public EntityId getRef() {
+        return id;
+    }
 
     @Override
     public IdentifiedEntity clone() {
@@ -36,5 +41,12 @@ public class User implements IdentifiedEntity  {
     @Override
     public LocalDateTime getExpiry() {
         return null;
+    }
+
+    @Override
+    public void validate() {
+        if (salt == null) throw new IllegalStateException();
+        if (password == null) throw new IllegalStateException();
+        if (when == null) throw new IllegalStateException();
     }
 }
