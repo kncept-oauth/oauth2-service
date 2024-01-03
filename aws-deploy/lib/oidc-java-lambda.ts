@@ -139,7 +139,7 @@ export class OidcJavaLambda extends cdk.Stack {
     })
 
     if (zone) {
-      const apiCertificate = new cdk.aws_certificatemanager.Certificate(resourcesStack, `${functionName}-Api-Certificate`, {
+      const apiCertificate = new cdk.aws_certificatemanager.Certificate(lambdaFnStack, `${functionName}-Api-Certificate`, {
         domainName: props.lambdaHostname,
         validation: cdk.aws_certificatemanager.CertificateValidation.fromDns(zone)
       })
@@ -149,7 +149,7 @@ export class OidcJavaLambda extends cdk.Stack {
         certificate: apiCertificate,
       })
 
-      new route53.CnameRecord(resourcesStack, `${functionName}-DnsEntry`, {
+      new route53.CnameRecord(lambdaFnStack, `${functionName}-DnsEntry`, {
         zone,
         recordName: props.lambdaHostname.substring(0, props.lambdaHostname.length - (extractHostedZoneFromHostname(props.lambdaHostname).length + 1)),
         domainName: apiDomainNameMountPoint!.domainNameAliasDomainName,
