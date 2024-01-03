@@ -11,16 +11,6 @@ version = '0.0.1'
 
 defaultTasks 'jar'
 
-// use JUnit5 Platform for testing
-test {
-    useJUnitPlatform()
-}
-
-repositories {
-	mavenLocal()
-	mavenCentral()
-}
-
 
 def junit5version = '5.8.2'
 dependencies {

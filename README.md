@@ -64,7 +64,7 @@ The following `OIDC_Config` classes are shipped (provider specific class in the 
 - `com.kncept.oauth2.config.InMemoryConfiguration` - In memory volatile store, useful for testing
 - `com.kncept.oauth2.config.DynoDbOauth2Configuration` - in service-aws, DynamoDB tables
   - uses the default SystemProperyConfiguration override points before providing DynamoDB implementations
-  - the additional property `OIDC_ConfigAutocreate` can be configured (defaults to true) to control table autocreation. 
+  - the additional property `OIDC_Storage_Config_Autocreate` can be configured (defaults to true) to control table autocreation. 
 
 You probably want to extend something like DynoDbOauth2Configuration and override the UserRepository
 with your own implementation.

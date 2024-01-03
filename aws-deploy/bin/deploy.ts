@@ -13,6 +13,13 @@ function envVarBooleanValue(varName: string): boolean {
 const lambdaHostname = process.env.LAMBDA_HOSTNAME || ''
 const lookupBasename = envVarBooleanValue('LOOKUP_BASENAME')
 
+// must match calcVersion() in 'build.gradle'
+export function calcVersion() {
+    const githubRefName = process.env.GITHUB_REF_NAME || '' 
+    if (githubRefName.startsWith("v")) return githubRefName.substring(1)
+    return "0.0.0-SNAPSHOT"
+}
+
 async function run() {
     const app = new cdk.App()
 

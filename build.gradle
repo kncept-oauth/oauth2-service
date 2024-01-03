@@ -1,13 +1,36 @@
 
 group = 'com.kncept.oauth2'
-version = '0.0.2'
+
+// a copy of this is in deploy.ts, and must match
+public String calcVersion() {
+	String githubRefName = System.getenv("GITHUB_REF_NAME")
+	if (githubRefName != null && githubRefName.startsWith("v")) return githubRefName.substring(1)
+	return "0.0.0-SNAPSHOT"
+}
+version = calcVersion()
+
+
 
 // explicit build target and configure the gradle distribiution we use to build the project.
 wrapper {
 	distributionType = Wrapper.DistributionType.ALL
-	gradleVersion = '7.5'
+	gradleVersion = '8.5'
 }
 
 subprojects {
+  apply plugin: 'java'
 	group = 'com.kncept.oauth2'
+	version = calcVersion()
+	// use JUnit5 Platform for testing
+	// test {
+	// 	useJUnitPlatform()
+	// }
+	tasks.withType(Test) {
+		useJUnitPlatform()
+	}
+
+	repositories {
+		mavenLocal()
+		mavenCentral()
+	}
 }

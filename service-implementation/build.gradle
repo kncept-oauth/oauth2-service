@@ -3,24 +3,10 @@ plugins {
 	id("java-library-distribution")
 	id("io.freefair.lombok") version "8.4"
 }
-
-group = 'com.kncept.oauth2'
-version = '0.0.1'
-
 defaultTasks 'run'
 
 jar.dependsOn check
 jar.dependsOn test
-
-// use JUnit5 Platform for testing
-test {
-    useJUnitPlatform()
-}
-
-repositories {
-	mavenLocal()
-	mavenCentral()
-}
 
 def junit5version = '5.8.2'
 dependencies {

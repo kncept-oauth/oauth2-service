@@ -1,9 +1,4 @@
 
-apply plugin: 'java'
-
-group = 'com.kncept.oauth2'
-version = '0.0.1'
-
 defaultTasks 'libJar'
 
 // workaround to include resources
@@ -11,17 +6,6 @@ sourceSets.main {
     resources.srcDirs += [
             new File(rootDir, 'service-implementation/src/main/resources'),
     ]
-}
-
-// use JUnit5 Platform for testing
-test {
-    useJUnitPlatform()
-}
-
-
-repositories {
-	mavenLocal()
-	mavenCentral()
 }
 
 def junit5version = '5.8.2'

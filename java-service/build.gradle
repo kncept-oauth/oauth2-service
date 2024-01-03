@@ -1,8 +1,6 @@
 
 apply plugin: 'application'
 
-group = 'com.kncept.oauth2'
-version = '0.0.1'
 mainClassName = 'com.kncept.oauth2.KnceptOauth2Server'
 
 defaultTasks 'run'
@@ -10,22 +8,12 @@ defaultTasks 'run'
 jar.dependsOn check
 jar.dependsOn test
 
-// use JUnit5 Platform for testing
-test {
-    useJUnitPlatform()
-}
-
 // tasks.withType(Checkstyle) {
 //     reports {
 //         xml.enabled false
 //         html.enabled true
 //     }
 // }
-
-repositories {
-	mavenLocal()
-	mavenCentral()
-}
 
 def junit5version = '5.8.2'
 dependencies {

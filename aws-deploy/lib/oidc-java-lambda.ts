@@ -13,6 +13,7 @@ import * as s3Deployment from 'aws-cdk-lib/aws-s3-deployment'
 import * as path from 'path'
 import { CfnOutput } from 'aws-cdk-lib'
 import { HostedZoneInfo, extractHostedZoneFromHostname } from '../bin/domain-tools'
+import { calcVersion } from '../bin/deploy'
 
 export interface StackProps {
   baseHostedZone?: HostedZoneInfo | undefined
@@ -71,8 +72,7 @@ export class OidcJavaLambda extends cdk.Stack {
 
     lambdaLogGroup.grantWrite(role)
 
-
-    const objKey = 'aws-service-0.0.1.zip'
+    const objKey = `aws-service-${calcVersion()}.zip`
     const deployBucket = new s3.Bucket(this, `${functionName}-Service`)
 
     const rootDir = path.join(__dirname, '..', '..')
@@ -80,14 +80,13 @@ export class OidcJavaLambda extends cdk.Stack {
     const deployedAsset = new s3Deployment.BucketDeployment(this, `${functionName}-Deployment`, {
       destinationBucket: deployBucket,
       sources: [
-        // s3Deployment.Source.asset(path.join(distDir, 'aws-service-0.0.1.zip'))
         s3Deployment.Source.asset(distDir),
       ],
       prune: true,
     })
 
     const handler = new lambda.Function(this, `${functionName}-Lambda`, {
-      runtime: lambda.Runtime.JAVA_17,
+      runtime: lambda.Runtime.JAVA_21,
       functionName: 'oidc-service',
       code: lambda.Code.fromBucket(deployedAsset.deployedBucket, objKey),
       handler: 'com.kncept.oauth2.Handler',
@@ -96,7 +95,7 @@ export class OidcJavaLambda extends cdk.Stack {
         // can't have dots . or dashes -
         
         // use the (default) DDB table for config and control
-          'OIDC_Config': 'com.kncept.oauth2.config.DynoDbOauth2Configuration',
+          'OIDC_Storage_Config': 'com.kncept.oauth2.config.DynoDbOauth2Configuration',
       },
       role,
       logRetention:  logs.RetentionDays.ONE_MONTH,

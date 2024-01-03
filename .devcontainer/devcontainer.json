@@ -5,7 +5,7 @@
     "build": { 
       "args": { 
         "NODE_VERSION": "18",
-        "OPENJDK_VERSION": "17"
+        "OPENJDK_VERSION": "21"
       }
     },
 
