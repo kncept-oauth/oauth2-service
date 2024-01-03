@@ -12,6 +12,7 @@ import * as s3Deployment from 'aws-cdk-lib/aws-s3-deployment'
 
 
 import * as path from 'path'
+import * as fs from 'fs'
 import { HostedZoneInfo, extractHostedZoneFromHostname } from '../bin/domain-tools'
 import { calcVersion } from '../bin/deploy'
 
@@ -115,19 +116,23 @@ export class OidcJavaLambda extends cdk.Stack {
     ddbTable.grantFullAccess(role)
 
     const objKey = `aws-service-${calcVersion()}.zip`
-    const deployBucket = new s3.Bucket(resourcesStack, `${functionName}-Service`)
-
+    const deployBucket = new s3.Bucket(resourcesStack, `${functionName}-Service`, {
+      removalPolicy: cdk.RemovalPolicy.DESTROY
+    })
     const rootDir = path.join(__dirname, '..', '..')
     const distDir = path.join(rootDir, 'aws-service', 'build', 'distributions')
     const deployedAsset = new s3Deployment.BucketDeployment(resourcesStack, `${functionName}-Deployment`, {
       destinationBucket: deployBucket,
       sources: [
-        s3Deployment.Source.asset(distDir),
+        s3Deployment.Source.asset(distDir, {
+          deployTime: true
+        }),
       ],
       prune: true,
       logRetention: logs.RetentionDays.ONE_MONTH
     })
 
+    const gitHeadRefPath = path.join(rootDir, '.git', 'refs', 'head', 'main')
     const handler = new lambda.Function(lambdaFnStack, `${functionName}-Lambda`, {
       description: 'Kncept Simple OIDC. An Oauth2 and OIDC provider solution',
       runtime: lambda.Runtime.JAVA_21,
@@ -142,6 +147,12 @@ export class OidcJavaLambda extends cdk.Stack {
         // use the (default) DDB table for config and control
           'OIDC_Storage_Config': 'com.kncept.oauth2.config.DynoDbOauth2Configuration',
           'OIDC_Hostname': `https://${props.lambdaHostname}`,
+
+          'version': calcVersion(),
+
+          // little hack to make sure that every deployment is unique/random
+          'deployhash': fs.readFileSync(gitHeadRefPath).toString('utf8'),
+          'deploytime': `${new Date()}`,
       },
       role,
       vpc,
