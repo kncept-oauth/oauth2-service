@@ -18,7 +18,7 @@ Assuming you are runing in the devcontainer:
   ```
   export AWS_ACCESS_KEY_ID=xxx
   export AWS_SECRET_ACCESS_KEY=xxx
-  export AWS_REGION=ap-southeast-2
+  export AWS_REGION=xxx
   ```
 1. Set configuration keys for Lambda control. eg:
   ```
@@ -43,22 +43,24 @@ This assumes that you also have Java installed on your system
 # Integration
 
 ## As a Library
-    Oauth2Configuration config = ...
-    Oauth2Processor oauth2 = new Oauth2(config)
+    Oauth2Configuration config = EnvPropertyConfiguration.loadStorageConfigFromEnvProperty()
+    Oauth2Processor oauth2 = new Oauth2(config, hostedUrl)
+    Oauth2AutoRouter router = new Oauth2AutoRouter(oauth2)
 Then hook up the the Oauth2Processor interface to your web application.
-This makes overriding and extending config trivial, and gives the most flexibility, but requires the most effort.
+Usage of the router is optional, but recommended as a way to rapidly integrate.
+In order to use a different base path, simply append it to the hostedUrl.
 N.B. provider specific libraries (eg: AWS Dynamo DB config) will be in provider specific jars.
 
 ## Using a prepared solution
-The prepared solutions read from the `oidc_config` environment property.
-This can be configured to point to a full implementation of the Oauth2Configuration
-interface, or can be left blank and individual points can be configured.
+The prepared solutions read from the `OIDC_Storage_Config` environment property for storage config, 
+and the `OIDC_Hostname` property to know where they are deployed.
+All other properties available are defaulted when blank. See the [EnvPropertyConfiguration](service-interfaces/src/main/java/com/kncept/oauth2/config/EnvPropertyConfiguration.java) class for details
+
 
 Note that if you intend to parially override an existing class, it must be on the
 classpath of the running application to be usable.
 
 The following `OIDC_Config` classes are shipped (provider specific class in the provider specific jar:
-- `com.kncept.oauth2.config.EnvPropertyConfiguration` - Detailed below.
 - `com.kncept.oauth2.config.InMemoryConfiguration` - In memory volatile store, useful for testing
 - `com.kncept.oauth2.config.DynoDbOauth2Configuration` - in service-aws, DynamoDB tables
   - uses the default SystemProperyConfiguration override points before providing DynamoDB implementations
@@ -67,29 +69,13 @@ The following `OIDC_Config` classes are shipped (provider specific class in the 
 You probably want to extend something like DynoDbOauth2Configuration and override the UserRepository
 with your own implementation.
 
-### EnvPropertyConfiguration of Data Storage
-Set the `OIDC_Config` system property to `com.kncept.oauth2.config.EnvPropertyConfiguration`
-This will vend an [EnvPropertyConfiguration](service-implementation/src/main/java/com/kncept/oauth2/config/SystemProperyConfiguration.java)
-which needs the following environment properties set:
-  -  `OIDC_Config_Client` a [ClientRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/client/ClientRepository.java)
-  - `OIDC_Config_AuthRequest` an [AuthRequestRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/authrequest/AuthRequestRepository.java)
-   - `OIDC_Config_User` a [UserRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/user/UserRepository.java)
-   - `OIDC_Config_OauthSession` an [OauthSessionRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/session/OauthSessionRepository.java)
-   - `OIDC_Config_Authcode` an [AuthcodeRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/authcode/AuthcodeRepository.java)
-   - `OIDC_Config_Parameter` a [ParameterRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/parameter/ParameterRepository.java)
-   - `OIDC_Config_ExpiringKeypair` an [ExpiringKeypairRepository](service-interfaces/src/main/java/com/kncept/oauth2/config/crypto/ExpiringKeypairRepository.java)
 
 ### ParameterRepository configuration
 This points to a table that has simple values in it - see the [ConfigParameters](service-interfaces/src/main/java/com/kncept/oauth2/config/parameter/ConfigParameters.java) enum
 
 ### Key Manager configuration
-Set the `OIDC_Keys` system property to one of the following:
-  - `Preshared`
-    - Uses `OIDC_Keys_Public` and `OIDC_Keys_Private` for the PKCS8 encoded values of the keys to use
-  - `Static`
-    - Will generate a fixed infinite key, and store it in the ExpiringKeypairRepository
-  - `Rotating`
-    - WIP - Currently unsupported... will rotate the key according to configured Parameters
+Set the `OIDC_Key_Config` system property to a valid implementation.
+This is currently WIP
 
 
 ## AWS Deployment
@@ -107,6 +93,6 @@ isn't pushed upstream, you can always modify a repository fork.
 ## Forked Repo
 
 You can of course fork the repo for yourself.
-if you do any bugfixes, submit a patch :)
+If you do any bugfixes, submit a patch :)
 
 Otherwise, the github workflow will need configuration (AWS keys as secrets, control values as variables, as above), and will deploy on commits to master.

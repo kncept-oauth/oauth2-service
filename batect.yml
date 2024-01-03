@@ -13,6 +13,8 @@ containers:
     run_as_current_user:
       enabled: true
       home_directory: /home/simple-oidc
+    ports:
+      - 8080:8080
   nodejs:
     image: node:current-alpine3.16
     volumes:
@@ -23,6 +25,20 @@ containers:
     run_as_current_user:
       enabled: true
       home_directory: /home/simple-oidc
+    ports:
+      - 3000:3000
+
+#      https://gitlab.com/guenoledc-perso/idp-oidc-tester
+  idp-oidc-tester:
+    image: registry.gitlab.com/guenoledc-perso/idp-oidc-tester:latest
+    volumes:
+      - container: /data
+        type: cache
+        name: oidc-test-container-cache
+    ports:
+#      - 3000:80
+    - 8081:80
+    
 
 tasks:
   clean:
@@ -35,6 +51,18 @@ tasks:
     run:
       container: java
       command: ./gradlew build
+  test-oidc:
+    description: run an OIDC tester on :8081 and the server on :8080. If it works
+    run:
+      container: java
+      command: ./gradlew run
+    dependencies:
+      - idp-oidc-tester
+  oidc:
+    description: run an OIDC tester on :8081
+    run:
+      container: idp-oidc-tester
+#      command: ./gradlew run
 
   dist:
     description: Builds all distributable files for all integrations and platforms

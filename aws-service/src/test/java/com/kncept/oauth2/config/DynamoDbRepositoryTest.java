@@ -1,17 +1,15 @@
 package com.kncept.oauth2.config;
 
 import com.kncept.oauth2.config.authrequest.AuthRequest;
-import com.kncept.oauth2.config.authrequest.SimpleAuthRequest;
 import com.kncept.oauth2.config.client.Client;
-import com.kncept.oauth2.config.client.SimpleClient;
-import com.kncept.oauth2.config.user.SaltedUser;
-import com.kncept.oauth2.config.user.SimpleSaltedUser;
-import com.kncept.oauth2.config.user.SimpleUser;
 import com.kncept.oauth2.config.user.User;
 
+import com.kncept.oauth2.entity.EntityId;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,51 +20,56 @@ public class DynamoDbRepositoryTest {
 
     @Test
     public void canConvertClient() {
-        DynamoDbRepository repository = new DynamoDbRepository<Client>(Client.class, null, "KnceptOidcClientRepository");
+        DynamoDbRepository repository = new DynamoDbRepository(null, "KnceptOidc");
+        repository.registerEntityType(Client.EntityType, Client.class);
+
+
         String clientId = UUID.randomUUID().toString();
 
-        Client original = new SimpleClient(clientId);
+        Client original = new Client() ;
+        original.setId(Client.id(clientId));
+        original.setEnabled(true);
         Map<String, AttributeValue> converted = repository.convert(original);
         assertNotNull(converted);
         
-        assertTrue(converted.containsKey("clientId"));
-        assertEquals(clientId, converted.get("clientId").s());
+        assertTrue(converted.containsKey("id"));
+        assertEquals(Client.EntityType + "/" + clientId, converted.get("id").s());
         assertTrue(converted.containsKey("enabled"));
-        assertEquals(original.enabled(), converted.get("enabled").bool());
+        assertEquals(original.isEnabled(), converted.get("enabled").bool());
 
-        assertFalse(converted.containsKey("id"));
+        assertFalse(converted.containsKey("absent"));
         
-        Client reconstitued = (Client)repository.reflectiveItemConverter(converted);
-        assertEquals(original.clientId(), reconstitued.clientId());
-        assertEquals(original.enabled(), reconstitued.enabled());
+        Client reconstitued = repository.reflectiveItemConverter(converted);
+        assertEquals(original.getId(), reconstitued.getId());
+        assertEquals(original.isEnabled(), reconstitued.isEnabled());
     }
     
     @Test
     public void canConvertAuthRequest() {
-    	DynamoDbRepository repository = new DynamoDbRepository(AuthRequest.class, null, "KnceptOidcAuthRequestRepository");
-        String oauthSessionId = UUID.randomUUID().toString();
-        AuthRequest original = new SimpleAuthRequest(
-        		"oauthSessionId string",
-                Optional.of("state string"),
-                Optional.empty(), // nonce,
-                "redirectUri string",
-                "clientId string",
-                "responseType string",
-                0
-        		);
+        DynamoDbRepository repository = new DynamoDbRepository(null, "KnceptOidc");
+        repository.registerEntityType(AuthRequest.EntityType, AuthRequest.class);
+//        String oauthSessionId = UUID.randomUUID().toString();
+        AuthRequest original = new AuthRequest();
+        original.setId(AuthRequest.id("oauthSessionId string"));
+        original.setState(Optional.of("state string"));
+        original.setNonce(Optional.empty());
+        original.setRedirectUri("redirectUri string");
+        original.setClientId("clientId string");
+        original.setResponseType("responseType string");
+        original.setExpiry(null);
         Map<String, AttributeValue> converted = repository.convert(original);
         AuthRequest reconstitued = (AuthRequest)repository.reflectiveItemConverter(converted);
-        assertEquals(original.oauthSessionId(), reconstitued.oauthSessionId());
-        assertEquals(original.state(), reconstitued.state());
-        assertEquals(original.nonce(), reconstitued.nonce());
-        assertEquals(original.redirectUri(), reconstitued.redirectUri());
-        assertEquals(original.clientId(), reconstitued.clientId());
-        assertEquals(original.responseType(), reconstitued.responseType());
+        assertEquals(original.getId(), reconstitued.getId());
+        assertEquals(original.getState(), reconstitued.getState());
+        assertEquals(original.getNonce(), reconstitued.getNonce());
+        assertEquals(original.getRedirectUri(), reconstitued.getRedirectUri());
+        assertEquals(original.getClientId(), reconstitued.getClientId());
+        assertEquals(original.getResponseType(), reconstitued.getResponseType());
     }
     
     @Test
     public void typeConversions() {
-    	DynamoDbRepository repository = new DynamoDbRepository(User.class, null, null);
+        DynamoDbRepository repository = new DynamoDbRepository(null, "KnceptOidc");
     	AttributeValue av = null;
     	
     	av = repository.toAttributeValue("stringValue");
@@ -87,56 +90,52 @@ public class DynamoDbRepositoryTest {
     
     @Test
     public void typeDeconversions() throws Exception {
-    	DynamoDbRepository repository = new DynamoDbRepository(User.class, null, null);
+        DynamoDbRepository repository = new DynamoDbRepository(null, "KnceptOidc");
     	AttributeValue av = null;
     	Object value = null;
     	
     	av = AttributeValue.fromS("stringValue");
-    	value = repository.fromAttributeValue(av, AuthRequest.class.getDeclaredMethod("oauthSessionId")); // method returning String
+    	value = repository.fromAttributeValue(av, String.class);
     	assertEquals("stringValue", value);
-    	
-    	av = AttributeValue.fromBool(true);
-    	value = repository.fromAttributeValue(av, Client.class.getDeclaredMethod("enabled")); // method returning String
-    	assertEquals(true, value);
+
+        av = AttributeValue.fromBool(true);
+        value = repository.fromAttributeValue(av, Boolean.class);
+        assertEquals(true, value);
+
+//        av = AttributeValue.fromBool(true);
+//        value = repository.fromAttributeValue(av, String.class);
+//        assertEquals(true, value);
 
     	av = AttributeValue.fromNul(true);
-    	value = repository.fromAttributeValue(av, AuthRequest.class.getDeclaredMethod("oauthSessionId")); // method returning String
+    	value = repository.fromAttributeValue(av, String.class);
     	assertEquals(null, value);
-    	
+
+
+        Optional<String> stringOptional = Optional.empty();
     	av = AttributeValue.fromNul(true);
-    	value = repository.fromAttributeValue(av, AuthRequest.class.getDeclaredMethod("state")); // method returning Optional<String>
+    	value = repository.fromAttributeValue(av, stringOptional.getClass()); // Optional<String>
     	assertEquals(Optional.empty(), value);
     	
     	av = AttributeValue.fromS("stringOption");
-    	value = repository.fromAttributeValue(av, AuthRequest.class.getDeclaredMethod("state")); // method returning Optional<String>
+    	value = repository.fromAttributeValue(av, stringOptional.getClass()); // method returning Optional<String>
     	assertEquals(Optional.of("stringOption"), value);
     }
 
     @Test
-    public void canConvertSimpleUser() {
-        DynamoDbRepository repository = new DynamoDbRepository<User>(User.class, null, "KnceptOidcSimpleUserRepository");
-        String randomUserId = UUID.randomUUID().toString();
-        SimpleUser original = new SimpleUser(randomUserId, "simpleusername");
-        Map<String, AttributeValue> converted = repository.convert(original);
-        User reconstitued = (User)repository.reflectiveItemConverter(converted);
-        assertEquals(randomUserId, reconstitued.userId());
-    }
+    public void canConvertUser() {
+        DynamoDbRepository repository = new DynamoDbRepository(null, "KnceptOidc");
+        repository.registerEntityType(User.EntityType, User.class);
 
-    @Test
-    public void canConvertSimpleSaltedUser() {
-        DynamoDbRepository repository = new DynamoDbRepository<SaltedUser>(SaltedUser.class, null, "KnceptOidcSimpleSaltedUserRepository");
-        String randomUserId = UUID.randomUUID().toString();
-        SimpleSaltedUser original = new SimpleSaltedUser(
-                randomUserId,
-                "simpleusername",
-                "salt",
-                "precomputedHash",
-                null
-        );
+        EntityId randomUserId = User.id();
+        User original = new User();
+        original.setId(randomUserId);
+        original.setUsername("simpleusername");
+        original.setSalt(" salt");
+        original.setPassword("precomputedHash");
+        original.setCreated(LocalDateTime.now(Clock.systemUTC()));
         Map<String, AttributeValue> converted = repository.convert(original);
-        SaltedUser reconstitued = (SaltedUser)repository.reflectiveItemConverter(converted);
-        assertEquals(randomUserId, reconstitued.userId());
-        assertNull(reconstitued.hashAlgorithm());
-        assertEquals("salt", reconstitued.salt());
+        User reconstitued = repository.reflectiveItemConverter(converted);
+        assertEquals(randomUserId, reconstitued.getId());
+        assertEquals(" salt", reconstitued.getSalt());
     }
 }

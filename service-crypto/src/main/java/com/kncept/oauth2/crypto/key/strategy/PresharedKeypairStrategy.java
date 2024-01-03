@@ -1,5 +1,6 @@
 package com.kncept.oauth2.crypto.key.strategy;
 
+import com.kncept.oauth2.config.crypto.ExpiringKeypair;
 import com.kncept.oauth2.crypto.key.ManagedKeypair;
 import com.kncept.oauth2.crypto.key.PKCS8KeypairParser;
 import com.kncept.oauth2.crypto.key.TextKeypairParser;
@@ -9,7 +10,7 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
-import static com.kncept.oauth2.config.Oauth2Configuration.env;
+import static com.kncept.oauth2.config.EnvPropertyConfiguration.env;
 
 public class PresharedKeypairStrategy implements KeypairStrategy {
     private final String propertyPrefix;
@@ -24,7 +25,7 @@ public class PresharedKeypairStrategy implements KeypairStrategy {
         PrivateKey privateKey = keypairParser.parsePrivate(env(propertyPrefix + "_Private"));
 
         key = new ManagedKeypair(
-                "static",
+                ExpiringKeypair.id("static"),
                 new KeyPair(publicKey, privateKey),
                 DateRange.infinite
         );

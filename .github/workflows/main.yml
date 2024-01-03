@@ -38,7 +38,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: service-artifacts
-          path: service-*/build/libs/service-*-0.0.1.jar
+          path: service-*/build/libs/service-*.jar
           retention-days: 7
 
       - name: Build AWS Lambda Deployment

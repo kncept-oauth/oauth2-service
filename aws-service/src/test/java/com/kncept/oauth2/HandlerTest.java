@@ -5,11 +5,9 @@ import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.kncept.oauth2.config.InMemoryConfiguration;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Proxy;
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,9 +18,10 @@ public class HandlerTest {
     @Test
     public void canInvokeHandler() {
         Handler handler = new Handler(new InMemoryConfiguration());
-
-        APIGatewayProxyResponseEvent result = handler.handleRequest(createSyntheticEvent(), createSyntheticContext());
-        assertEquals("", result.getBody());
+        APIGatewayProxyRequestEvent event = createSyntheticEvent();
+        event.setPath("/notfound");
+        APIGatewayProxyResponseEvent result = handler.handleRequest(event, createSyntheticContext());
+//        assertEquals("", result.getBody()); // we get an error page on 404's now. //TODO: Introduce a no content response type
         assertEquals(404, result.getStatusCode());
     }
 
@@ -71,6 +70,8 @@ public class HandlerTest {
 
     private APIGatewayProxyRequestEvent createSyntheticEvent() {
         APIGatewayProxyRequestEvent event =  new APIGatewayProxyRequestEvent();
+        event.setHttpMethod("GET");
+        event.setPath("");
         return event;
     }
 

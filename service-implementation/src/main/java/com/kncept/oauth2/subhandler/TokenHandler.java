@@ -2,7 +2,7 @@ package com.kncept.oauth2.subhandler;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.kncept.oauth2.config.Oauth2Configuration;
+import com.kncept.oauth2.config.Oauth2StorageConfiguration;
 import com.kncept.oauth2.config.authcode.Authcode;
 import com.kncept.oauth2.config.parameter.ConfigParameters;
 import com.kncept.oauth2.config.session.OauthSession;
@@ -24,15 +24,19 @@ import static com.kncept.oauth2.util.ParamUtils.required;
 
 public class TokenHandler {
 
-    private final Oauth2Configuration config;
+    private final Oauth2StorageConfiguration config;
     private final KeyManager keyManager;
 
+    private final String hostedUrl;
+
     public TokenHandler(
-            Oauth2Configuration config,
-            KeyManager keyManager
+            Oauth2StorageConfiguration config,
+            KeyManager keyManager,
+            String hostedUrl
     ) {
         this.config = config;
         this.keyManager = keyManager;
+        this.hostedUrl= hostedUrl;
     }
 
     // https://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
@@ -46,12 +50,12 @@ public class TokenHandler {
             String code = required("code", params);
             //code_verifier ? // https://developer.okta.com/docs/reference/api/oidc/#request-parameters-4
 
-            Optional<Authcode> authCode = config.authcodeRepository().lookup(code);
-            if (authCode.isEmpty()) {
+            Authcode authCode = config.authcodeRepository().read(Authcode.id(code));
+            if (authCode != null) {
                 return jsonError("No matching auth codes", oauthSessionId);
             }
-            Optional<OauthSession> session = config.oauthSessionRepository().lookup(authCode.get().oauthSessionId());
-            if (session.isEmpty()) {
+            OauthSession session = config.oauthSessionRepository().read(OauthSession.id(authCode.getOauthSessionId()));
+            if (session == null) {
                 return jsonError("Session has expired", oauthSessionId);
             }
 
@@ -69,8 +73,8 @@ public class TokenHandler {
                     (RSAPublicKey) keys.keyPair().getPublic(),
                     (RSAPrivateKey) keys.keyPair().getPrivate());
             String token = JWT.create()
-                    .withIssuer(issuerName())
-                    .withSubject(session.get().userId().get())
+                    .withIssuer(hostedUrl)
+                    .withSubject(session.getUserId().get().toString())
                     .withIssuedAt(iat)
                     .withExpiresAt(iat.plusSeconds(sessionDurationInSeconds()))
 //                    .withClaim("nonce", authRequest.getnonce)
@@ -93,9 +97,7 @@ public class TokenHandler {
         }
     }
 
-    String issuerName() {
-        return ConfigParameters.issuerName.get(config.parameterRepository());
-    }
+
 
     int sessionDurationInSeconds() {
         return Integer.parseInt(ConfigParameters.sessionDuration.get(config.parameterRepository()));

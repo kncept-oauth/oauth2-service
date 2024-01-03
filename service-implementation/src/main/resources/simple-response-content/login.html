@@ -1,0 +1,36 @@
+<html>
+    <head>
+        <title>Login</title>
+        <link rel="stylesheet" href="${root}style.css">
+    </head>
+    <body>
+        <div class="container">
+            <div id="login-signup-form">
+                <h1>Login</h1>
+                <form action="${root}login" method="post">
+                    ${message}
+                    <div class="form-line">
+                        <label for="signtype">Signup Type:</label>
+                        <select name="signtype" id="signtype">
+                            <option value="email">Email</option>
+                        </select>
+                    </div>
+
+                    <div class="form-line">
+                        <label for="externalcontact" id="externalcontact-label">Contact Email/Phone Number:</label>
+                        <input id="externalcontact" name="externalcontact" type="text" placeholder="external contact" class="form-control">
+                    </div>
+
+                    <div class="form-line">
+                        <label for="password">Password:</label>
+                        <input id="password" name="password" type="password" placeholder="password" class="form-control">
+                    </div>
+
+                    <div class="form-line">
+                        <button type="submit" class="btn btn-primary">&nbsp;Login&nbsp;</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>

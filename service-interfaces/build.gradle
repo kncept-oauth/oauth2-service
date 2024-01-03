@@ -1,9 +1,13 @@
 
 
-apply plugin: 'java-library-distribution'
+plugins {
+	id("java-library-distribution")
+	id("io.freefair.lombok") version "8.4"
+}
 
-group = 'com.kncept.oauth2'
 version = '0.0.1'
+// GITHUB_REF_NAME
+// GITHUB_SHA
 
 defaultTasks 'jar'
 

@@ -6,10 +6,12 @@ import java.util.Optional;
 
 public class ContentResponse implements OperationResponse {
     public enum Content {
-        LOGIN_PAGE,
         SIGNUP_PAGE,
+        VERIFY_PAGE,
+        LOGIN_PAGE,
+        PROFILE_PAGE,
         ERROR_PAGE,
-        CSS
+        CSS,
     }
 
     private final int responseCode;

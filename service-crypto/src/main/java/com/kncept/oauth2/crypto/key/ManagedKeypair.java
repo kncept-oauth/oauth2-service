@@ -1,17 +1,19 @@
 package com.kncept.oauth2.crypto.key;
 
 import com.kncept.oauth2.date.DateRange;
+import com.kncept.oauth2.entity.EntityId;
 
 import java.security.KeyPair;
-import java.time.Instant;
+import java.time.Clock;
+import java.time.LocalDateTime;
 
 public class ManagedKeypair {
-    private final String id;
+    private final EntityId id;
     private final KeyPair keyPair;
     private final DateRange validity;
 
     public ManagedKeypair(
-            String id,
+            EntityId id,
             KeyPair keyPair,
             DateRange validity
     ) {
@@ -24,7 +26,7 @@ public class ManagedKeypair {
         return validity;
     }
 
-    public String id() {
+    public EntityId id() {
         return id;
     }
 
@@ -33,7 +35,7 @@ public class ManagedKeypair {
     }
 
     public boolean isValid() {
-        return validity == null || validity.contains(Instant.now());
+        return validity == null || validity.contains(LocalDateTime.now(Clock.systemUTC()));
     }
 
 }

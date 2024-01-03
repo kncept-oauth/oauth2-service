@@ -1,25 +1,25 @@
 package com.kncept.oauth2.date;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 public class DateRange {
-    public static long epochSecond() {
-        return System.currentTimeMillis() / 1000;
-    }
+//    public static long epochSecond() {
+//        return System.currentTimeMillis() / 1000;
+//    }
 
-    private static Instant min = Instant.MIN; //Instant.ofEpochSecond(Long.MIN_VALUE);
-    private static Instant max = Instant.MAX; //Instant.ofEpochSecond(Long.MAX_VALUE);
 
-    public static DateRange infinite = new DateRange(true, true, min, max);
+    public static DateRange infinite = new DateRange(true, true, LocalDateTime.MIN, LocalDateTime.MAX);
 
     private final boolean includesStart;
     private final boolean includesEnd;
-    private final Instant start;
-    private final Instant end;
+    private final LocalDateTime start;
+    private final LocalDateTime end;
 
     public DateRange(
-            Instant start,
-            Instant end
+            LocalDateTime start,
+            LocalDateTime end
     ) {
         this(true, false, start, end);
     }
@@ -27,8 +27,8 @@ public class DateRange {
     public DateRange(
             boolean includesStart,
             boolean includesEnd,
-            Instant start,
-            Instant end
+            LocalDateTime start,
+            LocalDateTime end
     ) {
         this.includesStart = includesStart;
         this.includesEnd = includesEnd;
@@ -42,11 +42,11 @@ public class DateRange {
     ) {
         includesStart = true;
         includesEnd = false;
-        this.start = Instant.ofEpochSecond(start);
-        this.end = Instant.ofEpochSecond(end);
+        this.start = LocalDateTime.ofEpochSecond(start, 0, ZoneOffset.UTC);
+        this.end = LocalDateTime.ofEpochSecond(end, 0, ZoneOffset.UTC);
     }
 
-    public boolean contains(Instant when) {
+    public boolean contains(LocalDateTime when) {
         if (when.isBefore(start)) return false;
         if (when.isAfter(end)) return false;
         if (when.compareTo(start) == 0) return includesStart;
@@ -54,11 +54,11 @@ public class DateRange {
         return true;
     }
 
-    public Instant start() {
+    public LocalDateTime start() {
         return start;
     }
 
-    public Instant end() {
+    public LocalDateTime end() {
         return end;
     }
 

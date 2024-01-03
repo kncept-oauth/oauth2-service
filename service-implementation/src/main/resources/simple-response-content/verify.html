@@ -1,0 +1,36 @@
+<html>
+    <head>
+        <title>Verify</title>
+        <link rel="stylesheet" href="${root}style.css">
+    </head>
+    <body>
+        <div class="container">
+            <div id="login-signup-form">
+                <h1>Verify</h1>
+                <form action="${root}verify" method="post">
+                    ${message}
+                    <div class="form-line">
+                        <label for="signtype">Signup Type:</label>
+                        <select name="signtype" id="signtype">
+                            <option value="email">Email</option>
+                        </select>
+                    </div>
+
+                    <div class="form-line">
+                        <label for="externalcontact" id="externalcontact-label">Contact Email/Phone Number:</label>
+                        <input id="externalcontact" name="externalcontact" type="text" placeholder="external contact" value="${externalcontact}" class="form-control">
+                    </div>
+
+                    <div class="form-line">
+                        <label for="code">VerificationCode:</label>
+                        <input id="code" name="code" type="text" class="form-control">
+                    </div>
+
+                    <div class="form-line">
+                        <button type="submit" class="btn btn-primary">&nbsp;Verify&nbsp;</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>

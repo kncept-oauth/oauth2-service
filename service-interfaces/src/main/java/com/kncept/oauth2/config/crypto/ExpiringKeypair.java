@@ -1,22 +1,37 @@
 package com.kncept.oauth2.config.crypto;
 
-import com.kncept.oauth2.config.annotation.OidcExpiryTime;
-import com.kncept.oauth2.config.annotation.OidcId;
 
-public interface ExpiringKeypair {
+import com.kncept.oauth2.entity.EntityId;
+import com.kncept.oauth2.entity.IdentifiedEntity;
+import lombok.Data;
 
-    @OidcId
-    String id();
+import java.time.LocalDateTime;
+import java.util.UUID;
 
-    String privateKey();
+@Data
+public class ExpiringKeypair implements IdentifiedEntity {
 
-    String publicKey();
+    public static final String EntityType = "keypair";
 
-    long validFrom();
+    public static EntityId id(String value) {
+        return EntityId.parse(EntityType, value);
+    }
 
-    long validTo();
 
-    @OidcExpiryTime
-    long deletionTime();
+    EntityId id;
+    String privateKey;
+    String publicKey;
+    LocalDateTime validFrom;
+    LocalDateTime validTo;
+    LocalDateTime expiry;
+
+    @Override
+    public IdentifiedEntity clone() {
+        try {
+            return (IdentifiedEntity) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 }

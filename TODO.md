@@ -4,9 +4,7 @@ TODO list:
 
 - refresh tokens
 
-- Ability to expose PUBLIC keys, for full cryptographic verification
-  - by 'timeslice'
-  - also better PK configuration, and loading from file/property/db
+- Auto Key Rotation
 
 - enable proper PKCE
 

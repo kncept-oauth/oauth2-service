@@ -1,38 +1,36 @@
 package com.kncept.oauth2.crypto.key;
 
 import com.kncept.oauth2.config.crypto.ExpiringKeypair;
-import com.kncept.oauth2.config.crypto.SimpleExpiringKeypair;
 import com.kncept.oauth2.date.DateRange;
 
 import java.security.KeyPair;
-import java.time.ZoneOffset;
 
 public class ManagedKeypairConverter {
 
     public static ManagedKeypair convert(ExpiringKeypair key) {
         TextKeypairParser parser = new PKCS8KeypairParser();
         return new ManagedKeypair(
-                key.id(),
+                key.getId(),
                 new KeyPair(
-                        parser.parsePublic(key.publicKey()),
-                        parser.parsePrivate(key.publicKey())
+                        parser.parsePublic(key.getPublicKey()),
+                        parser.parsePrivate(key.getPublicKey())
                 ),
                 new DateRange(
-                        key.validFrom(),
-                        key.validTo()
+                        key.getValidFrom(),
+                        key.getValidTo()
                 )
         );
     }
 
     public static ExpiringKeypair convert(ManagedKeypair key) {
         TextKeypairParser parser = new PKCS8KeypairParser();
-        return new SimpleExpiringKeypair(
-                key.id(),
-                parser.outputPrivate(key.keyPair().getPrivate()),
-                parser.outputPublic(key.keyPair().getPublic()),
-                key.validity().start().getEpochSecond(),
-                key.validity().end().getEpochSecond(),
-                key.validity().end().getEpochSecond()
-        );
+        ExpiringKeypair keypair = new ExpiringKeypair();
+        keypair.setId(key.id());
+        keypair.setPrivateKey(parser.outputPrivate(key.keyPair().getPrivate()));
+        keypair.setPublicKey(parser.outputPublic(key.keyPair().getPublic()));
+        keypair.setValidFrom(key.validity().start());
+        keypair.setValidTo(key.validity().end());
+        keypair.setExpiry(key.validity().end());
+        return keypair;
     }
 }

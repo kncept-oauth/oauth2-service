@@ -5,9 +5,8 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.kncept.oauth2.config.EnvPropertyConfiguration;
-import com.kncept.oauth2.config.Oauth2Configuration;
+import com.kncept.oauth2.config.Oauth2StorageConfiguration;
 import com.kncept.oauth2.config.client.Client;
-import com.kncept.oauth2.config.client.SimpleClient;
 import com.kncept.oauth2.operation.response.ContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
 import com.kncept.oauth2.operation.response.RedirectResponse;
@@ -22,46 +21,35 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
     private static final Logger logger = Logger.getLogger(Handler.class.getName());
     private static final String knceptClient = "kncept-oidc-client";
     private final Oauth2Processor oauth2;
+    private final Oauth2AutoRouter router;
     public Handler() {
-        this(Oauth2Configuration.loadConfigurationFromEnvProperty(
-                () -> new EnvPropertyConfiguration()));
+        this(EnvPropertyConfiguration.loadStorageConfigFromEnvProperty());
     }
-    public Handler(Oauth2Configuration config) {
-        oauth2 = new Oauth2(config);
+
+
+    public Handler(Oauth2StorageConfiguration config) {
+        oauth2 = new Oauth2(config, EnvPropertyConfiguration.hostname());
         oauth2.init(false); // easier init of tables
-        if(config.clientRepository().lookup(knceptClient).isEmpty()) {
-            Client knceptOidcClient = new SimpleClient(knceptClient, true);
-            config.clientRepository().update(knceptOidcClient);
+        if(config.clientRepository().read(Client.id(knceptClient)) == null) {
+            Client knceptOidcClient = new Client();
+            knceptOidcClient.setId(Client.id(knceptClient));
+            knceptOidcClient.setEnabled(true);
+            knceptOidcClient.setSecret(knceptClient);
+            config.clientRepository().create(knceptOidcClient);
         }
+        router = new Oauth2AutoRouter(oauth2);
     }
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
         try {
-            String path = input.getPath();
-            path = path == null ? "" : path.toLowerCase();
             Map<String, String> cookies = headerCookies(input);
-            Optional<String> oauthSessionId = Optional.ofNullable(cookies.get("oauthSessionId"));
-            if (path.equals("/authorize") || path.equals("/oauth/authorize")) {
-                return handleResponse(oauth2.authorize(bodyOrQueryParams(input), oauthSessionId));
-            } else if (path.equals("/login")) {
-                return handleResponse(oauth2.login(bodyParams(input), oauthSessionId.orElseThrow()));
-            } else if (path.equals("/signup")) {
-                return handleResponse(oauth2.signup(bodyParams(input), oauthSessionId.orElseThrow()));
-            } else if (path.equals("/style.css")) {
-                return handleResponse(oauth2.renderCss());
-            } else if (path.equals("/token") || path.equals("/oauth/token")) {
-                return handleResponse(oauth2.token(bodyOrQueryParams(input)));
-            } else if (path.equals("/access_token") || path.equals("/oauth/access_token")) {
-                return handleResponse(oauth2.token(bodyOrQueryParams(input)));
-            } else if (path.equals("/init")) {
-                oauth2.init(true);
-                return emptyResponse(200);
-            } else if (path.equals("/.well-known/openid-configuration")) {
-                return handleResponse(oauth2.discovery());
-            } else {
-                return emptyResponse(404);
-            }
+            OperationResponse response = router.route(
+                    input.getPath(),
+                    input.getHttpMethod(),
+                    bodyOrQueryParams(input),
+                    cookies.get("oauthSessionId"));
+            return handleResponse(response);
         } catch (Exception e) {
             logger.severe(e.getMessage());
             return response(e.getMessage(), 500);

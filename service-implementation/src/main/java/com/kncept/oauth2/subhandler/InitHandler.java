@@ -1,6 +1,7 @@
 package com.kncept.oauth2.subhandler;
 
-import com.kncept.oauth2.config.Oauth2Configuration;
+
+import com.kncept.oauth2.config.Oauth2StorageConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,9 +11,9 @@ import java.util.concurrent.TimeUnit;
 
 public class InitHandler {
 
-    private final Oauth2Configuration config;
+    private final Oauth2StorageConfiguration config;
 
-    public InitHandler(Oauth2Configuration config) {
+    public InitHandler(Oauth2StorageConfiguration config) {
         this.config= config;
     }
 
@@ -23,6 +24,7 @@ public class InitHandler {
         tasks.add(config::oauthSessionRepository);
         tasks.add(config::authRequestRepository);
         tasks.add(config::userRepository);
+        tasks.add(config::userLoginRepository);
         tasks.add(config::parameterRepository);
         ExecutorService service = Executors.newFixedThreadPool(tasks.size());
         tasks.forEach(service::execute);

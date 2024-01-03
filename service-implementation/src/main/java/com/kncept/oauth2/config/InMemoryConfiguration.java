@@ -1,77 +1,55 @@
 package com.kncept.oauth2.config;
 
-import com.kncept.oauth2.config.authcode.InMemoryAuthcodeRepository;
-import com.kncept.oauth2.config.authrequest.InMemoryAuthRequestRepository;
-import com.kncept.oauth2.config.client.InMemoryClientRepository;
-import com.kncept.oauth2.config.crypto.InMemoryExpiringKeypairRepository;
-import com.kncept.oauth2.config.parameter.EmptyParameterRepository;
-import com.kncept.oauth2.config.session.InMemoryOauthSessionRepository;
-import com.kncept.oauth2.config.user.InMemoryUserRepository;
+import com.kncept.oauth2.entity.EntityId;
+import com.kncept.oauth2.entity.IdentifiedEntity;
 
-public class InMemoryConfiguration implements Oauth2Configuration {
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-    private Boolean requirePkce;
-    private InMemoryClientRepository clientRepository;
-    private InMemoryAuthRequestRepository authRequestRepository;
-    private InMemoryUserRepository userRepository;
-    private InMemoryOauthSessionRepository oauthSessionRepository;
-    private InMemoryAuthcodeRepository authcodeRepository;
-    private EmptyParameterRepository parameterRepository;
-    private InMemoryExpiringKeypairRepository expiringKeypairRepository;
+public class InMemoryConfiguration extends SingleStorageConfiguration {
 
-    @Override
-    public synchronized InMemoryClientRepository clientRepository() {
-        if (clientRepository == null) {
-            clientRepository = new InMemoryClientRepository();
-        }
-        return clientRepository;
+
+    public InMemoryConfiguration(){
+        super(new InMemoryCrudRepo());
     }
 
-    @Override
-    public synchronized InMemoryAuthRequestRepository authRequestRepository() {
-        if (authRequestRepository == null) {
-            authRequestRepository = new InMemoryAuthRequestRepository();
-        }
-        return authRequestRepository;
+    public Map<EntityId, IdentifiedEntity> repo() {
+        return ((InMemoryCrudRepo)super.repo).repo;
     }
 
-    @Override
-    public synchronized InMemoryUserRepository userRepository() {
-        if (userRepository == null) {
-            userRepository = new InMemoryUserRepository();
-        }
-        return userRepository;
-    }
+    private static class InMemoryCrudRepo implements SingleStorageConfiguration.CrudRepo {
+        public final Map<EntityId, IdentifiedEntity> repo = new HashMap<>();
 
-    @Override
-    public synchronized InMemoryOauthSessionRepository oauthSessionRepository() {
-        if (oauthSessionRepository == null) {
-            oauthSessionRepository = new InMemoryOauthSessionRepository();
+        @Override
+        public <T extends IdentifiedEntity> void registerEntityType(String entityType, Class<T> javaType) {
+            // meh. irrelevant here (!!)
         }
-        return oauthSessionRepository;
-    }
 
-    @Override
-    public synchronized InMemoryAuthcodeRepository authcodeRepository() {
-        if (authcodeRepository == null) {
-            authcodeRepository = new InMemoryAuthcodeRepository();
+        public <T extends IdentifiedEntity> T read(EntityId id) {
+            IdentifiedEntity entity = repo.get(id);
+            if (entity != null) return (T) entity.clone();
+            return null;
         }
-        return authcodeRepository;
-    }
+        public <T extends IdentifiedEntity> void create(T entity) {
+            if(repo.containsKey(entity.getId())) throw new IllegalStateException("Already Exists: " + entity.getId());
+            repo.put(entity.getId(), entity);
+        }
+        public <T extends IdentifiedEntity> void update(T entity) {
+            if(!repo.containsKey(entity.getId())) throw new IllegalStateException("Doesn't Exist: " + entity.getId());
+            repo.put(entity.getId(), entity);
+        }
 
-    @Override
-    public EmptyParameterRepository parameterRepository() {
-        if (parameterRepository == null) {
-            parameterRepository = new EmptyParameterRepository();
+        public <T extends IdentifiedEntity> void delete(T entity) {
+            if(!repo.containsKey(entity.getId())) throw new IllegalStateException("Doesn't Exist: " + entity.getId());
+            repo.remove(entity.getId());
         }
-        return parameterRepository;
-    }
 
-    @Override
-    public synchronized InMemoryExpiringKeypairRepository expiringKeypairRepository() {
-        if (expiringKeypairRepository == null) {
-            expiringKeypairRepository = new InMemoryExpiringKeypairRepository();
+        @Override
+        public <T extends IdentifiedEntity> List<T> list(String... entityTypes) {
+            return (List<T>) repo.values().stream().filter(v -> v.getId().isOfType(entityTypes)).collect(Collectors.toList());
         }
-        return expiringKeypairRepository;
     }
 }
+
