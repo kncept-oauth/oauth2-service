@@ -132,7 +132,6 @@ export class OidcJavaLambda extends cdk.Stack {
       logRetention: logs.RetentionDays.ONE_MONTH
     })
 
-    const gitHeadRefPath = path.join(rootDir, '.git', 'refs', 'head', 'main')
     const handler = new lambda.Function(lambdaFnStack, `${functionName}-Lambda`, {
       description: 'Kncept Simple OIDC. An Oauth2 and OIDC provider solution',
       runtime: lambda.Runtime.JAVA_21,
@@ -151,7 +150,7 @@ export class OidcJavaLambda extends cdk.Stack {
           'version': calcVersion(),
 
           // little hack to make sure that every deployment is unique/random
-          'deployhash': fs.readFileSync(gitHeadRefPath).toString('utf8'),
+          'git_hash': process.env.GITHUB_SHA || 'unknown',
           'deploytime': `${new Date()}`,
       },
       role,
