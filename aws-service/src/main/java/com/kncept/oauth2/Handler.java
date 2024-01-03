@@ -33,7 +33,7 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
         if(config.clientRepository().read(Client.id(knceptClient)) == null) {
             Client knceptOidcClient = new Client();
             knceptOidcClient.setId(Client.id(knceptClient));
-            knceptOidcClient.setEnabled(true);
+            knceptOidcClient.setEnabled(false);
             knceptOidcClient.setSecret(knceptClient);
             config.clientRepository().create(knceptOidcClient);
         }

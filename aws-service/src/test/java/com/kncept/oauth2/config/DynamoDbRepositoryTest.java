@@ -20,7 +20,7 @@ public class DynamoDbRepositoryTest {
 
     @Test
     public void canConvertClient() {
-        DynamoDbRepository repository = new DynamoDbRepository(null, "KnceptOidc");
+        DynamoDbRepository repository = new DynamoDbRepository(null, "SimpleOidc");
         repository.registerEntityType(Client.EntityType, Client.class);
 
 
@@ -46,7 +46,7 @@ public class DynamoDbRepositoryTest {
     
     @Test
     public void canConvertAuthRequest() {
-        DynamoDbRepository repository = new DynamoDbRepository(null, "KnceptOidc");
+        DynamoDbRepository repository = new DynamoDbRepository(null, "SimpleOidc");
         repository.registerEntityType(AuthRequest.EntityType, AuthRequest.class);
 //        String oauthSessionId = UUID.randomUUID().toString();
         AuthRequest original = new AuthRequest();
@@ -69,7 +69,7 @@ public class DynamoDbRepositoryTest {
     
     @Test
     public void typeConversions() {
-        DynamoDbRepository repository = new DynamoDbRepository(null, "KnceptOidc");
+        DynamoDbRepository repository = new DynamoDbRepository(null, "SimpleOidc");
     	AttributeValue av = null;
     	
     	av = repository.toAttributeValue("stringValue");
@@ -90,7 +90,7 @@ public class DynamoDbRepositoryTest {
     
     @Test
     public void typeDeconversions() throws Exception {
-        DynamoDbRepository repository = new DynamoDbRepository(null, "KnceptOidc");
+        DynamoDbRepository repository = new DynamoDbRepository(null, "SimpleOidc");
     	AttributeValue av = null;
     	Object value = null;
     	
@@ -123,7 +123,7 @@ public class DynamoDbRepositoryTest {
 
     @Test
     public void canConvertUser() {
-        DynamoDbRepository repository = new DynamoDbRepository(null, "KnceptOidc");
+        DynamoDbRepository repository = new DynamoDbRepository(null, "SimpleOidc");
         repository.registerEntityType(User.EntityType, User.class);
 
         EntityId randomUserId = User.id();

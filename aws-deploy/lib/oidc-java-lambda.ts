@@ -4,6 +4,7 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
 import * as iam from 'aws-cdk-lib/aws-iam'
 import * as s3 from 'aws-cdk-lib/aws-s3'
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as logs from 'aws-cdk-lib/aws-logs'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import * as route53 from 'aws-cdk-lib/aws-route53'
@@ -37,9 +38,7 @@ export class OidcJavaLambda extends cdk.Stack {
     // lambda function isolation stack
     const lambdaFnStack = new cdk.NestedStack(this, 'lambda')
 
-
-
-    const lambdaLogGroup = new logs.LogGroup(logStack, `${functionName}-LogGroup`, {
+    const logGroup = new logs.LogGroup(logStack, `${functionName}-LogGroup`, {
       logGroupName: `/com/kncept/${functionName}`,
       retention: logs.RetentionDays.ONE_MONTH,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -71,27 +70,50 @@ export class OidcJavaLambda extends cdk.Stack {
     const role = new iam.Role(resourcesStack, `${functionName}-Role`, {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       roleName: functionName,
-      description: 'OIDC Lambda role',
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaVPCAccessExecutionRole"),
-        iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
-      ]
+      description: 'simple-oidc Lambda role',
     })
+    role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"))
+    if(useVpc) role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaVPCAccessExecutionRole"))
     role.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY)
+    logGroup.grantWrite(role)
 
-    // eg: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_lambda-access-dynamodb.html
-    role.addToPrincipalPolicy(new iam.PolicyStatement({
-      sid: 'KnceptOidcDdbTables',
-      actions: [
-        'dynamodb:*',
-      ],
-      resources: [
-        'arn:aws:dynamodb:*:*:table/KnceptOidc*'
-      ],
-      effect: iam.Effect.ALLOW,
-    }))
+    // role.attachInlinePolicy(new iam.Policy(resourcesStack, 'ddb-access', {
+    //   policyName: `${functionName}-ddb-access`,
+    //   document: iam.PolicyDocument.fromJson({
+    //     "Version": "2012-10-17",
+    //     "Statement": [
+    //       {
+    //         "Effect": "Allow",
+    //         "Action": "dynamodb:*",
+    //         "Resource": "arn:aws:dynamodb:*:*:table/SimpleOidc",
+    //       },
+    //       {
+    //         "Effect": "Allow",
+    //         "Action": "dynamodb:ListTables",
+    //         "Resource:": "arn:aws:dynamodb:*:*:*",
+    //       }
+    //     ]
+    //   })
+    // }))
+    const ddbTable = new dynamodb.TableV2(resourcesStack, 'ddb-table', {
+      tableName: 'SimpleOidc',
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING},
+      sortKey: { name: 'ref', type: dynamodb.AttributeType.STRING},
+      
+      globalSecondaryIndexes: [{ // reverse index
+        indexName: 'gsi',
+        partitionKey: { name: 'ref', type: dynamodb.AttributeType.STRING},
+        sortKey: { name: 'id', type: dynamodb.AttributeType.STRING}
+      }],
+      localSecondaryIndexes: [{
+        indexName: 'when',
+        sortKey: { name: 'when', type: dynamodb.AttributeType.NUMBER} // number
+      }],
 
-    lambdaLogGroup.grantWrite(role)
+      timeToLiveAttribute: 'expiry', // number
+      removalPolicy: cdk.RemovalPolicy.DESTROY
+    })
+    ddbTable.grantFullAccess(role)
 
     const objKey = `aws-service-${calcVersion()}.zip`
     const deployBucket = new s3.Bucket(resourcesStack, `${functionName}-Service`)
@@ -104,22 +126,24 @@ export class OidcJavaLambda extends cdk.Stack {
         s3Deployment.Source.asset(distDir),
       ],
       prune: true,
+      logRetention: logs.RetentionDays.ONE_MONTH
     })
 
     const handler = new lambda.Function(lambdaFnStack, `${functionName}-Lambda`, {
       runtime: lambda.Runtime.JAVA_21,
-      functionName: 'oidc-service',
+      functionName,
       code: lambda.Code.fromBucket(deployedAsset.deployedBucket, objKey),
       handler: 'com.kncept.oauth2.Handler',
       timeout: cdk.Duration.seconds(29), // behind api gateway = 29s timeout
+      logGroup: logGroup,
       environment: {
         // can't have dots . or dashes -
         
         // use the (default) DDB table for config and control
           'OIDC_Storage_Config': 'com.kncept.oauth2.config.DynoDbOauth2Configuration',
+          'OIDC_Hostname': props.lambdaHostname,
       },
       role,
-      logRetention:  logs.RetentionDays.ONE_MONTH,
       vpc
     })
 
