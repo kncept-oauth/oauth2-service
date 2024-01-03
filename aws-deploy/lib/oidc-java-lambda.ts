@@ -12,7 +12,6 @@ import * as s3Deployment from 'aws-cdk-lib/aws-s3-deployment'
 
 
 import * as path from 'path'
-import { CfnOutput } from 'aws-cdk-lib'
 import { HostedZoneInfo, extractHostedZoneFromHostname } from '../bin/domain-tools'
 import { calcVersion } from '../bin/deploy'
 
@@ -142,7 +141,7 @@ export class OidcJavaLambda extends cdk.Stack {
         
         // use the (default) DDB table for config and control
           'OIDC_Storage_Config': 'com.kncept.oauth2.config.DynoDbOauth2Configuration',
-          'OIDC_Hostname': props.lambdaHostname,
+          'OIDC_Hostname': `https://${props.lambdaHostname}`,
       },
       role,
       vpc,

@@ -63,7 +63,6 @@ public class DynamoDbRepository implements SingleStorageConfiguration.CrudRepo {
 //        } catch (ResourceNotFoundException rnf) {
 //            return null;
 //        }
-
         try {
             QueryResponse response = client.query(QueryRequest.builder()
                     .tableName(tableName)

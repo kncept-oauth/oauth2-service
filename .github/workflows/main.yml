@@ -22,7 +22,7 @@ jobs:
           cache: 'gradle'
 
       - name: Main Build
-        run: ./gradlew build check
+        run: ./gradlew clean build check
 
 # Upload the core API and Implementation as github artifacts
       - uses: actions/upload-artifact@v3
