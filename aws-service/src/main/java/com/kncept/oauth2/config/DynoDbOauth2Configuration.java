@@ -7,6 +7,7 @@ public class DynoDbOauth2Configuration extends SingleStorageConfiguration implem
 
     public DynoDbOauth2Configuration() {
         this(DynamoDbClient.create());
+//        this(DynamoDbClient.builder().build());
     }
 
     public DynoDbOauth2Configuration(DynamoDbClient client) {

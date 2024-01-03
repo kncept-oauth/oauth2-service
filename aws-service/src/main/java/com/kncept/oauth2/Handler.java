@@ -29,14 +29,20 @@ public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIG
 
     public Handler(Oauth2StorageConfiguration config) {
         oauth2 = new Oauth2(config, EnvPropertyConfiguration.hostname());
+
         oauth2.init(false); // easier init of tables
-        if(config.clientRepository().read(Client.id(knceptClient)) == null) {
-            Client knceptOidcClient = new Client();
-            knceptOidcClient.setId(Client.id(knceptClient));
-            knceptOidcClient.setEnabled(false);
-            knceptOidcClient.setSecret(knceptClient);
-            config.clientRepository().create(knceptOidcClient);
-        }
+        Thread exampleClientThread = new Thread(() -> {
+            if(config.clientRepository().read(Client.id(knceptClient)) == null) {
+                Client knceptOidcClient = new Client();
+                knceptOidcClient.setId(Client.id(knceptClient));
+                knceptOidcClient.setEnabled(false);
+                knceptOidcClient.setSecret(knceptClient);
+                config.clientRepository().create(knceptOidcClient);
+            }
+        });
+        exampleClientThread.setDaemon(true);
+        exampleClientThread.start();
+
         router = new Oauth2AutoRouter(oauth2);
     }
 

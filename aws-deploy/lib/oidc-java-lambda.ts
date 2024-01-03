@@ -130,6 +130,7 @@ export class OidcJavaLambda extends cdk.Stack {
     })
 
     const handler = new lambda.Function(lambdaFnStack, `${functionName}-Lambda`, {
+      description: 'Kncept Simple OIDC. An Oauth2 and OIDC provider solution',
       runtime: lambda.Runtime.JAVA_21,
       functionName,
       code: lambda.Code.fromBucket(deployedAsset.deployedBucket, objKey),
@@ -144,7 +145,7 @@ export class OidcJavaLambda extends cdk.Stack {
           'OIDC_Hostname': props.lambdaHostname,
       },
       role,
-      vpc
+      vpc,
     })
 
     const restApi = new apigateway.RestApi(lambdaFnStack, `${functionName}-Api`, {

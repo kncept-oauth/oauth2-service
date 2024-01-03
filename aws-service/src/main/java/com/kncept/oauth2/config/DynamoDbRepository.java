@@ -54,12 +54,26 @@ public class DynamoDbRepository implements SingleStorageConfiguration.CrudRepo {
 
     @Override
     public <T extends IdentifiedEntity> T read(EntityId id) {
+//        try {
+//            GetItemResponse response = client.getItem(GetItemRequest.builder()
+//                    .tableName(tableName)
+//                    .key(Map.of("id", AttributeValue.fromS(id.toString())))
+//                    .build());
+//            return reflectiveItemConverter(response.item());
+//        } catch (ResourceNotFoundException rnf) {
+//            return null;
+//        }
+
         try {
-            GetItemResponse response = client.getItem(GetItemRequest.builder()
+            QueryResponse response = client.query(QueryRequest.builder()
                     .tableName(tableName)
-                    .key(Map.of("id", AttributeValue.fromS(id.toString())))
+                    .keyConditionExpression("id = :id")
+                    .expressionAttributeValues(Map.of(":id", AttributeValue.fromS(id.toString())))
                     .build());
-            return reflectiveItemConverter(response.item());
+            List<Map<String, AttributeValue>> items =response.items();
+            if (items == null || items.isEmpty()) return null;
+            if (items.size() > 1) throw new RuntimeException("Multiple pk matches on " + id);
+            return reflectiveItemConverter(items.get(0));
         } catch (ResourceNotFoundException rnf) {
             return null;
         }
@@ -109,60 +123,6 @@ public class DynamoDbRepository implements SingleStorageConfiguration.CrudRepo {
         field.set(obj, value);
     }
 
-    // https://github.com/awsdocs/aws-doc-sdk-examples/blob/main/javav2/example_code/dynamodb/src/main/java/com/example/dynamodb/CreateTable.java
-    public synchronized void createTableIfNotExists() {
-        TableStatus tableStatus = null;
-        DescribeTableRequest describeTable = DescribeTableRequest.builder()
-                .tableName(tableName)
-                .build();
-        try {
-            DescribeTableResponse describeTableResponse = client.describeTable(describeTable);
-            tableStatus = describeTableResponse.table().tableStatus();
-        } catch (ResourceNotFoundException rnf) { }
-        if (tableStatus == null || !(tableStatus.equals(TableStatus.ACTIVE) || tableStatus.equals(TableStatus.CREATING))) {
-            System.out.println(getClass().getSimpleName() + " creating table " + tableName);
-            client.createTable(CreateTableRequest.builder()
-                    .tableName(tableName)
-                    .keySchema(KeySchemaElement.builder()
-                            .attributeName("id")
-                            .keyType(KeyType.HASH)
-                            .build())
-                    .attributeDefinitions(
-                            new AttributeDefinition[] {AttributeDefinition.builder()
-                                    .attributeName("id")
-                                    .attributeType(ScalarAttributeType.S)
-                                    .build()}
-                    )
-                    .billingMode(BillingMode.PAY_PER_REQUEST)
-                    .build());
-        }
-        while (tableStatus == null || !tableStatus.equals(TableStatus.ACTIVE)) {
-            try { Thread.sleep(5); }
-            catch (InterruptedException e) { }
-            try {
-                DescribeTableResponse describeTableResponse = client.describeTable(describeTable);
-                tableStatus = describeTableResponse.table().tableStatus();
-            } catch (ResourceNotFoundException rnf) { }
-        }
-
-
-        DescribeTimeToLiveResponse ttlResponse = client.describeTimeToLive(DescribeTimeToLiveRequest.builder()
-                .tableName(tableName)
-                .build());
-        TimeToLiveStatus ttlStatus = ttlResponse.timeToLiveDescription().timeToLiveStatus();
-        if (ttlStatus == null || !(ttlStatus.equals(TimeToLiveStatus.ENABLED) || ttlStatus.equals(TimeToLiveStatus.ENABLING))) {
-            System.out.println(getClass().getSimpleName() + " updating ttl expiry " + tableName);
-            client.updateTimeToLive(UpdateTimeToLiveRequest.builder()
-                    .tableName(tableName)
-                    .timeToLiveSpecification(TimeToLiveSpecification.builder()
-                            .attributeName("expiry")
-                            .enabled(true)
-                            .build())
-                    .build());
-        }
-    }
-
-
     // read data from ddb
     <T extends IdentifiedEntity> T reflectiveItemConverter(Map<String, AttributeValue> item) {
         if (item == null || item.isEmpty()) return null;
@@ -199,13 +159,11 @@ public class DynamoDbRepository implements SingleStorageConfiguration.CrudRepo {
 		} catch (NullPointerException e) {
 			// means it's not null... ugh
 		}
-        System.out.println("at type " + av.type());
-        // S
-        // BOOL
 
+        // TODO: Excise optionals :/
         if (Optional.class.isAssignableFrom(type)) {
-            TypeVariable[] tv = type.getTypeParameters();
-            System.out.println(tv[0].getTypeName() + "  " + tv[0]);
+//            TypeVariable[] tv = type.getTypeParameters();
+//            System.out.println(tv[0].getTypeName() + "  " + tv[0]);
 
             if (av.type() == AttributeValue.Type.S) return Optional.of(av.s());
             if (av.type() == AttributeValue.Type.BOOL) return Optional.of(av.bool());
