@@ -43,7 +43,7 @@ jobs:
         run: npm ci
         working-directory: aws-deploy
       - name: AWS CDK cdk deploy
-        run: npm run cdk deploy OidcJavaLambda
+        run: npm run cdk deploy simple-oidc
         working-directory: aws-deploy
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}

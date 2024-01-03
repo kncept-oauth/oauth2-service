@@ -20,30 +20,55 @@ export interface StackProps {
   lambdaHostname: string
 }
 
+// TODO: Allow a way to deploy into an existing vpc
+var useVpc = process.env.USE_VPC || false
+
 export class OidcJavaLambda extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, {})
+    const functionName = 'simple-oidc'
 
-    const functionName = 'kncept-oidc'
+    // allow logs to be torn down later if required
+    const logStack = new cdk.NestedStack(this, 'logs')
 
-    const vpc = new ec2.Vpc(this, `${functionName}-vpc`, {
-      vpcName: `${functionName}-vpc`,
+    // general resources stack
+    const resourcesStack = new cdk.NestedStack(this, 'resources')
+
+    // lambda function isolation stack
+    const lambdaFnStack = new cdk.NestedStack(this, 'lambda')
+
+
+
+    const lambdaLogGroup = new logs.LogGroup(logStack, `${functionName}-LogGroup`, {
+      logGroupName: `/com/kncept/${functionName}`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
     })
+
+    
+    let vpc: ec2.Vpc | undefined = undefined
+    if (useVpc) {
+      vpc = new ec2.Vpc(resourcesStack, `${functionName}-vpc`, {
+          vpcName: `${functionName}-vpc`,
+        })
+    }
 
     let zone: route53.IHostedZone | undefined
     if(props.baseHostedZone) {
-      zone = route53.HostedZone.fromHostedZoneAttributes(this, `${functionName}-LookupHostedZone`, {
+      zone = route53.HostedZone.fromHostedZoneAttributes(resourcesStack, `${functionName}-LookupHostedZone`, {
         hostedZoneId: props.baseHostedZone.id,
         zoneName: props.baseHostedZone.name,
       })
     } else if (props.lambdaHostname !== '') {
-      zone = new route53.PublicHostedZone(this, `${functionName}-HostedZone`, {
+      
+      zone = new route53.PublicHostedZone(resourcesStack, `${functionName}-HostedZone`, {
         caaAmazon: true,
         zoneName: extractHostedZoneFromHostname(props.lambdaHostname),
       })
+      zone.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY)
     }
 
-    const role = new iam.Role(this, `${functionName}-Role`, {
+    const role = new iam.Role(resourcesStack, `${functionName}-Role`, {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       roleName: functionName,
       description: 'OIDC Lambda role',
@@ -52,6 +77,7 @@ export class OidcJavaLambda extends cdk.Stack {
         iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
       ]
     })
+    role.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY)
 
     // eg: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_lambda-access-dynamodb.html
     role.addToPrincipalPolicy(new iam.PolicyStatement({
@@ -65,19 +91,14 @@ export class OidcJavaLambda extends cdk.Stack {
       effect: iam.Effect.ALLOW,
     }))
 
-    const lambdaLogGroup = new logs.LogGroup(this, `${functionName}-LogGroup`, {
-      logGroupName: `/aws/lambda/${functionName}`,
-      retention: logs.RetentionDays.ONE_MONTH,
-    })
-
     lambdaLogGroup.grantWrite(role)
 
     const objKey = `aws-service-${calcVersion()}.zip`
-    const deployBucket = new s3.Bucket(this, `${functionName}-Service`)
+    const deployBucket = new s3.Bucket(resourcesStack, `${functionName}-Service`)
 
     const rootDir = path.join(__dirname, '..', '..')
     const distDir = path.join(rootDir, 'aws-service', 'build', 'distributions')
-    const deployedAsset = new s3Deployment.BucketDeployment(this, `${functionName}-Deployment`, {
+    const deployedAsset = new s3Deployment.BucketDeployment(resourcesStack, `${functionName}-Deployment`, {
       destinationBucket: deployBucket,
       sources: [
         s3Deployment.Source.asset(distDir),
@@ -85,7 +106,7 @@ export class OidcJavaLambda extends cdk.Stack {
       prune: true,
     })
 
-    const handler = new lambda.Function(this, `${functionName}-Lambda`, {
+    const handler = new lambda.Function(lambdaFnStack, `${functionName}-Lambda`, {
       runtime: lambda.Runtime.JAVA_21,
       functionName: 'oidc-service',
       code: lambda.Code.fromBucket(deployedAsset.deployedBucket, objKey),
@@ -102,14 +123,11 @@ export class OidcJavaLambda extends cdk.Stack {
       vpc
     })
 
-    const restApi = new apigateway.RestApi(this, `${functionName}-Api`, {
+    const restApi = new apigateway.RestApi(lambdaFnStack, `${functionName}-Api`, {
       restApiName: 'Kncept OIDC',
       description: 'Kncept OIDC and Oauth2 Server',
       endpointTypes: [apigateway.EndpointType.REGIONAL],
       minCompressionSize: cdk.Size.bytes(0),
-    })
-    new CfnOutput(this, `${functionName}-Api-Url-Backend`, {
-      value: restApi.url
     })
 
     const handlerIntegration = new apigateway.LambdaIntegration(handler, {
@@ -121,7 +139,7 @@ export class OidcJavaLambda extends cdk.Stack {
     })
 
     if (zone) {
-      const apiCertificate = new cdk.aws_certificatemanager.Certificate(this, `${functionName}-Api-Certificate`, {
+      const apiCertificate = new cdk.aws_certificatemanager.Certificate(resourcesStack, `${functionName}-Api-Certificate`, {
         domainName: props.lambdaHostname,
         validation: cdk.aws_certificatemanager.CertificateValidation.fromDns(zone)
       })
@@ -131,15 +149,18 @@ export class OidcJavaLambda extends cdk.Stack {
         certificate: apiCertificate,
       })
 
-      new route53.CnameRecord(this, `${functionName}-DnsEntry`, {
+      new route53.CnameRecord(resourcesStack, `${functionName}-DnsEntry`, {
         zone,
         recordName: props.lambdaHostname.substring(0, props.lambdaHostname.length - (extractHostedZoneFromHostname(props.lambdaHostname).length + 1)),
         domainName: apiDomainNameMountPoint!.domainNameAliasDomainName,
       })
-
-      new CfnOutput(this, `${functionName}-Api-Url-Output`, {
-        value: `https://${props.lambdaHostname}/`
-      })
     }
   }
+
+  getLogicalId(element: cdk.CfnElement): string {
+    if (element.node.id.includes('NestedStackResource')) {
+        return /([a-zA-Z0-9]+)\.NestedStackResource/.exec(element.node.id)![1] // will be the exact id of the stack
+    }
+    return super.getLogicalId(element)
+}
 }

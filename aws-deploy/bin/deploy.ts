@@ -31,7 +31,7 @@ async function run() {
         }
         
     }
-    new OidcJavaLambda(app, 'OidcJavaLambda', {
+    new OidcJavaLambda(app, 'simple-oidc', {
         baseHostedZone,
         lambdaHostname,
     })
