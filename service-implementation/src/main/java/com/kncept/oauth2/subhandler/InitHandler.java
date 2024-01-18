@@ -14,7 +14,7 @@ public class InitHandler {
     private final Oauth2StorageConfiguration config;
 
     public InitHandler(Oauth2StorageConfiguration config) {
-        this.config= config;
+        this.config = config;
     }
 
     public void init(boolean await) {

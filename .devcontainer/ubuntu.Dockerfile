@@ -1,4 +1,4 @@
-FROM docker.io/ubuntu:23.04
+FROM docker.io/ubuntu:22.04
 # https://github.com/kncept-oauth/simple-oidc
 # DEBUGGING: docker build -f .devcontainer/ubuntu.Dockerfile -t ubuntu-dev . && docker run -it ubuntu-dev bash
 
@@ -20,6 +20,8 @@ ARG OPENJDK_VERSION=17
 RUN apt install -y openjdk-${OPENJDK_VERSION}-jdk openjdk-${OPENJDK_VERSION}-jre
 
 
+# user 'ubuntu' exists in 23 but not in 22
+RUN useradd -m -s /bin/bash ubuntu
 # User
 RUN usermod -aG sudo ubuntu
 RUN echo "ubuntu:ubuntu" | chpasswd
@@ -28,8 +30,9 @@ WORKDIR /home/ubuntu
 
 # install NVM and node tools
 ARG NODE_VERSION=18
+ARG NVM_SH_VERSION=v0.39.7
 RUN \
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_SH_VERSION}/install.sh | bash
 RUN bash -c 'source .nvm/nvm.sh && npm install -g ts-node'
 
 

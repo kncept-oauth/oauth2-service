@@ -117,7 +117,8 @@ public class Oauth2 implements Oauth2Processor {
                 return htmlPageVendor.verifyPage(optional("maessage", params));
             }
             case LOGIN_PAGE -> {
-                return htmlPageVendor.loginPage(optional("message", params));
+                boolean acceptingSignup = Boolean.valueOf(ConfigParameters.signupEnabled.get(config.parameterRepository()));
+                return htmlPageVendor.loginPage(optional("message", params), acceptingSignup);
             }
             case PROFILE_PAGE -> {
                 return htmlPageVendor.profilePage(params);

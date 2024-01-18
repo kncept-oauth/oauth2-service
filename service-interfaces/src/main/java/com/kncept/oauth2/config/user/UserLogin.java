@@ -4,6 +4,10 @@ import com.kncept.oauth2.entity.EntityId;
 import com.kncept.oauth2.entity.IdentifiedEntity;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+import static java.util.Arrays.asList;
 
 @Data
 public class UserLogin implements IdentifiedEntity {
@@ -28,8 +32,8 @@ public class UserLogin implements IdentifiedEntity {
         return EntityId.parse(type.toString(), value);
     }
 
-    EntityId id;
-    EntityId ref;
+    EntityId id; // login
+    EntityId ref; // user id
 
     boolean verified = false;
 
@@ -57,6 +61,9 @@ public class UserLogin implements IdentifiedEntity {
     }
 
     @Override
-    public void validate() {}
+    public void validate() {
+        id.validate(Arrays.stream(UserLoginType.values()).map(UserLoginType::name).collect(Collectors.toList()));
+        ref.validate(asList(User.EntityType));
+    }
 
 }

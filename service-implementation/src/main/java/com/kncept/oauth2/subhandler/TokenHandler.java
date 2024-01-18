@@ -11,6 +11,8 @@ import com.kncept.oauth2.crypto.key.ManagedKeypair;
 import com.kncept.oauth2.operation.response.RenderedContentResponse;
 import org.json.simple.JSONObject;
 
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
@@ -51,7 +53,7 @@ public class TokenHandler {
             //code_verifier ? // https://developer.okta.com/docs/reference/api/oidc/#request-parameters-4
 
             Authcode authCode = config.authcodeRepository().read(Authcode.id(code));
-            if (authCode != null) {
+            if (authCode == null) {
                 return jsonError("No matching auth codes", oauthSessionId);
             }
             OauthSession session = config.oauthSessionRepository().read(OauthSession.id(authCode.getOauthSessionId()));
@@ -69,9 +71,18 @@ public class TokenHandler {
             Instant iat = LocalDateTime.now().toInstant(ZoneOffset.UTC);
 
             ManagedKeypair keys = keyManager.current();
-            Algorithm algorithm = Algorithm.RSA256(
-                    (RSAPublicKey) keys.keyPair().getPublic(),
-                    (RSAPrivateKey) keys.keyPair().getPrivate());
+
+            Algorithm algorithm = null;
+            String alg = keys.keyType();
+            if (alg.equals("EC")) {
+                algorithm = Algorithm.ECDSA256(
+                        (ECPublicKey) keys.keyPair().getPublic(),
+                        (ECPrivateKey) keys.keyPair().getPrivate());
+            } else if (alg.equals("RSA")) {
+                algorithm = Algorithm.RSA256(
+                        (RSAPublicKey) keys.keyPair().getPublic(),
+                        (RSAPrivateKey) keys.keyPair().getPrivate());
+            } else throw new UnsupportedOperationException("Unable to handle a key algorithm of " + alg);
             String token = JWT.create()
                     .withIssuer(hostedUrl)
                     .withSubject(session.getRef().toString())
@@ -79,7 +90,6 @@ public class TokenHandler {
                     .withExpiresAt(iat.plusSeconds(sessionDurationInSeconds()))
 //                    .withClaim("nonce", authRequest.getnonce)
                     .sign(algorithm);
-
 
             JSONObject jwt = new JSONObject();
             jwt.put("token_type", "Bearer");

@@ -34,7 +34,7 @@ public class PKCS8KeypairParser implements TextKeypairParser {
         return s.startsWith(pkcs8PrivateKeyHeader);
     }
 
-    private synchronized KeyFactory keyFactory() {
+    private synchronized KeyFactory rsaKeyFactory() {
         if (keyFactory == null) try {
             keyFactory = KeyFactory.getInstance("RSA");
         } catch (NoSuchAlgorithmException e) {
@@ -53,7 +53,7 @@ public class PKCS8KeypairParser implements TextKeypairParser {
 
         KeySpec keySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(s));
         try {
-            return keyFactory().generatePublic(keySpec);
+            return rsaKeyFactory().generatePublic(keySpec);
         } catch (InvalidKeySpecException e) {
             throw new RuntimeException(e);
         }
@@ -68,7 +68,7 @@ public class PKCS8KeypairParser implements TextKeypairParser {
 
         KeySpec keySpec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(s));
         try {
-            return keyFactory().generatePrivate(keySpec);
+            return rsaKeyFactory().generatePrivate(keySpec);
         } catch (InvalidKeySpecException e) {
             throw new RuntimeException(e);
         }

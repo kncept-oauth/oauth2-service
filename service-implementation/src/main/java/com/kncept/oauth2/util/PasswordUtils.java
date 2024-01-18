@@ -109,7 +109,7 @@ public class PasswordUtils {
     private static final int saltLength = 12;
 
     public static String generateSalt() {
-        return generateSalt(PasswordHashType.fips_140);
+        return generateSalt(PasswordHashType.sha256);
     }
     public static String generateSalt(PasswordHashType type) {
         return type.prefix + ":" + randomString(saltLength, base62);
@@ -199,7 +199,8 @@ public class PasswordUtils {
 
         @Override
         public boolean matches(String hash, String password) {
-            return hash(password).matches(hash);
+            throw new RuntimeException("no nice 'matches' available :(");
+//            return hash(password).matches(hash);
         }
     }
 }

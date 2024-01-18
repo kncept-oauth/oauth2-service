@@ -18,7 +18,8 @@ class ManagedKeypairConverterTest {
         ManagedKeypair kp = new ManagedKeypair(
                 ExpiringKeypair.id("id"),
                 gen.generateKeypair(),
-                DateRange.infinite
+                DateRange.infinite,
+                "EC"
         );
         ExpiringKeypair ekp = ManagedKeypairConverter.convert(kp);
         assertNotNull(ekp);

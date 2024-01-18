@@ -24,15 +24,19 @@ public class HtmlPageVendor {
         return inflater.inflate(inflater.loadHtmlPageResource("/simple-response-content/error.html"), params);
     }
 
-    public String loginPage(Optional<String> message) {
+    public String loginPage(Optional<String> message, boolean includeSignup) {
+
+//
         Map<String, String> params = defaultParams();
         params.put("message", message.map(m -> "<div id=\"login-signup-message\">" + m + "</div>").orElse(null));
+        if (includeSignup) params.put("loginsignup", "<span><a href=\"" + hostedUrl + "signup\">Signup</a> if you don't have an account<span>");
         return inflater.inflate(inflater.loadHtmlPageResource("/simple-response-content/login.html"), params);
     }
 
     public String signupPage(Optional<String> message) {
         Map<String, String> params = defaultParams();
         params.put("message", message.map(m -> "<div id=\"login-signup-message\">" + m + "</div>").orElse(null));
+        params.put("loginsignup", "<span><a href=\"" + hostedUrl + "login\">Login</a> if you already have an account<span>");
         return inflater.inflate(inflater.loadHtmlPageResource("/simple-response-content/signup.html"), params);
     }
 

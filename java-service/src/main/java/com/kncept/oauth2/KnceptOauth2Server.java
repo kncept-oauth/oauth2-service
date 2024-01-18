@@ -1,6 +1,8 @@
 package com.kncept.oauth2;
 
+import com.kncept.oauth2.config.EnvPropertyConfiguration;
 import com.kncept.oauth2.config.InMemoryConfiguration;
+import com.kncept.oauth2.config.Oauth2StorageConfiguration;
 import com.kncept.oauth2.config.client.Client;
 import com.kncept.oauth2.operation.response.ContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
@@ -54,24 +56,7 @@ public class KnceptOauth2Server implements HttpHandler {
     private final Oauth2AutoRouter router;
 
     public KnceptOauth2Server(String hostedUrl) {
-//        Oauth2StorageConfiguration config = Oauth2StorageConfiguration.loadStorageConfigFromEnvProperty();
-        InMemoryConfiguration config = new InMemoryConfiguration();
-
-        Thread dumpThread = new Thread("dumpThread") {
-            @Override
-            public void run() {
-                while(true) {
-                    config.repo().values().forEach(System.out::println);
-                    try {
-                        Thread.sleep(TimeUnit.MINUTES.toMillis(1));
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-        };
-        dumpThread.setDaemon(true);
-        dumpThread.start();
+        Oauth2StorageConfiguration config = EnvPropertyConfiguration.loadStorageConfigFromEnvProperty();
 
         if(config.clientRepository().read(Client.id(knceptClient)) == null) {
             Client knceptOidcClient = new Client();
@@ -91,7 +76,7 @@ public class KnceptOauth2Server implements HttpHandler {
         Map<String, String> cookies = headerCookies(exchange);
         Optional<String> oauthSessionId = Optional.ofNullable(cookies.get("oauthSessionId"));
 //            Optional<String> jwt = Optional.ofNullable(cookies.get("jwt"));
-//            System.out.println("PATH " + path + "  " + oauthSessionId.orElse(null));
+           System.out.println("PATH " + path + "  " + oauthSessionId.orElse("_"));
         OperationResponse response = router.route(path, exchange.getRequestMethod(), bodyOrQueryParams(exchange), cookies.get("oauthSessionId"));
         handleResponse(exchange, response);
     }

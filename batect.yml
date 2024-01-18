@@ -51,6 +51,15 @@ tasks:
     run:
       container: java
       command: ./gradlew build
+  nodejs:
+    description: run a shell in nodejs
+    run:
+      container: nodejs
+      command: sh
+
+
+
+
   test-oidc:
     description: run an OIDC tester on :8081 and the server on :8080. If it works
     run:

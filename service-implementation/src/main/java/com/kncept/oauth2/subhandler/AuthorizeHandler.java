@@ -83,14 +83,27 @@ public class AuthorizeHandler {
             if (session != null && session.getRef().type.equals(User.EntityType) && session.getExpiry().isAfter(utcNow())) {
                 // for each new inbound auth request, just create a new auth request.
                 // otherwise old state can be picked up
-                AuthRequest ar = new AuthRequest();
-                ar.setId(AuthRequest.id(oauthSessionId.get()));
-                ar.setState(state);
-                ar.setNonce(nonce);
-                ar.setRedirectUri(redirectUri);
-                ar.setRef(client.getId());
-                ar.setResponseType(responseType);
-                ar.setExpiry(utcNow().plusMinutes(5));
+                AuthRequest ar = config.authRequestRepository().read(AuthRequest.id(oauthSessionId.get()));
+                if (ar != null) config.authRequestRepository().delete(ar);
+//                if (ar == null) {
+                    ar = new AuthRequest();
+                    ar.setId(AuthRequest.id(oauthSessionId.get()));
+                    ar.setState(state);
+                    ar.setNonce(nonce);
+                    ar.setRedirectUri(redirectUri);
+                    ar.setRef(client.getId());
+                    ar.setResponseType(responseType);
+                    ar.setExpiry(utcNow().plusMinutes(5));
+//                } else {
+//                    if (ar.getExpiry().isBefore(utcNow())) {
+//                        // expired. bad
+//                        return new ContentResponse(
+//                             400,
+//                                ContentResponse.Content.ERROR_PAGE,
+//                                Optional.of("")
+//                        ).withParam("error", "Session Expired");
+//                    }
+//                }
 
                 config.authRequestRepository().create(ar);
                 return redirectAfterSuccessfulAuth(oauthSessionId.get(), ar, session.getRef());

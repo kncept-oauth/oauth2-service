@@ -58,9 +58,6 @@ public class KeyManager {
         return strategy.current();
     }
 
-
-
-
 /*
 eg:
 {"jwk":
@@ -107,7 +104,7 @@ w0Ls1jF44-csFCur-kEgU8awapJzKnqDKgw",
             ec(jwksFormat, (ECPublicKey) key);
         } else if (alg.equals("RSA")) {
             rsa(jwksFormat, (RSAPublicKey) key);
-        }
+        } else throw new UnsupportedOperationException("Unable to handle a key algorithm of " + alg);
 
         return jwksFormat;
     }

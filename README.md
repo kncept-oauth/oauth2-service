@@ -38,6 +38,7 @@ This assumes that you also have Java installed on your system
 `./gradlew :java-service:run` will run the java-service on :8080 configured for development
 - Authorize Endpoint: http://localhost:8080/authorize
 - Token Endpoint: http://localhost:8080/oauth/token
+For a test client on http://localhost:3000/ run `cd oidc-test-client; npm start`
 
 
 # Integration

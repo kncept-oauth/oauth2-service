@@ -22,6 +22,7 @@ public class ExpiringKeypair implements IdentifiedEntity {
     EntityId id;
     String privateKey;
     String publicKey;
+    String keyType;
     LocalDateTime when; // valid from
     LocalDateTime expiry; // valid to
 
@@ -43,6 +44,7 @@ public class ExpiringKeypair implements IdentifiedEntity {
     public void validate() {
         if (privateKey == null) throw new IllegalStateException();
         if (publicKey == null) throw new IllegalStateException();
+        if (keyType == null) throw new IllegalStateException();
         if (when == null) throw new IllegalStateException();
         if (expiry == null) throw new IllegalStateException();
     }

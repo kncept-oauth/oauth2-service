@@ -12,14 +12,18 @@ public class ManagedKeypair {
     private final KeyPair keyPair;
     private final DateRange validity;
 
+    private final String keyType;
+
     public ManagedKeypair(
             EntityId id,
             KeyPair keyPair,
-            DateRange validity
+            DateRange validity,
+            String keyType
     ) {
         this.id = id;
         this.keyPair = keyPair;
         this.validity = validity;
+        this.keyType = keyType;
     }
 
     public DateRange validity() {
@@ -32,6 +36,10 @@ public class ManagedKeypair {
 
     public KeyPair keyPair() {
         return keyPair;
+    }
+
+    public String keyType() {
+        return keyType;
     }
 
     public boolean isValid() {

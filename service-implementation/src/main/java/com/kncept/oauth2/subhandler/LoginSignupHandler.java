@@ -4,7 +4,6 @@ import com.kncept.oauth2.config.Oauth2StorageConfiguration;
 import com.kncept.oauth2.config.authcode.Authcode;
 import com.kncept.oauth2.config.authrequest.AuthRequest;
 import com.kncept.oauth2.config.parameter.ConfigParameters;
-import com.kncept.oauth2.config.parameter.Parameter;
 import com.kncept.oauth2.config.session.OauthSession;
 import com.kncept.oauth2.config.user.User;
 import com.kncept.oauth2.config.user.UserLogin;
@@ -16,7 +15,6 @@ import com.kncept.oauth2.util.PasswordUtils;
 
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -34,12 +32,6 @@ public class LoginSignupHandler {
     }
 
     public OperationResponse signup(Map<String, String> params, String oauthSessionId) {
-//        if (oauthSessionId != null && !oauthSessionId.isEmpty())
-//            return new ContentResponse(
-//                    400,
-//                    ContentResponse.Content.ERROR_PAGE,
-//                    Optional.ofNullable(oauthSessionId))
-//                    .withParam("error", "Already signed in.");
         if (!acceptingSignup())
             return new ContentResponse(
                     400,
@@ -109,13 +101,6 @@ public class LoginSignupHandler {
     }
 
     public OperationResponse verify(Map<String, String> params, String oauthSessionId) {
-//        if (oauthSessionId != null && !oauthSessionId.isEmpty())
-//            return new ContentResponse(
-//                    400,
-//                    ContentResponse.Content.ERROR_PAGE,
-//                    Optional.ofNullable(oauthSessionId))
-//                    .withParam("error", "Already signed in.");
-
         UserLogin.UserLoginType loginType = supportedLoginType(params.get("signtype"));
         if (loginType == null) return new ContentResponse(
                 400,
@@ -167,7 +152,8 @@ public class LoginSignupHandler {
         config.userLoginRepository().update(login);
 
         AuthRequest authRequest = config.authRequestRepository().read(AuthRequest.id(oauthSessionId));
-        if (authRequest == null) {
+        if (authRequest == null || authRequest.getExpiry().isBefore(utcNow())) {
+            if (authRequest != null) config.authRequestRepository().delete(authRequest);
             return new ContentResponse(
                     400,
                     ContentResponse.Content.ERROR_PAGE,

@@ -27,8 +27,10 @@ public class PresharedKeypairStrategy implements KeypairStrategy {
         key = new ManagedKeypair(
                 ExpiringKeypair.id("static"),
                 new KeyPair(publicKey, privateKey),
-                DateRange.infinite
+                DateRange.infinite,
+                "kp.getPrivate().getAlgorithm()"
         );
+        throw new UnsupportedOperationException("Not yet implemented = need to pass in EC or RSA for algorithm type. somehow");
     }
 
     public ManagedKeypair current() {

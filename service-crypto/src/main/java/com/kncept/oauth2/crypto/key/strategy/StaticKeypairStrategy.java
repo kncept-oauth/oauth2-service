@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class StaticKeypairStrategy implements KeypairStrategy {
@@ -27,8 +26,9 @@ public class StaticKeypairStrategy implements KeypairStrategy {
     }
 
     @Override
-    public ManagedKeypair current() {
+    public synchronized ManagedKeypair current() {
         if (cached != null && cached.isValid()) return cached;
+
         LocalDateTime now = LocalDateTime.now(Clock.systemUTC());
 
         List<ExpiringKeypair> stored = repository.list();
@@ -57,7 +57,8 @@ public class StaticKeypairStrategy implements KeypairStrategy {
         cached = new ManagedKeypair(
                 ExpiringKeypair.id("01-" + now.format(DateTimeFormatter.ofPattern("MM-yyyy"))),
                 kp,
-                DateRange.infinite
+                DateRange.infinite,
+                kp.getPrivate().getAlgorithm()
         );
         repository.create(ManagedKeypairConverter.convert(cached));
         return cached;

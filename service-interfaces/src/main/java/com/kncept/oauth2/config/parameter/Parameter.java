@@ -5,7 +5,6 @@ import com.kncept.oauth2.entity.IdentifiedEntity;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 public class Parameter implements IdentifiedEntity {

@@ -24,12 +24,17 @@
       // "8080:8080" // wasmserve - will auto forward and prompt
     ],
 
+    "features": {
+      "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    },
+
     "customizations": {
       // Configure properties specific to VS Code.
       "vscode": {
         // Add the IDs of extensions you want installed when the container is created.
         "extensions": [
           "streetsidesoftware.code-spell-checker",
+          "vscjava.vscode-java-pack",
         ]
       }
     }

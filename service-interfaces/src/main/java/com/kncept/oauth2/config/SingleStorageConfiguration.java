@@ -15,8 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static java.util.Arrays.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SingleStorageConfiguration implements Oauth2StorageConfiguration {
     final CrudRepo repo;
@@ -50,6 +49,7 @@ public class SingleStorageConfiguration implements Oauth2StorageConfiguration {
         <T extends IdentifiedEntity> void registerEntityType(String entityType, String subType, Class<T> javaType) {
             if (entityType == null) throw new NullPointerException();
             if (subType == null) subType = "*";
+            // System.out.println("registering " + entityType + "-" + subType + " to " + javaType.getName());
 
             Map<String, Class<?>> subtypeMapping = entityToJavaType.computeIfAbsent(entityType, key -> new HashMap<>());
             Class<?> existingMapping = subtypeMapping.put(subType, javaType);
@@ -74,7 +74,7 @@ public class SingleStorageConfiguration implements Oauth2StorageConfiguration {
 
     public SingleStorageConfiguration(CrudRepo repo) {
         this.repo = repo;
-        repositories = new HashMap<>();
+        repositories = new ConcurrentHashMap<>();
     }
 
     private <T extends IdentifiedEntity> SimpleCrudRepository<T> lookupSimpleCrudRepo(Class<T> javaType, Runnable registerAction) {
@@ -107,7 +107,7 @@ public class SingleStorageConfiguration implements Oauth2StorageConfiguration {
                 @Override
                 public void delete(T entity) {
                     multiMapper.validate(entity);
-                    repo.update(entity);
+                    repo.delete(entity);
                 }
 
                 @Override
@@ -150,7 +150,7 @@ public class SingleStorageConfiguration implements Oauth2StorageConfiguration {
     public SimpleCrudRepository<UserLogin> userLoginRepository() {
         return lookupSimpleCrudRepo(UserLogin.class, () -> {
             for(UserLogin.UserLoginType type: UserLogin.UserLoginType.values()) {
-                registerEntityType(type.name(), User.EntityType, User.class);
+                registerEntityType(type.name(), User.EntityType, UserLogin.class);
             }
         });
     }

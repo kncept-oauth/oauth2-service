@@ -18,7 +18,8 @@ public class ManagedKeypairConverter {
                 new DateRange(
                         key.getWhen(),
                         key.getExpiry()
-                )
+                ),
+                key.getKeyType()
         );
     }
 
@@ -28,6 +29,7 @@ public class ManagedKeypairConverter {
         keypair.setId(key.id());
         keypair.setPrivateKey(parser.outputPrivate(key.keyPair().getPrivate()));
         keypair.setPublicKey(parser.outputPublic(key.keyPair().getPublic()));
+        keypair.setKeyType(key.keyType());
         keypair.setWhen(key.validity().start());
         keypair.setExpiry(key.validity().end());
         return keypair;
