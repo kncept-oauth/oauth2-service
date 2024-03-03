@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.util.Arrays.asList;
+
 public class SingleStorageConfiguration implements Oauth2StorageConfiguration {
     final CrudRepo repo;
     private final  Map<Class<?>, SimpleCrudRepository<? extends IdentifiedEntity>> repositories;
@@ -108,10 +110,9 @@ public class SingleStorageConfiguration implements Oauth2StorageConfiguration {
                     multiMapper.validate(entity);
                     repo.delete(entity);
                 }
-
                 @Override
-                public List<T> list() {
-                    return repo.list(multiMapper.entityTypesFor(javaType));
+                public List<T> list(String entityType) {
+                    return repo.list(asList(entityType));
                 }
             };
         });

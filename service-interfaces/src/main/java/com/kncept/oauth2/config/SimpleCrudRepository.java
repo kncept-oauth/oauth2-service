@@ -11,6 +11,5 @@ public interface SimpleCrudRepository<T extends IdentifiedEntity> {
     void update (T entity);
     void delete (T entity);
 
-    //how do I do a list?
-    List<T> list();
+    List<T> list(String entityType); // pk/ prefix
 }

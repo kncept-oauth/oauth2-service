@@ -31,7 +31,7 @@ public class StaticKeypairStrategy implements KeypairStrategy {
 
         LocalDateTime now = LocalDateTime.now(Clock.systemUTC());
 
-        List<ExpiringKeypair> stored = repository.list();
+        List<ExpiringKeypair> stored = repository.list(ExpiringKeypair.EntityType);
         stored.sort(Comparator.comparing(ExpiringKeypair::getExpiry));
 
         // trim all expired keys when searching
