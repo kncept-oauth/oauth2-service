@@ -6,6 +6,8 @@ import com.kncept.oauth2.entity.IdentifiedEntity;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 public class Client implements IdentifiedEntity {
@@ -16,9 +18,10 @@ public class Client implements IdentifiedEntity {
     }
 
     private EntityId id; // oauth client id (prefixed 'client/' as per entity id)
-    private String secret;
+    private String secret; // client secret for OAuth2
     boolean enabled;
-
+    boolean requirePkce; // if PKCE is _required_ for the 'authorization' flow
+    String[] endpoints; // allowed redirect_uri destinations for this endpoint
 
     @Override
     public EntityId getRef() {
@@ -47,5 +50,6 @@ public class Client implements IdentifiedEntity {
     @Override
     public void validate() {
         if (secret == null) throw new IllegalStateException();
+        if (endpoints == null) throw new IllegalStateException();
     }
 }

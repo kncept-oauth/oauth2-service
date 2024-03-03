@@ -1,7 +1,6 @@
 package com.kncept.oauth2.subhandler;
 
 import com.kncept.oauth2.config.Oauth2StorageConfiguration;
-import com.kncept.oauth2.config.authcode.Authcode;
 import com.kncept.oauth2.config.authrequest.AuthRequest;
 import com.kncept.oauth2.config.parameter.ConfigParameters;
 import com.kncept.oauth2.config.session.OauthSession;
@@ -10,17 +9,14 @@ import com.kncept.oauth2.config.user.UserLogin;
 import com.kncept.oauth2.entity.EntityId;
 import com.kncept.oauth2.operation.response.ContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
-import com.kncept.oauth2.operation.response.RedirectResponse;
 import com.kncept.oauth2.util.PasswordUtils;
 
-import java.io.IOException;
-import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static com.kncept.oauth2.subhandler.AuthorizeHandler.redirectAfterSuccessfulAuth;
 import static com.kncept.oauth2.util.DateUtils.utcNow;
 
 public class LoginSignupHandler {
@@ -163,7 +159,11 @@ public class LoginSignupHandler {
 
         // TODO: Handle session does not exist (!)
             authenticate(oauthSessionId, login.getRef());
-            return redirectAfterSuccessfulAuth(oauthSessionId, authRequest, login.getRef());
+
+        authRequest.setUserId(login.getRef());
+        authRequest.setOauthSessionId(OauthSession.id(oauthSessionId));
+        config.authRequestRepository().update(authRequest);
+        return redirectAfterSuccessfulAuth(authRequest);
     }
 
     private OauthSession authenticate(String oauthSessionId, EntityId userId) {
@@ -238,7 +238,9 @@ public class LoginSignupHandler {
                         Optional.of(oauthSessionId))
                         .withParam("error", "OIDC Auth Request Timed out");
             }
-            return redirectAfterSuccessfulAuth(oauthSessionId, authRequest, user.getId());
+            authRequest.setUserId(user.getId());
+            config.authRequestRepository().update(authRequest);
+            return redirectAfterSuccessfulAuth(authRequest);
         } else {
             return new ContentResponse(
                     200,
@@ -254,41 +256,5 @@ public class LoginSignupHandler {
         return Boolean.valueOf(ConfigParameters.signupEnabled.get(config.parameterRepository()));
     }
 
-    private OperationResponse redirectAfterSuccessfulAuth(
-            String oauthSessionId,
-            AuthRequest authRequest,
-            EntityId userId
-    ) {
-        try {
-            // redirect back to app.
-            //
-            // Potential option - use an interposing screen.
-            // Use case - ignoring redirect URI and using this service
-            // as an 'index' service
-            // eg: these services have been authorized
-            //   - app1
-            //   - app2
 
-            String redirectUri = authRequest.getRedirectUri();
-
-            if (!redirectUri.endsWith("?")) {
-                redirectUri = redirectUri + "?";
-            }
-
-            Authcode authCode = new Authcode();
-            authCode.setId(Authcode.id(UUID.randomUUID().toString()));
-            authCode.setRef(userId);
-            authCode.setOauthSessionId(oauthSessionId);
-            authCode.setExpiry(utcNow().plusMinutes(5));
-            config.authcodeRepository().create(authCode);
-            redirectUri = redirectUri + "code=" + URLEncoder.encode(authCode.getId().value, "UTF8");
-
-            Optional<String> state = authRequest.getState();
-            if (state.isPresent()) redirectUri = redirectUri + "&state=" + URLEncoder.encode(state.get(), "UTF8");
-
-            return new RedirectResponse(redirectUri);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }

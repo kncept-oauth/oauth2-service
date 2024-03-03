@@ -1,6 +1,5 @@
 package com.kncept.oauth2.config;
 
-import com.kncept.oauth2.config.authcode.Authcode;
 import com.kncept.oauth2.config.authrequest.AuthRequest;
 import com.kncept.oauth2.config.client.Client;
 import com.kncept.oauth2.config.crypto.ExpiringKeypair;
@@ -129,13 +128,6 @@ public class SingleStorageConfiguration implements Oauth2StorageConfiguration {
     public SimpleCrudRepository<AuthRequest> authRequestRepository() {
         return lookupSimpleCrudRepo(AuthRequest.class, () -> {
             registerEntityType(AuthRequest.EntityType, Client.EntityType, AuthRequest.class);
-        });
-    }
-
-    @Override
-    public SimpleCrudRepository<Authcode> authcodeRepository() {
-        return lookupSimpleCrudRepo(Authcode.class, () -> {
-            registerEntityType(Authcode.EntityType, Authcode.RefType, Authcode.class);
         });
     }
 

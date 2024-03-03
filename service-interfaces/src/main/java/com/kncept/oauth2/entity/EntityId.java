@@ -3,6 +3,8 @@ package com.kncept.oauth2.entity;
 import java.util.List;
 import java.util.Objects;
 
+import static java.util.Arrays.asList;
+
 public class EntityId {
 
     public final String type;
@@ -24,14 +26,18 @@ public class EntityId {
 
     public static EntityId parse(String type, String value) {
         if (type == null) return parse(value);
-        if (value.startsWith(type + " /")) return parse(value);
+        if (value.startsWith(type + "/")) return parse(value);
 
         // its namespaced, but type doesn't match.
         if (value.contains("/")) {
-            throw new IllegalStateException("Not of required type: " + type + " got: " + value.substring(0, value.indexOf("/")));
+            throw new IllegalStateException("Not of required type: \"" + type + "\" got: \"" + value.substring(0, value.indexOf("/")) + "\"");
         }
 
         return parse(type + "/" + value);
+    }
+
+    public void validate(String requiredType) {
+        validate(asList(requiredType));
     }
 
     public void validate(List<String> requiredTypes) {

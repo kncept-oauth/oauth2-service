@@ -170,6 +170,7 @@ export class OidcJavaLambda extends cdk.Stack {
     restApi.root.addProxy({
       defaultIntegration: handlerIntegration
     })
+    restApi.root.addMethod('GET', handlerIntegration, {})
 
     if (zone) {
       const apiCertificate = new cdk.aws_certificatemanager.Certificate(lambdaFnStack, `${functionName}-Api-Certificate`, {

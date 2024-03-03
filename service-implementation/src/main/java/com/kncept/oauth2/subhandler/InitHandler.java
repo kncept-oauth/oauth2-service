@@ -20,7 +20,6 @@ public class InitHandler {
     public void init(boolean await) {
         List<Runnable> tasks = new ArrayList<>();
         tasks.add(config::clientRepository);
-        tasks.add(config::authcodeRepository);
         tasks.add(config::oauthSessionRepository);
         tasks.add(config::authRequestRepository);
         tasks.add(config::userRepository);

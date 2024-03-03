@@ -39,5 +39,7 @@ public class OauthSession implements IdentifiedEntity {
 
     @Override
     public void validate() {
+        if (id == null) throw new IllegalStateException();
+        if (ref == null) throw new IllegalStateException();
     }
 }

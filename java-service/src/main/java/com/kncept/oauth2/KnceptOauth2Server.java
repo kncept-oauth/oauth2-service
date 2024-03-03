@@ -66,7 +66,7 @@ public class KnceptOauth2Server implements HttpHandler {
             config.clientRepository().create(knceptOidcClient);
         }
         oauth2 = new Oauth2(config, hostedUrl);
-        oauth2.init(false); // easier init of tables
+        oauth2.init(true); // easier init of tables
         router = new Oauth2AutoRouter(oauth2);
     }
 

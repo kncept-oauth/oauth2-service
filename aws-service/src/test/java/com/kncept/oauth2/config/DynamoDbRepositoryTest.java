@@ -10,10 +10,12 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class DynamoDbRepositoryTest {
@@ -86,20 +88,45 @@ public class DynamoDbRepositoryTest {
     	
     	av = repository.toAttributeValue(Optional.of("stringOption"));
     	assertEquals("stringOption", av.s());
+
+//        av = repository.toAttributeValue(new ArrayList<>());
+//        assertTrue(av.ss().isEmpty());
+//        av = repository.toAttributeValue(asList("value0"));
+//        assertFalse(av.ss().isEmpty());
+//        assertEquals("value0", av.ss().get(0));
+
+        av = repository.toAttributeValue(new String[]{});
+        assertTrue(av.ss().isEmpty());
+        av = repository.toAttributeValue(new String[]{"value0"});
+        assertFalse(av.ss().isEmpty());
+        assertEquals("value0", av.ss().get(0));
     }
-    
+
+    private static class TypeConverionFields {
+        public String string;
+        public Optional<String> stringOptional;
+        public Boolean booleanObj;
+        public boolean booleanPrimitive;
+    }
+
     @Test
     public void typeDeconversions() throws Exception {
         DynamoDbRepository repository = new DynamoDbRepository(null, "SimpleOidc");
     	AttributeValue av = null;
     	Object value = null;
+
+
     	
     	av = AttributeValue.fromS("stringValue");
-    	value = repository.fromAttributeValue(av, String.class);
+    	value = repository.fromAttributeValue(av, TypeConverionFields.class.getField("string"));
     	assertEquals("stringValue", value);
 
         av = AttributeValue.fromBool(true);
-        value = repository.fromAttributeValue(av, Boolean.class);
+        value = repository.fromAttributeValue(av, TypeConverionFields.class.getField("booleanObj"));
+        assertEquals(true, value);
+
+        av = AttributeValue.fromBool(true);
+        value = repository.fromAttributeValue(av, TypeConverionFields.class.getField("booleanPrimitive"));
         assertEquals(true, value);
 
 //        av = AttributeValue.fromBool(true);
@@ -107,17 +134,15 @@ public class DynamoDbRepositoryTest {
 //        assertEquals(true, value);
 
     	av = AttributeValue.fromNul(true);
-    	value = repository.fromAttributeValue(av, String.class);
-    	assertEquals(null, value);
+    	value = repository.fromAttributeValue(av, TypeConverionFields.class.getField("string"));
+        assertNull(value);
 
-
-        Optional<String> stringOptional = Optional.empty();
     	av = AttributeValue.fromNul(true);
-    	value = repository.fromAttributeValue(av, stringOptional.getClass()); // Optional<String>
+    	value = repository.fromAttributeValue(av, TypeConverionFields.class.getField("stringOptional"));
     	assertEquals(Optional.empty(), value);
     	
     	av = AttributeValue.fromS("stringOption");
-    	value = repository.fromAttributeValue(av, stringOptional.getClass()); // method returning Optional<String>
+    	value = repository.fromAttributeValue(av, TypeConverionFields.class.getField("stringOptional"));
     	assertEquals(Optional.of("stringOption"), value);
     }
 

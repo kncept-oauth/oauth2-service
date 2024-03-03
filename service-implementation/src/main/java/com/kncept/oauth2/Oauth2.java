@@ -34,6 +34,10 @@ public class Oauth2 implements Oauth2Processor {
         htmlPageVendor = new HtmlPageVendor(this.hostedUrl);
     }
 
+    public Oauth2StorageConfiguration getConfig() {
+        return config;
+    }
+
     // https://auth0.com/docs/get-started/applications/configure-applications-with-oidc-discovery
     // should be on a https://YOUR_DOMAIN(and optional prefix root)/.well-known/openid-configuration URL
     @Override

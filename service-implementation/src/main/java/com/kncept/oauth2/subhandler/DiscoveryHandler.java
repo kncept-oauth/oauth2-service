@@ -44,7 +44,7 @@ public class DiscoveryHandler {
 //                        registration_endpoint // Dynamic client Registration?
                 .with("scopes_supported", List.of("openid", "email", "sub")) // MUST include openid
                 .with("response_types_supported", List.of("code", "id_token", "token id_token"))
-                .with("grant_types_supported", List.of("implicit", "authorization_code")) // optional
+                .with("grant_types_supported", List.of("implicit", "authorization_code")) // optional //  refresh_token ?
                 .with("subject_types_supported", List.of("public"))
                 .with("id_token_signing_alg_values_supported", List.of("RS256", "ES256")) // EdDSA
 //                .with("id_token_signing_alg_values_supported", List.of("RS256", "RS384"))

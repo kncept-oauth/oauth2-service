@@ -5,14 +5,13 @@ import com.kncept.oauth2.entity.IdentifiedEntity;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.TypeVariable;
+import java.lang.reflect.*;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.util.Arrays.asList;
 
 public class DynamoDbRepository implements SingleStorageConfiguration.CrudRepo {
 //    private final Class<T> valueInterface;
@@ -69,7 +68,7 @@ public class DynamoDbRepository implements SingleStorageConfiguration.CrudRepo {
                     .keyConditionExpression("id = :id")
                     .expressionAttributeValues(Map.of(":id", AttributeValue.fromS(id.toString())))
                     .build());
-            List<Map<String, AttributeValue>> items =response.items();
+            List<Map<String, AttributeValue>> items = response.items();
             if (items == null || items.isEmpty()) return null;
             if (items.size() > 1) throw new RuntimeException("Multiple pk matches on " + id);
             return reflectiveItemConverter(items.get(0));
@@ -138,7 +137,7 @@ public class DynamoDbRepository implements SingleStorageConfiguration.CrudRepo {
             T value = (T) javaType.getDeclaredConstructor().newInstance();
             for (Field field : fields(javaType)) {
                 AttributeValue av = item.get(field.getName());
-                Object fieldValue = fromAttributeValue(av, field.getType());
+                Object fieldValue = fromAttributeValue(av, field);
                 set(field, value, fieldValue);
             }
             return value;
@@ -152,7 +151,8 @@ public class DynamoDbRepository implements SingleStorageConfiguration.CrudRepo {
             throw new RuntimeException(e);
         }
     }
-    public Object fromAttributeValue(AttributeValue av, Class<?> type) {
+    public Object fromAttributeValue(AttributeValue av, Field field) {
+        Class<?> type = field.getType();
     	try {
 			if (av == null || av.type() == AttributeValue.Type.NUL || av.nul()) {
                 if (Optional.class.isAssignableFrom(type)) return Optional.empty();
@@ -166,9 +166,17 @@ public class DynamoDbRepository implements SingleStorageConfiguration.CrudRepo {
         if (Optional.class.isAssignableFrom(type)) {
 //            TypeVariable[] tv = type.getTypeParameters();
 //            System.out.println(tv[0].getTypeName() + "  " + tv[0]);
-
             if (av.type() == AttributeValue.Type.S) return Optional.of(av.s());
             if (av.type() == AttributeValue.Type.BOOL) return Optional.of(av.bool());
+        }
+
+        if (type.isArray() && String.class.isAssignableFrom(type.getComponentType())) {
+            List<String> ss = av.ss();
+            return ss.toArray(new String[ss.size()]);
+        }
+        if (type.isArray() && Long.class.isAssignableFrom(type.getComponentType())) {
+            List<String> ns = av.ns();
+            return ns.stream().map(Long::valueOf).toList().toArray(new Long[ns.size()]);
         }
 
     	if (String.class.isAssignableFrom(type)) return av.s();
@@ -185,17 +193,30 @@ public class DynamoDbRepository implements SingleStorageConfiguration.CrudRepo {
     // write data to ddb
     // n.b. primitive types will be autoboxed
     public AttributeValue toAttributeValue(Object value) {
+
     	if (value == null) return AttributeValue.builder().nul(true).build();
     	if (value instanceof Optional) {
     		if (((Optional) value).isEmpty()) return AttributeValue.builder().nul(true).build();
     		value = ((Optional) value).get();
     	}
+        if (value instanceof List) {
+            throw new RuntimeException("Unable to convert value of type " + value.getClass());
+        }
+        Class<?> type = value.getClass();
+        if (type.isArray() && String.class.isAssignableFrom(type.getComponentType())) {
+            return AttributeValue.fromSs(asList((String[])value));
+        }
+        if (type.isArray() && Long.class.isAssignableFrom(type.getComponentType())) {
+            return AttributeValue.fromNs(Arrays.stream((Long[])value).map(Object::toString).collect(Collectors.toList()));
+        }
+
     	if (value instanceof String) return AttributeValue.fromS((String)value);
     	if (value instanceof Boolean) return AttributeValue.fromBool((Boolean)value);
         if (value instanceof Long) return AttributeValue.fromN(value.toString());
         if (value instanceof EntityId) return AttributeValue.fromS(value.toString());
         if (value instanceof LocalDateTime) return AttributeValue.fromN(Long.toString(((LocalDateTime)value).toEpochSecond(ZoneOffset.UTC)));
-    	throw new RuntimeException("Unable to convert value of type" + value.getClass().getSimpleName());
+
+    	throw new RuntimeException("Unable to convert value of type " + value.getClass().getSimpleName());
     }
     public <T extends IdentifiedEntity> Map<String, AttributeValue> convert(T value) {
     	try {

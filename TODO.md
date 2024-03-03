@@ -1,5 +1,17 @@
+IN PROGRESS:
+
+Endpoint registration
+PKCE Registration
+
+Client Initialization - 
+ - property based initializer (java app)
+ - AWS Example of query/insert
+
+PKCE verification when exchanging auth code for login-refresh tokens
+
 TODO list:
-  
+
+
 - client secret validation
 
 - refresh tokens

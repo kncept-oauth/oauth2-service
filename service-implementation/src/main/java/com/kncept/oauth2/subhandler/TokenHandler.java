@@ -1,16 +1,19 @@
 package com.kncept.oauth2.subhandler;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.kncept.oauth2.config.Oauth2StorageConfiguration;
-import com.kncept.oauth2.config.authcode.Authcode;
+import com.kncept.oauth2.config.authrequest.AuthRequest;
 import com.kncept.oauth2.config.parameter.ConfigParameters;
 import com.kncept.oauth2.config.session.OauthSession;
+import com.kncept.oauth2.crypto.auth.AuthCrypto;
 import com.kncept.oauth2.crypto.key.KeyManager;
 import com.kncept.oauth2.crypto.key.ManagedKeypair;
 import com.kncept.oauth2.operation.response.RenderedContentResponse;
 import org.json.simple.JSONObject;
 
+import java.nio.charset.StandardCharsets;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
@@ -52,11 +55,28 @@ public class TokenHandler {
             String code = required("code", params);
             //code_verifier ? // https://developer.okta.com/docs/reference/api/oidc/#request-parameters-4
 
-            Authcode authCode = config.authcodeRepository().read(Authcode.id(code));
-            if (authCode == null) {
+            AuthRequest ar = config.authRequestRepository().read(AuthRequest.id(code));
+            if (ar == null) {
                 return jsonError("No matching auth codes", oauthSessionId);
             }
-            OauthSession session = config.oauthSessionRepository().read(OauthSession.id(authCode.getOauthSessionId()));
+
+            // see https://datatracker.ietf.org/doc/html/rfc7636#section-4.6
+            if (ar.isPkce()) {
+                String codeVerifier = required("code_verifier", params);
+                boolean verified = false;
+                if("plain".equalsIgnoreCase(ar.getPkceChallengeType())) {
+                    verified = ar.getPkceCodeChallenge().equals(codeVerifier);
+                } else if ("S256".equalsIgnoreCase(ar.getPkceChallengeType())) {
+//                    BASE64URL-ENCODE(SHA256(ASCII(code_verifier))) == code_challenge
+                    byte[] b = codeVerifier.getBytes(StandardCharsets.US_ASCII);
+                    String expectedCodeChallence = new AuthCrypto().hasher("b64(sha256").hash(codeVerifier, "");
+                    verified = expectedCodeChallence.equals(codeVerifier);
+                }
+                if (!verified) return jsonError("PKCE Verification failure", oauthSessionId);
+            }
+
+
+            OauthSession session = config.oauthSessionRepository().read(ar.getOauthSessionId());
             if (session == null) {
                 return jsonError("Session has expired", oauthSessionId);
             }
@@ -83,12 +103,17 @@ public class TokenHandler {
                         (RSAPublicKey) keys.keyPair().getPublic(),
                         (RSAPrivateKey) keys.keyPair().getPrivate());
             } else throw new UnsupportedOperationException("Unable to handle a key algorithm of " + alg);
-            String token = JWT.create()
+            JWTCreator.Builder jwtBuilder = JWT.create()
                     .withIssuer(hostedUrl)
                     .withSubject(session.getRef().toString())
                     .withIssuedAt(iat)
                     .withExpiresAt(iat.plusSeconds(sessionDurationInSeconds()))
-//                    .withClaim("nonce", authRequest.getnonce)
+                    ;
+            if (ar.getNonce() != null && ar.getNonce().isPresent()) {
+                jwtBuilder.withClaim("nonce", ar.getNonce().get());
+            }
+
+            String token = jwtBuilder
                     .sign(algorithm);
 
             JSONObject jwt = new JSONObject();

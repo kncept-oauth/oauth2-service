@@ -1,6 +1,5 @@
 package com.kncept.oauth2.config;
 
-import com.kncept.oauth2.config.authcode.Authcode;
 import com.kncept.oauth2.config.authrequest.AuthRequest;
 import com.kncept.oauth2.config.client.Client;
 import com.kncept.oauth2.config.crypto.ExpiringKeypair;
@@ -13,7 +12,6 @@ public interface Oauth2StorageConfiguration {
 
         SimpleCrudRepository<Client> clientRepository();
         SimpleCrudRepository<AuthRequest> authRequestRepository();
-        SimpleCrudRepository<Authcode> authcodeRepository();
         SimpleCrudRepository<User> userRepository();
         SimpleCrudRepository<UserLogin> userLoginRepository();
         SimpleCrudRepository<OauthSession> oauthSessionRepository();

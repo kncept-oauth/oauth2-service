@@ -1,13 +1,11 @@
 package com.kncept.oauth2.subhandler;
 
 import com.kncept.oauth2.config.Oauth2StorageConfiguration;
-import com.kncept.oauth2.config.authcode.Authcode;
 import com.kncept.oauth2.config.authrequest.AuthRequest;
 import com.kncept.oauth2.config.client.Client;
 import com.kncept.oauth2.config.parameter.ConfigParameters;
 import com.kncept.oauth2.config.session.OauthSession;
 import com.kncept.oauth2.config.user.User;
-import com.kncept.oauth2.entity.EntityId;
 import com.kncept.oauth2.operation.response.ContentResponse;
 import com.kncept.oauth2.operation.response.OperationResponse;
 import com.kncept.oauth2.operation.response.RedirectResponse;
@@ -29,7 +27,7 @@ public class AuthorizeHandler {
 
     private final Oauth2StorageConfiguration config;
 
-    enum ResponseType {
+    public enum ResponseType {
         code ; //, token;
         public static ResponseType fromString(String name) {
             for(ResponseType type: values())
@@ -59,13 +57,6 @@ public class AuthorizeHandler {
         Optional<String> state = optional("state", params);
         Optional<String> nonce = optional("nonce", params);
 
-//        boolean isPkce = config.requirePkce() || params.containsKey("code_challenge");
-//        if (isPkce) {
-//            String codeChallenge = required("code_challenge", params);
-//            String codeChallengeMethod = optional("code_challenge_method", params, "S256");
-//            String code_verifier = optional("code_verifier", params, null);
-//        }
-
         Client client = config.clientRepository().read(Client.id(clientId));
         if (client == null) {
             return new ContentResponse(
@@ -74,6 +65,40 @@ public class AuthorizeHandler {
                     oauthSessionId)
                     .withParam("error", "Unknown Client ID: " + clientId);
         }
+        // if Client PKCE required and no PKCE then error "PKCE Code Challenge Required"
+
+
+        boolean pkce = client.isRequirePkce() || params.containsKey("code_challenge");
+        String pkceCodeChallenge = null;
+        String pkceChallengeType = null;
+        if (pkce) {
+            pkceCodeChallenge = required("code_challenge", params);
+            pkceChallengeType = optional("code_challenge_method", params, "plain");
+            if (
+                    !"plain".equalsIgnoreCase(pkceChallengeType) &&
+                    !"S256".equalsIgnoreCase(pkceChallengeType)
+            ) return new ContentResponse(
+                    400,
+                    ContentResponse.Content.ERROR_PAGE,
+                    oauthSessionId)
+                    .withParam("error", "PKCE Challenge type is not valid");
+        }
+
+        boolean redirectUrlIsValid = false;
+        if (client.getEndpoints() != null)
+        for(String endpoint: client.getEndpoints()) {
+            System.out.println(redirectUri + " --> endpoint --> " + endpoint);
+            if (endpoint.endsWith("*")) {
+                redirectUrlIsValid |= redirectUri.startsWith(endpoint.substring(0, endpoint.length() - 1));
+            } else {
+                redirectUrlIsValid |= redirectUri.equals(endpoint);
+            }
+        }
+        if (!redirectUrlIsValid) return new ContentResponse(
+                400,
+                ContentResponse.Content.ERROR_PAGE,
+                oauthSessionId)
+                .withParam("error", "Redirect URL is not valid");
 
         // TODO: Dynamic Code Generator
 
@@ -94,6 +119,14 @@ public class AuthorizeHandler {
                     ar.setRef(client.getId());
                     ar.setResponseType(responseType);
                     ar.setExpiry(utcNow().plusMinutes(5));
+
+                    ar.setUserId(session.getRef());
+                    ar.setOauthSessionId(OauthSession.id(oauthSessionId.get()));
+
+                    ar.setPkce(pkce);
+                    ar.setPkceCodeChallenge(pkceCodeChallenge);
+                    ar.setPkceChallengeType(pkceChallengeType);
+
 //                } else {
 //                    if (ar.getExpiry().isBefore(utcNow())) {
 //                        // expired. bad
@@ -106,7 +139,7 @@ public class AuthorizeHandler {
 //                }
 
                 config.authRequestRepository().create(ar);
-                return redirectAfterSuccessfulAuth(oauthSessionId.get(), ar, session.getRef());
+                return redirectAfterSuccessfulAuth(ar);
             }
         }
 
@@ -116,7 +149,7 @@ public class AuthorizeHandler {
         session.setRef(session.getId()); // TODO: This is a bit vexing
         session.setExpiry(utcNow().plusSeconds(sessionDuration));
         config.oauthSessionRepository().create(session);
-//        OauthSession session = config.oauthSessionRepository().createSession();
+
         AuthRequest ar = new AuthRequest();
         ar.setId(AuthRequest.id(session.getId().value));
         ar.setState(state);
@@ -125,6 +158,14 @@ public class AuthorizeHandler {
         ar.setRef(client.getId());
         ar.setResponseType(responseType);
         ar.setExpiry(utcNow().plusMinutes(5));
+
+//        ar.setUserId(); // no user yet (!!)
+        ar.setOauthSessionId(session.getId());
+
+        ar.setPkce(pkce);
+        ar.setPkceCodeChallenge(pkceCodeChallenge);
+        ar.setPkceChallengeType(pkceChallengeType);
+
         config.authRequestRepository().create(ar);
 
         return new ContentResponse(
@@ -138,30 +179,18 @@ public class AuthorizeHandler {
         return Boolean.valueOf(ConfigParameters.signupEnabled.get(config.parameterRepository()));
     }
 
-    private OperationResponse redirectAfterSuccessfulAuth(String oauthSessionId, AuthRequest authRequest, EntityId userId) {
+    public static OperationResponse redirectAfterSuccessfulAuth(AuthRequest authRequest) {
+        if (authRequest.getUserId() == null) throw new IllegalStateException("User much be authorized to redirectAfterSuccessfulAuth");
         try {
-            // redirect back to app.
-            //
-            // Potential option - use an interposing screen.
-            // Use case - ignoring redirect URI and using this service
-            // as an 'index' service
-            // eg: these services have been authorized
-            //   - app1
-            //   - app2
-
             String redirectUri = authRequest.getRedirectUri();
 
-            if (!redirectUri.endsWith("?")) {
+            if (!redirectUri.contains("?")) { //no query part at all (add it)
                 redirectUri = redirectUri + "?";
+            } else if (!redirectUri.endsWith("?")) { // not at the very start of a query part, so append a param
+                redirectUri = redirectUri + "&";
             }
 
-            Authcode authCode = new Authcode();
-            authCode.setId(Authcode.id(UUID.randomUUID().toString()));
-            authCode.setRef(userId);
-            authCode.setOauthSessionId(oauthSessionId);
-            authCode.setExpiry(utcNow().plusMinutes(5));
-            config.authcodeRepository().create(authCode);
-            redirectUri = redirectUri + "code=" + URLEncoder.encode(authCode.getId().value, "UTF8");
+            redirectUri = redirectUri + "code=" + URLEncoder.encode(authRequest.getId().value, "UTF8");
 
             Optional<String> state = authRequest.getState();
             if (state.isPresent()) redirectUri = redirectUri + "&state=" + URLEncoder.encode(state.get(), "UTF8");
