@@ -32,7 +32,6 @@ public class DiscoveryHandler {
      * @return
      */
     public RenderedContentResponse openIdDiscovery() {
-        // N.B.  "jwks_uri": "certUri" << TODO !!
         MapBuilder mapBuilder = new MapBuilder()
 //                .with("issuer", ConfigParameters.issuerName.get(config.parameterRepository())) // MUST be a URL
                 .with("issuer", hostedUrl)
