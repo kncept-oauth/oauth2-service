@@ -156,21 +156,23 @@ export class OidcJavaLambda extends cdk.Stack {
       vpc,
     })
 
+    const handlerIntegration = new apigateway.LambdaIntegration(handler, {
+      allowTestInvoke: false
+    })
+
     const restApi = new apigateway.RestApi(lambdaFnStack, `${functionName}-Api`, {
       restApiName: 'Kncept OIDC',
       description: 'Kncept OIDC and Oauth2 Server',
       endpointTypes: [apigateway.EndpointType.REGIONAL],
       minCompressionSize: cdk.Size.bytes(0),
-    })
-
-    const handlerIntegration = new apigateway.LambdaIntegration(handler, {
-      allowTestInvoke: false
-    })
-
-    restApi.root.addProxy({
       defaultIntegration: handlerIntegration
     })
-    restApi.root.addMethod('GET', handlerIntegration, {})
+
+    // adds a /{proxy+} route - but doesn't cover / (index) (!!)
+    // fixed above by setting defaultIntegration
+    // restApi.root.addProxy({
+    //   defaultIntegration: handlerIntegration
+    // })
 
     if (zone) {
       const apiCertificate = new cdk.aws_certificatemanager.Certificate(lambdaFnStack, `${functionName}-Api-Certificate`, {
