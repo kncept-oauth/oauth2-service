@@ -69,8 +69,14 @@ public class TokenHandler {
                 } else if ("S256".equalsIgnoreCase(ar.getPkceChallengeType())) {
 //                    BASE64URL-ENCODE(SHA256(ASCII(code_verifier))) == code_challenge
                     byte[] b = codeVerifier.getBytes(StandardCharsets.US_ASCII);
-                    String expectedCodeChallence = new AuthCrypto().hasher("b64(sha256").hash(codeVerifier, "");
-                    verified = expectedCodeChallence.equals(codeVerifier);
+                    String expectedCodeChallence = new AuthCrypto().hasher("b64(sha256)").hash(codeVerifier, "");
+                    expectedCodeChallence = expectedCodeChallence
+                            .replaceAll("=", "") // no padding
+                            .replaceAll("\\+", "-") //base64URL replaces + with -
+                            .replaceAll("/", "_") //base64URL replaces / with _
+                    ;
+
+                    verified = expectedCodeChallence.equals(ar.getPkceCodeChallenge());
                 }
                 if (!verified) return jsonError("PKCE Verification failure", oauthSessionId);
             }

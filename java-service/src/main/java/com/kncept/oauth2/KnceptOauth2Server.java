@@ -1,7 +1,6 @@
 package com.kncept.oauth2;
 
 import com.kncept.oauth2.config.EnvPropertyConfiguration;
-import com.kncept.oauth2.config.InMemoryConfiguration;
 import com.kncept.oauth2.config.Oauth2StorageConfiguration;
 import com.kncept.oauth2.config.client.Client;
 import com.kncept.oauth2.operation.response.ContentResponse;
@@ -19,7 +18,6 @@ import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.util.*;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import static java.util.Arrays.asList;
 
@@ -58,13 +56,20 @@ public class KnceptOauth2Server implements HttpHandler {
     public KnceptOauth2Server(String hostedUrl) {
         Oauth2StorageConfiguration config = EnvPropertyConfiguration.loadStorageConfigFromEnvProperty();
 
-        if(config.clientRepository().read(Client.id(knceptClient)) == null) {
+        // if(config.clientRepository().read(Client.id(knceptClient)) == null) {
             Client knceptOidcClient = new Client();
             knceptOidcClient.setId(Client.id(knceptClient));
             knceptOidcClient.setEnabled(true);
             knceptOidcClient.setSecret(knceptClient);
+
+            knceptOidcClient.setEndpoints(new String[]{
+                "https://www.kncept.com/*",
+                "http://localhost:3000/*",
+                "http://localhost:3001/*",
+            });
+
             config.clientRepository().create(knceptOidcClient);
-        }
+        // }
         oauth2 = new Oauth2(config, hostedUrl);
         oauth2.init(true); // easier init of tables
         router = new Oauth2AutoRouter(oauth2);
@@ -74,9 +79,9 @@ public class KnceptOauth2Server implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         String path = exchange.getRequestURI().getPath().toLowerCase();
         Map<String, String> cookies = headerCookies(exchange);
-        Optional<String> oauthSessionId = Optional.ofNullable(cookies.get("oauthSessionId"));
+        // Optional<String> oauthSessionId = Optional.ofNullable(cookies.get("oauthSessionId"));
 //            Optional<String> jwt = Optional.ofNullable(cookies.get("jwt"));
-           System.out.println("PATH " + path + "  " + oauthSessionId.orElse("_"));
+        //    System.out.println("PATH " + path + "  " + oauthSessionId.orElse("_"));
         OperationResponse response = router.route(path, exchange.getRequestMethod(), bodyOrQueryParams(exchange), cookies.get("oauthSessionId"));
         handleResponse(exchange, response);
     }

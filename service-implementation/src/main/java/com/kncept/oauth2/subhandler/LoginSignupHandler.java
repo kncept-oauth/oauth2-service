@@ -87,6 +87,7 @@ public class LoginSignupHandler {
         login.setTokenExpires(now.plusMinutes(10));
 
         config.userLoginRepository().create(login);
+        System.out.println("Verification token " + login.getTokenValue() + " set for " + login.getId());
         return new ContentResponse(
                 400,
                 ContentResponse.Content.VERIFY_PAGE,

@@ -87,7 +87,6 @@ public class AuthorizeHandler {
         boolean redirectUrlIsValid = false;
         if (client.getEndpoints() != null)
         for(String endpoint: client.getEndpoints()) {
-            System.out.println(redirectUri + " --> endpoint --> " + endpoint);
             if (endpoint.endsWith("*")) {
                 redirectUrlIsValid |= redirectUri.startsWith(endpoint.substring(0, endpoint.length() - 1));
             } else {
@@ -98,7 +97,7 @@ public class AuthorizeHandler {
                 400,
                 ContentResponse.Content.ERROR_PAGE,
                 oauthSessionId)
-                .withParam("error", "Redirect URL is not valid");
+                .withParam("error", "Redirect URL is not valid: " + redirectUri);
 
         // TODO: Dynamic Code Generator
 

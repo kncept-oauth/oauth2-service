@@ -14,7 +14,7 @@ interface OidcTestClientImpl {
 const oidcTestClients: Record<string, OidcTestClientImpl> = {
   'oidc-client': {enabled: false, view: () => <OidcClient />},
   'oidc-client-ts': {enabled: false, view: OidcClientTs},
-  'react-oidc': {enabled: true, view: ReactOidcContext},
+  'react-oidc-context': {enabled: true, view: ReactOidcContext},
   'axafr-oidc': {enabled: false, view: AxaFrOidcClient},
   
 }

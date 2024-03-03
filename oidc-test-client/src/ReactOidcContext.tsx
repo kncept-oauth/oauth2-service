@@ -45,7 +45,7 @@ export default function ReactOidcContext() {
     const oidcConfig : AuthProviderProps = {
         authority: "http://localhost:8080", // --> http://localhost:8080/.well-known/openid-configuration
         client_id: "kncept-oidc-client",
-        redirect_uri: `${window.location.protocol}//${window.location.host}/test-oidc/react-oidc/callback`,
+        redirect_uri: `${window.location.protocol}//${window.location.host}/test-oidc/react-oidc-context/callback`,
         loadUserInfo: true,
 //         userStore: new WebStorageStateStore({store: new WrappedStorage('userStore', window.localStorage) }),
 //         stateStore: new WebStorageStateStore({store: new WrappedStorage('stateStore', window.localStorage) }),
@@ -83,7 +83,7 @@ const OidcCallback: React.FC<{userManager: UserManager}> = ({userManager}) => {
             window.location.pathname,
           )
 //           React.useEffect() ??
-        navigate('/test-oidc/react-oidc')
+        navigate('/test-oidc/react-oidc-context')
     })
     .catch(reason => {
         console.log('user manager catch')
